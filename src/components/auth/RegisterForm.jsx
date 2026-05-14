@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 
 export default function RegisterForm() {
   const router = useRouter();
@@ -162,6 +163,8 @@ export default function RegisterForm() {
         >
           {loading ? "Creating account..." : "Register"}
         </button>
+
+        
       </div>
 
       <p className="mt-6 text-center text-sm text-slate-500">

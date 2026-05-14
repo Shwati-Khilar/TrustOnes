@@ -112,6 +112,13 @@ export default function LoginForm() {
             placeholder="Enter your password"
             className="mt-1 w-full rounded-lg border border-slate-300 px-4 py-3 outline-none focus:border-slate-900"
           />
+          <button
+            type="button"
+            onClick={() => router.push("/forgot-password")}
+            className="text-sm text-slate-500 hover:text-slate-900"
+          >
+            Forgot password?
+          </button>
         </div>
 
         <button
@@ -122,6 +129,18 @@ export default function LoginForm() {
           {loading ? "Logging in..." : "Login"}
         </button>
       </div>
+
+      <button
+        type="button"
+        onClick={() =>
+          signIn("google", {
+           callbackUrl: "/redirect",
+          })
+        }
+        className="mt-4 w-full rounded-lg border border-slate-300 bg-white px-4 py-3 font-semibold text-slate-900 transition hover:bg-slate-100"
+      >
+        Continue with Google
+      </button>
 
       <p className="mt-6 text-center text-sm text-slate-500">
         New here?{" "}
