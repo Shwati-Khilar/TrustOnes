@@ -9,6 +9,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import crypto from "crypto";
 import { transporter } from "@/lib/mail";
+import { verifyEmailTemplate } from "@/lib/emailTemplates";
 
 const registerSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -32,13 +33,10 @@ export async function registerUser(input) {
   }
 
   const { name, email, password, role } = validation.data;
-
   const normalizedEmail = email.toLowerCase().trim();
 
   const existingUser = await prisma.user.findUnique({
-    where: {
-      email: normalizedEmail,
-    },
+    where: { email: normalizedEmail },
   });
 
   if (existingUser) {
@@ -50,12 +48,8 @@ export async function registerUser(input) {
   }
 
   const passwordHash = await bcrypt.hash(password, 12);
-
   const verificationToken = crypto.randomBytes(32).toString("hex");
-
-  const verificationTokenExpiry = new Date(
-    Date.now() + 1000 * 60 * 60
-  );
+  const verificationTokenExpiry = new Date(Date.now() + 1000 * 60 * 60); // 1 hour
 
   const user = await prisma.user.create({
     data: {
@@ -78,23 +72,17 @@ export async function registerUser(input) {
     },
   });
 
-const verificationUrl = `${process.env.NEXTAUTH_URL}/api/auth/verify-email?token=${verificationToken}`;
+  const verificationUrl = `${process.env.NEXTAUTH_URL}/api/auth/verify-email?token=${verificationToken}`;
+
   await transporter.sendMail({
-    from: process.env.EMAIL_USER,
-
+    from: `"TrustOnes" <${process.env.EMAIL_USER}>`,
     to: user.email,
-
-    subject: "Verify your email",
-
-    html: `
-    <h2>Verify your account</h2>
-
-    <p>Click below to verify your email:</p>
-
-    <a href="${verificationUrl}">
-      Verify Email
-    </a>
-  `,
+    subject: "Verify your TrustOnes email",
+    html: verifyEmailTemplate({
+      userName: user.name,
+      email: user.email,
+      verifyUrl: verificationUrl,
+    }),
   });
 
   return {

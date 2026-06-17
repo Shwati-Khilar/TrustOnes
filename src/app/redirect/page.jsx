@@ -19,13 +19,17 @@ export default function RedirectPage() {
         return;
       }
 
-      const role = session.user.role;
-
-      if (role === "CLIENT") {
+      if (session.user.role === "CLIENT") {
         router.push("/client/dashboard");
-      } else if (role === "FREELANCER") {
+      }
+
+      else if (
+        session.user.role === "FREELANCER"
+      ) {
         router.push("/freelancer/dashboard");
-      } else {
+      }
+
+      else {
         router.push("/unauthorized");
       }
     }
@@ -35,14 +39,8 @@ export default function RedirectPage() {
   }, [router]);
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-100">
-
-      <div className="rounded-xl bg-white p-6 shadow">
-        <p className="text-slate-600">
-          Redirecting...
-        </p>
-      </div>
-
+    <main className="flex min-h-screen items-center justify-center">
+      <p>Redirecting...</p>
     </main>
   );
 }

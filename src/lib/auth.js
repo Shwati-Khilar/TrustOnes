@@ -122,7 +122,7 @@ export const authOptions = {
               email: user.email,
               image: user.image || null,
               provider: "google",
-              role: "CLIENT",
+              role: "FREELANCER",
               status: "ACTIVE",
               emailVerified: true,
             },
@@ -149,6 +149,8 @@ export const authOptions = {
         token.id = dbUser.id;
         token.role = dbUser.role;
         token.status = dbUser.status;
+        token.name = dbUser.name;
+        token.image = dbUser.image;
       }
 
       return token;
@@ -160,6 +162,8 @@ export const authOptions = {
         session.user.id = token.id;
         session.user.role = token.role;
         session.user.status = token.status;
+        session.user.name = token.name;
+        session.user.image = token.image;
       }
 
       return session;
