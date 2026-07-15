@@ -1,14 +1,8 @@
-// Validate input
-// Check duplicate email
-// Hash password
-// Save user
-// Never return passwordHash
-
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import crypto from "crypto";
-import { transporter } from "@/lib/mail";
+import { sendVerificationEmail } from "@/lib/mail";
+import { createRawToken, hashToken } from "@/lib/tokens";
 
 const registerSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -42,6 +36,16 @@ export async function registerUser(input) {
   });
 
   if (existingUser) {
+    if (!existingUser.emailVerified) {
+      return {
+        success: false,
+        status: 409,
+        message:
+          "This email is already registered but not verified. Please verify your email.",
+        redirectTo: `/verify-email?email=${encodeURIComponent(normalizedEmail)}`,
+      };
+    }
+
     return {
       success: false,
       status: 409,
@@ -51,11 +55,13 @@ export async function registerUser(input) {
 
   const passwordHash = await bcrypt.hash(password, 12);
 
-  const verificationToken = crypto.randomBytes(32).toString("hex");
+  // Generate raw token for email link
+  const rawVerificationToken = createRawToken();
 
-  const verificationTokenExpiry = new Date(
-    Date.now() + 1000 * 60 * 60
-  );
+  // Store only hashed token in database
+  const hashedVerificationToken = hashToken(rawVerificationToken);
+
+  const verificationTokenExpiry = new Date(Date.now() + 1000 * 60 * 60);
 
   const user = await prisma.user.create({
     data: {
@@ -63,8 +69,9 @@ export async function registerUser(input) {
       email: normalizedEmail,
       passwordHash,
       role,
-      status: "ACTIVE",
-      verificationToken,
+      provider: "credentials",
+      status: "PENDING",
+      verificationToken: hashedVerificationToken,
       verificationTokenExpiry,
       emailVerified: false,
     },
@@ -74,33 +81,36 @@ export async function registerUser(input) {
       email: true,
       role: true,
       status: true,
+      emailVerified: true,
       createdAt: true,
     },
   });
 
-const verificationUrl = `${process.env.NEXTAUTH_URL}/api/auth/verify-email?token=${verificationToken}`;
-  await transporter.sendMail({
-    from: process.env.EMAIL_USER,
+  try {
+    await sendVerificationEmail({
+      to: user.email,
+      name: user.name,
+      token: rawVerificationToken,
+    });
 
-    to: user.email,
+    return {
+      success: true,
+      status: 201,
+      message:
+        "Account created successfully. Please check your email to verify your account.",
+      user,
+      redirectTo: `/verify-email?email=${encodeURIComponent(user.email)}`,
+    };
+  } catch (error) {
+    console.error("SEND_VERIFICATION_EMAIL_ERROR", error);
 
-    subject: "Verify your email",
-
-    html: `
-    <h2>Verify your account</h2>
-
-    <p>Click below to verify your email:</p>
-
-    <a href="${verificationUrl}">
-      Verify Email
-    </a>
-  `,
-  });
-
-  return {
-    success: true,
-    status: 201,
-    message: "User registered successfully.",
-    user,
-  };
+    return {
+      success: true,
+      status: 201,
+      message:
+        "Account created, but verification email could not be sent. Please use resend verification email.",
+      user,
+      redirectTo: `/verify-email?email=${encodeURIComponent(user.email)}`,
+    };
+  }
 }
