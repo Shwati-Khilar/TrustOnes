@@ -1,8 +1,14 @@
-import { Bell, Search, Plus, HelpCircle } from 'lucide-react';
+"use client";
+
+import { Bell, Search, Plus, HelpCircle } from "lucide-react";
 import UserAvatar from "./UserAvatar";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function ClientTopNav({ user }) {
+  const router = useRouter();
+  
+
   return (
     <header className="fixed top-0 left-64 right-0 h-16 bg-[#FAF6F1]/90 backdrop-blur-md border-b border-[#E7DDD2] z-20 flex items-center px-6 gap-4">
       {/* Search */}
@@ -19,7 +25,11 @@ export default function ClientTopNav({ user }) {
 
       <div className="flex items-center gap-2 ml-auto">
         {/* Create Project CTA */}
-        <button className="flex items-center gap-2 px-4 py-2 bg-[#7A4A28] hover:bg-[#5F381D] text-white text-sm font-600 rounded-xl transition-colors shadow-sm">
+        <button
+          type="button"
+          onClick={() => router.push("/client/projects/create")}
+          className="flex items-center gap-2 px-4 py-2 bg-[#7A4A28] hover:bg-[#5F381D] text-white text-sm font-600 rounded-xl transition-colors shadow-sm"
+        >
           <Plus className="w-4 h-4" />
           Create Project
         </button>

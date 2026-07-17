@@ -18,32 +18,126 @@ enum UserStatus {
   PENDING
 }
 
+enum ProjectStatus {
+  OPEN
+  ACTIVE
+  PAUSED
+  COMPLETED
+  CANCELLED
+}
+
+enum ProposalStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+}
+
+enum MilestoneStatus {
+  PENDING
+  IN_PROGRESS
+  SUBMITTED
+  APPROVED
+  REJECTED
+}
+
 model User {
-  id             String     @id @default(cuid())
-  name           String
-  email          String     @unique
-
-  passwordHash   String?
-
-  provider       String     @default("credentials")
-
-  image          String?
-
-  emailVerified  Boolean    @default(false)
-
-  verificationToken String?
-  
+  id                      String     @id @default(cuid())
+  name                    String
+  email                   String     @unique
+  passwordHash            String?
+  provider                String     @default("credentials")
+  image                   String?
+  emailVerified           Boolean    @default(false)
+  verificationToken       String?
   verificationTokenExpiry DateTime?
+  resetPasswordToken      String?
+  resetPasswordExpiry     DateTime?
+  role                    UserRole?
+  status                  UserStatus @default(ACTIVE)
+  createdAt               DateTime   @default(now())
+  updatedAt               DateTime   @updatedAt
 
-  resetPasswordToken String?
-
-  resetPasswordExpiry DateTime?
-
-  role           UserRole?
-  status         UserStatus @default(ACTIVE)
-
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
+  clientProjects     Project[]  @relation("ClientProjects")
+  freelancerProjects Project[]  @relation("FreelancerProjects")
+  proposals          Proposal[]
 
   @@map("users")
+}
+
+model Project {
+  id          String     @id @default(cuid())
+  title       String
+  description String
+  category    String
+  proposals   Proposal[]
+  milestones Milestone[]
+
+  budget   Decimal  @db.Decimal(12, 2)
+  deadline DateTime
+
+  status ProjectStatus @default(OPEN)
+
+  clientId String
+  client   User   @relation("ClientProjects", fields: [clientId], references: [id], onDelete: Restrict)
+
+  freelancerId String?
+  freelancer   User?   @relation("FreelancerProjects", fields: [freelancerId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clientId])
+  @@index([freelancerId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("projects")
+}
+
+model Proposal {
+  id String @id @default(cuid())
+
+  coverLetter   String
+  bidAmount     Decimal @db.Decimal(12, 2)
+  estimatedDays Int
+
+  status ProposalStatus @default(PENDING)
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Restrict)
+
+  freelancerId String
+  freelancer   User   @relation(fields: [freelancerId], references: [id], onDelete: Restrict)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([projectId, freelancerId])
+  @@index([projectId])
+  @@index([freelancerId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("proposals")
+}
+
+model Milestone {
+  id String @id @default(cuid())
+
+  title       String
+  description String?
+  amount      Decimal @db.Decimal(12, 2)
+  dueDate     DateTime
+
+  status MilestoneStatus @default(PENDING)
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Restrict)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("milestones")
 }

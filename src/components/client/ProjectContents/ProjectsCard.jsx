@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
     ChevronDown,
     ChevronUp,
@@ -11,6 +12,32 @@ const tagClass = "px-3 py-2 rounded-xl bg-[#F7F3EE] text-[#B88746] text-sm";
 
 export default function ProjectCard({ project }) {
     const [showMilestones, setShowMilestones] = useState(false);
+    const progress = project.progress ?? 0;
+    const spent = project.spent ?? 0;
+    const completedMilestones = project.completedMilestones ?? 0;
+    const totalMilestones = project.totalMilestones ?? 0;
+    const milestones = project.milestones ?? [];
+    const freelancerName = project.freelancer?.name ?? "Not Assigned";
+
+    const freelancerInitial = project.freelancer?.name?.charAt(0).toUpperCase() ?? "N";
+
+    const formattedDeadline = new Date(project.deadline).toLocaleDateString(
+        "en-IN",
+        {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+        }
+    );
+
+    const formattedStatus =
+        project.status.charAt(0) +
+        project.status.slice(1).toLowerCase();
+
+    const formattedBudget = Number(project.budget).toLocaleString("en-IN");
+    const remainingBudget = Number(project.budget) - Number(spent);
+
+    const router = useRouter();
     return (
         <div className="rounded-2xl bg-white border border-[#E7DDD2] p-5">
 
@@ -38,7 +65,7 @@ export default function ProjectCard({ project }) {
           whitespace-nowrap
         "
                 >
-                    {project.status}
+                    {formattedStatus}
                 </span>
             </div>
 
@@ -49,11 +76,11 @@ export default function ProjectCard({ project }) {
                 </span>
 
                 <span className={tagClass}>
-                    📅 {project.deadline}
+                    📅 {formattedDeadline}
                 </span>
 
                 <span className={tagClass}>
-                    🛡️ Escrow Funded
+                    🛡️ Funding Not Started
                 </span>
             </div>
 
@@ -65,7 +92,7 @@ export default function ProjectCard({ project }) {
                     </span>
 
                     <span className="font-medium text-[#8B5A2B]">
-                        {project.progress}%
+                        {progress}%
                     </span>
                 </div>
 
@@ -73,7 +100,7 @@ export default function ProjectCard({ project }) {
                     <div
                         className="h-2 rounded-full bg-[#C58A1D]"
                         style={{
-                            width: `${project.progress}%`,
+                            width: `${progress}%`,
                         }}
                     />
                 </div>
@@ -98,7 +125,7 @@ export default function ProjectCard({ project }) {
                     </p>
 
                     <h3 className="font-bold text-[#3D2414] text-md">
-                        ₹{project.budget}
+                        ₹{formattedBudget}
                     </h3>
                 </div>
 
@@ -108,7 +135,7 @@ export default function ProjectCard({ project }) {
                     </p>
 
                     <h3 className="font-bold text-[#3D2414] text-md">
-                        ₹{project.spent}
+                        ₹{spent}
                     </h3>
                 </div>
 
@@ -118,7 +145,7 @@ export default function ProjectCard({ project }) {
                     </p>
 
                     <h3 className="font-bold text-green-600 text-md">
-                        ₹{project.budget - project.spent}
+                        ₹{remainingBudget.toLocaleString("en-IN")}
                     </h3>
                 </div>
             </div>
@@ -151,16 +178,18 @@ export default function ProjectCard({ project }) {
             font-semibold
           "
                     >
-                        {project.freelancer?.charAt(0) || "F"}
+                        {freelancerInitial}
                     </div>
 
                     <div>
                         <h4 className="font-medium text-[#3D2414] text-md">
-                            {project.freelancer}
+                            {freelancerName}
                         </h4>
 
                         <p className="text-[#B88746] text-sm">
-                            ⭐ {project.rating}
+                            {project.freelancer
+                                ? "Assigned Freelancer"
+                                : "Awaiting assignment"}
                         </p>
                     </div>
 
@@ -190,8 +219,8 @@ export default function ProjectCard({ project }) {
                 >
                     <span>
                         🎯 Milestones (
-                        {project.completedMilestones}/
-                        {project.totalMilestones} done)
+                        {completedMilestones}/
+                        {totalMilestones} done)
                     </span>
 
                     {showMilestones ? (
@@ -203,88 +232,59 @@ export default function ProjectCard({ project }) {
 
                 {showMilestones && (
                     <div className="mt-4 space-y-3">
-
-                        {project.milestones?.map(
-                            (milestone, index) => (
+                        {milestones.length === 0 ? (
+                            <p className="text-sm text-[#B88746]">
+                                No milestones created yet.
+                            </p>
+                        ) : (
+                            milestones.map((milestone, index) => (
                                 <div
                                     key={index}
-                                    className="
-              flex
-              items-center
-              gap-3
-            "
+                                    className="flex items-center gap-3"
                                 >
-
-                                    {milestone.completed ? (
-                                        <CheckCircle
-                                            size={15}
-                                            className="text-green-500"
-                                        />
-                                    ) : (
-                                        <div
-                                            className="
-                  h-4
-                  w-4
-                  rounded-full
-                  border-2
-                  border-[#D8C9B8]
-                "
-                                        />
-                                    )}
+                                    {milestone.status === "COMPLETED" ? (
+  <CheckCircle
+    size={15}
+    className="text-green-500"
+  />
+) : (
+  <div className="h-4 w-4 rounded-full border-2 border-[#D8C9B8]" />
+)}
 
                                     <span
                                         className={
-                                            milestone.completed
+                                            milestone.status === "COMPLETED"
                                                 ? "line-through text-[#B88746] text-sm"
                                                 : "text-[#3D2414] text-sm"
                                         }
                                     >
                                         {milestone.title}
                                     </span>
-
                                 </div>
-                            )
+                            ))
                         )}
-
                     </div>
                 )}
 
-            </div>
-
-            {/* Actions */}
-            <div className="mt-4 flex gap-3">
-
-                <button
-                    className="
-          flex-1
-          rounded-2xl
-          bg-[#8B5A2B]
-          py-2
-          text-white
-          font-medium
-          hover:bg-[#6D4120]
-          transition-colors
-
-        "
-                >
-                    View Details
-                </button>
-
-                {project.status === "Open" && (
+                {/* Actions */}
+                <div className="mt-4 flex gap-3">
                     <button
+                        onClick={() => router.push(`/client/projects/${project.id}`)}
                         className="
-            rounded-2xl
-            border
-            border-[#8B5A2B]
-            px-5
-            text-[#8B5A2B]
-            hover:bg-[#F7F3EE]
-            transition-colors
-          "
+      flex-1
+      rounded-2xl
+      bg-[#8B5A2B]
+      py-2
+      text-white
+      font-medium
+      hover:bg-[#6D4120]
+      transition-colors
+    "
                     >
-                        Fund Escrow
+                        View Details
                     </button>
-                )}
+                </div>
+
 
             </div>
 

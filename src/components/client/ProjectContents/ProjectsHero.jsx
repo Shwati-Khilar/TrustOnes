@@ -1,4 +1,10 @@
-export default function ProjectsHero() {
+export default function ProjectsHero({ projects }) {
+  const totalProjects = projects.length;
+
+  const totalBudget = projects.reduce(
+    (sum, project) => sum + Number(project.budget),
+    0
+  );
   return (
     <div
       className="
@@ -38,12 +44,14 @@ export default function ProjectsHero() {
 
       <div className="mt-10 grid grid-cols-4 gap-8 border-t border-white/10 pt-8">
         <div>
-          <h3 className="text-2xl font-bold">6</h3>
+          <h3 className="text-2xl font-bold">{totalProjects}</h3>
           <p>Total Projects</p>
         </div>
 
         <div>
-          <h3 className="text-2xl font-bold">₹59K</h3>
+          <h3 className="text-2xl font-bold">
+            ₹{totalBudget.toLocaleString("en-IN")}
+          </h3>
           <p>Total Budget</p>
         </div>
 

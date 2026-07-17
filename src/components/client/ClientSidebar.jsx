@@ -2,7 +2,8 @@
 import {
   LayoutDashboard,
   FolderKanban,
-  FileText,
+  Bell,
+  ShieldAlert,
   MessageSquare,
   Shield,
   Star,
@@ -10,14 +11,13 @@ import {
   Settings,
   ChevronRight,
   TrendingUp,
-} from 'lucide-react';
+} from "lucide-react";
 
 import UserAvatar from "./UserAvatar";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 
 const navItems = [
-
   {
     icon: LayoutDashboard,
     label: "Dashboard",
@@ -30,9 +30,16 @@ const navItems = [
     badge: "4",
   },
   {
-    icon: FileText,
-    label: "Applications",
-    href: "/client/applications",
+    icon: Bell,
+    label: "Notifications",
+    href: "/client/notifications",
+    badge: "5",
+  },
+  {
+    icon: ShieldAlert,
+    label: "Disputes",
+    href: "/client/disputes",
+    badge: "1",
   },
   {
     icon: MessageSquare,
@@ -70,9 +77,9 @@ export default function ClientSidebar({ user }) {
       {/* Logo */}
       <div className="px-6 py-5 border-b border-beige-200">
         <Link
-    href="/"
-    className="flex items-center gap-3 group"
-  >
+          href="/"
+          className="flex items-center gap-3 group"
+        >
           <div className="w-9 h-9 rounded-xl bg-[#7A4A28] flex items-center justify-center shadow-sm">
             <Shield className="w-5 h-5 text-white" />
           </div>
@@ -89,15 +96,15 @@ export default function ClientSidebar({ user }) {
       {/* Nav */}
       <nav className="flex-1 px-3 py-4 overflow-y-auto scrollbar-thin space-y-0.5">
 
-  {navItems.map(({ icon: Icon, label, href, badge }) => {
+        {navItems.map(({ icon: Icon, label, href, badge }) => {
 
-    const active = pathname === href;
+          const active = pathname === href;
 
-    return (
-      <Link
-        href={href}
-        key={label}
-        className={`
+          return (
+            <Link
+              href={href}
+              key={label}
+              className={`
           w-full
           flex
           items-center
@@ -111,48 +118,52 @@ export default function ClientSidebar({ user }) {
           duration-150
           group
 
-          ${
-            active
-              ? "bg-[#7A4A28] text-white shadow-sm"
-              : "text-[#3D2414] hover:bg-[#F2E8DE]"
-          }
+          ${active
+                  ? "bg-[#7A4A28] text-white shadow-sm"
+                  : "text-[#3D2414] hover:bg-[#F2E8DE]"
+                }
         `}
-      >
-        <Icon
-          size={18}
-          className={`flex-shrink-0 ${
-            active
-              ? "text-white"
-              : "text-[#7A7068] group-hover:text-[#7A4A28]"
-          }`}
-        />
+            >
+              <Icon
+                size={20}
+                strokeWidth={1.8}
+                className={`flex-shrink-0 ${active
+                  ? "text-white"
+                  : "text-[#7A7068] group-hover:text-[#7A4A28]"
+                  }`}
+              />
 
-        <span className="flex-1 text-left">
-          {label}
-        </span>
+              <span className="flex-1 text-left">
+                {label}
+              </span>
 
-        {badge && (
-          <span
-            className={`
-              text-[10px]
-              px-1.5
-              py-0.5
-              rounded-full
+              {badge && (
+                <span
+  className={`
+      ml-auto
+      min-w-[22px]
+      h-5
+      flex
+      items-center
+      justify-center
+      rounded-full
+      text-[10px]
+      font-semibold
 
-              ${
-                active
-                  ? "bg-white/20 text-white"
-                  : "bg-[#EFE5DB] text-[#7A4A28]"
-              }
-            `}
-          >
-            {badge}
-          </span>
-        )}
+      ${
+        active
+          ? "bg-white/20 text-white"
+          : "bg-[#F3E6D8] text-[#B88746]"
+      }
+`}
+>
+                  {badge}
+                </span>
+              )}
 
-        {!active && !badge && (
-          <ChevronRight
-            className="
+              {!active && !badge && (
+                <ChevronRight
+                  className="
               w-3.5
               h-3.5
               text-[#B88746]
@@ -160,13 +171,13 @@ export default function ClientSidebar({ user }) {
               group-hover:opacity-100
               transition-opacity
             "
-          />
-        )}
-      </Link>
-    );
-  })}
+                />
+              )}
+            </Link>
+          );
+        })}
 
-</nav>
+      </nav>
 
       {/* Trust score card */}
       <div className="px-3 pb-4">
