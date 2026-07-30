@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowUpRight,
   CalendarClock,
@@ -11,60 +14,18 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
-const dealRooms = [
-  {
-    id: "trustones-client-portal",
-    title: "TrustOnes Client Portal",
-    client: "Cara Wilson",
-    status: "ACTIVE",
-    budget: "₹42,000",
-    deadline: "30 Jun 2026",
-    milestonesDone: 3,
-    milestonesTotal: 5,
-    fundedAmount: "₹18,500",
-    nextAction: "Submit Backend API Integration",
-    unreadMessages: 2,
-  },
-  {
-    id: "healthcare-dashboard-ui",
-    title: "Healthcare Dashboard UI",
-    client: "MedLink Labs",
-    status: "ACCEPTED",
-    budget: "₹30,000",
-    deadline: "10 Jul 2026",
-    milestonesDone: 1,
-    milestonesTotal: 4,
-    fundedAmount: "₹6,000",
-    nextAction: "Confirm milestone structure",
-    unreadMessages: 1,
-  },
-  {
-    id: "portfolio-redesign",
-    title: "Portfolio Website Redesign",
-    client: "Ananya Studio",
-    status: "NEGOTIATING",
-    budget: "₹12,500",
-    deadline: "02 Jul 2026",
-    milestonesDone: 0,
-    milestonesTotal: 3,
-    fundedAmount: "₹0",
-    nextAction: "Waiting for client milestone confirmation",
-    unreadMessages: 0,
-  },
-];
-
 function StatusBadge({ status }) {
   const styles = {
     ACTIVE: "bg-[#ecfdf5] text-[#047857] border-[#a7f3d0]",
-    ACCEPTED: "bg-[#eff6ff] text-[#1d4ed8] border-[#bfdbfe]",
-    NEGOTIATING: "bg-[#fffbeb] text-[#b45309] border-[#fde68a]",
-    DISPUTED: "bg-[#fef2f2] text-[#b91c1c] border-[#fecaca]",
+    PAUSED: "bg-[#fffbeb] text-[#b45309] border-[#fde68a]",
+    COMPLETED: "bg-[#ecfdf5] text-[#047857] border-[#a7f3d0]",
+    CANCELLED: "bg-[#f8fafc] text-[#64748b] border-[#e2e8f0]",
   };
 
   return (
     <span
       className={`rounded-full border px-3 py-1 text-[11px] font-black uppercase tracking-[0.08em] ${
-        styles[status] || styles.ACCEPTED
+        styles[status] || styles.ACTIVE
       }`}
     >
       {status}
@@ -72,7 +33,132 @@ function StatusBadge({ status }) {
   );
 }
 
+function EmptyState() {
+  return (
+    <div className="rounded-[1.7rem] border border-dashed border-[#d7c3b2] bg-[#fffaf3] p-10 text-center">
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-[#6f2e1c]">
+        <Handshake size={24} />
+      </div>
+
+      <h3 className="mt-4 text-lg font-black text-[#24130c]">
+        No deal rooms found
+      </h3>
+
+      <p className="mt-2 text-sm text-[#7c6858]">
+        Accepted projects assigned to you will appear here.
+      </p>
+    </div>
+  );
+}
+
+function mapApiRoom(room) {
+  return {
+    id: room.id,
+    title: room.title,
+    client: room.client?.name || "Client",
+    status: room.status || "ACTIVE",
+    budget: room.budgetDisplay || "₹0",
+    deadline: room.deadlineDisplay || "No deadline",
+    milestonesDone: room.milestoneSummary?.approved || 0,
+    milestonesTotal: room.milestoneSummary?.total || 0,
+    fundedAmount: room.milestoneSummary?.activeAmountDisplay || "₹0",
+    approvedAmount: room.milestoneSummary?.approvedAmountDisplay || "₹0",
+    nextAction: room.nextAction || "Open deal room",
+    unreadMessages: 0,
+    health: room.health || "READY",
+  };
+}
+
 export default function FreelancerDealRoomsPage() {
+  const [dealRoomData, setDealRoomData] = useState({
+    stats: {
+      totalDealRooms: 0,
+      activeDealRooms: 0,
+      pausedDealRooms: 0,
+      completedDealRooms: 0,
+      actionRequiredMilestones: 0,
+      submittedMilestones: 0,
+      approvedAmountDisplay: "₹0",
+    },
+    dealRooms: [],
+  });
+  const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadDealRooms() {
+      try {
+        setLoading(true);
+        setErrorMessage("");
+
+        const response = await fetch("/api/freelancer/deal-rooms", {
+          method: "GET",
+          cache: "no-store",
+        });
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          throw new Error(result.message || "Unable to load deal rooms.");
+        }
+
+        if (!ignore) {
+          setDealRoomData(result.data);
+        }
+      } catch (error) {
+        if (!ignore) {
+          setErrorMessage(error.message || "Unable to load deal rooms.");
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadDealRooms();
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  const dealRooms = useMemo(() => {
+    return (dealRoomData.dealRooms || []).map(mapApiRoom);
+  }, [dealRoomData.dealRooms]);
+
+  const stats = dealRoomData.stats || {};
+
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-[1480px] space-y-6">
+        <div className="rounded-[2rem] border border-[#eadfd2] bg-[#fffaf3] p-8 shadow-sm">
+          <p className="text-sm font-bold text-[#7c6858]">
+            Loading freelancer deal rooms...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (errorMessage) {
+    return (
+      <div className="mx-auto max-w-[1480px] space-y-6">
+        <div className="rounded-[2rem] border border-[#fecaca] bg-[#fff7f7] p-8 shadow-sm">
+          <h2 className="text-xl font-black text-[#24130c]">
+            Unable to load deal rooms
+          </h2>
+
+          <p className="mt-2 text-sm font-semibold text-[#b91c1c]">
+            {errorMessage}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-[1480px] space-y-6">
       <section className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
@@ -101,22 +187,22 @@ export default function FreelancerDealRoomsPage() {
         {[
           {
             label: "Active Rooms",
-            value: "3",
+            value: stats.activeDealRooms || 0,
             icon: Handshake,
           },
           {
-            label: "Funded Value",
-            value: "₹24,500",
+            label: "Approved Value",
+            value: stats.approvedAmountDisplay || "₹0",
             icon: IndianRupee,
           },
           {
-            label: "Open Milestones",
-            value: "7",
+            label: "Action Required",
+            value: stats.actionRequiredMilestones || 0,
             icon: ListChecks,
           },
           {
-            label: "Unread Messages",
-            value: "3",
+            label: "Submitted Work",
+            value: stats.submittedMilestones || 0,
             icon: MessageSquare,
           },
         ].map((stat) => {
@@ -132,6 +218,7 @@ export default function FreelancerDealRoomsPage() {
                   <p className="text-sm font-bold text-[#7c6858]">
                     {stat.label}
                   </p>
+
                   <h3 className="mt-2 text-3xl font-black tracking-[-0.05em] text-[#24130c]">
                     {stat.value}
                   </h3>
@@ -152,6 +239,7 @@ export default function FreelancerDealRoomsPage() {
             <h2 className="text-xl font-black tracking-[-0.03em] text-[#24130c]">
               Your Deal Rooms
             </h2>
+
             <p className="mt-1 text-sm font-medium text-[#9b7a64]">
               Open a room to manage milestones, terms, submissions, and timeline.
             </p>
@@ -159,9 +247,10 @@ export default function FreelancerDealRoomsPage() {
 
           <div className="space-y-4">
             {dealRooms.map((room) => {
-              const progress = Math.round(
-                (room.milestonesDone / room.milestonesTotal) * 100
-              );
+              const progress =
+                room.milestonesTotal === 0
+                  ? 0
+                  : Math.round((room.milestonesDone / room.milestonesTotal) * 100);
 
               return (
                 <article
@@ -172,6 +261,18 @@ export default function FreelancerDealRoomsPage() {
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
                         <StatusBadge status={room.status} />
+
+                        {room.health === "NEEDS_ATTENTION" && (
+                          <span className="rounded-full border border-[#fecaca] bg-[#fef2f2] px-3 py-1 text-[11px] font-black uppercase tracking-[0.08em] text-[#b91c1c]">
+                            Needs attention
+                          </span>
+                        )}
+
+                        {room.health === "WAITING_CLIENT" && (
+                          <span className="rounded-full border border-[#ddd6fe] bg-[#f5f3ff] px-3 py-1 text-[11px] font-black uppercase tracking-[0.08em] text-[#6d28d9]">
+                            Waiting client
+                          </span>
+                        )}
 
                         {room.unreadMessages > 0 && (
                           <span className="rounded-full border border-[#f0d7c3] bg-white px-3 py-1 text-[11px] font-black uppercase tracking-[0.08em] text-[#7c341d]">
@@ -206,6 +307,7 @@ export default function FreelancerDealRoomsPage() {
                           Budget
                         </p>
                       </div>
+
                       <p className="text-sm font-black text-[#24130c]">
                         {room.budget}
                       </p>
@@ -215,11 +317,16 @@ export default function FreelancerDealRoomsPage() {
                       <div className="mb-2 flex items-center gap-2 text-[#9b7a64]">
                         <ShieldCheck size={15} />
                         <p className="text-[11px] font-black uppercase tracking-[0.16em]">
-                          Funded
+                          Active Value
                         </p>
                       </div>
+
                       <p className="text-sm font-black text-[#24130c]">
                         {room.fundedAmount}
+                      </p>
+
+                      <p className="mt-1 text-xs font-semibold text-[#9b7a64]">
+                        Approved {room.approvedAmount}
                       </p>
                     </div>
 
@@ -230,6 +337,7 @@ export default function FreelancerDealRoomsPage() {
                           Deadline
                         </p>
                       </div>
+
                       <p className="text-sm font-black text-[#24130c]">
                         {room.deadline}
                       </p>
@@ -241,6 +349,7 @@ export default function FreelancerDealRoomsPage() {
                       <span>
                         Milestones {room.milestonesDone}/{room.milestonesTotal}
                       </span>
+
                       <span>{progress}%</span>
                     </div>
 
@@ -254,6 +363,7 @@ export default function FreelancerDealRoomsPage() {
 
                   <div className="mt-4 flex items-center gap-2 rounded-2xl bg-white px-4 py-3">
                     <Clock3 size={16} className="text-[#b45309]" />
+
                     <p className="text-sm font-semibold text-[#7c6858]">
                       Next action:{" "}
                       <span className="font-black text-[#24130c]">
@@ -264,6 +374,8 @@ export default function FreelancerDealRoomsPage() {
                 </article>
               );
             })}
+
+            {dealRooms.length === 0 && <EmptyState />}
           </div>
         </div>
 
@@ -291,6 +403,7 @@ export default function FreelancerDealRoomsPage() {
               ].map((item) => (
                 <div key={item} className="flex items-center gap-3">
                   <CheckCircle2 size={17} className="text-[#f4b454]" />
+
                   <p className="text-sm font-semibold text-white/78">
                     {item}
                   </p>
@@ -308,23 +421,23 @@ export default function FreelancerDealRoomsPage() {
               {[
                 {
                   step: "01",
-                  title: "Invite accepted",
-                  text: "Project enters deal discussion mode.",
+                  title: "Proposal accepted",
+                  text: "Project gets assigned to the freelancer.",
                 },
                 {
                   step: "02",
-                  title: "Milestones confirmed",
-                  text: "Client and freelancer agree on deliverables.",
+                  title: "Milestones created",
+                  text: "Client and freelancer track deliverables.",
                 },
                 {
                   step: "03",
-                  title: "Payment verified",
-                  text: "Milestone becomes funded after webhook verification.",
+                  title: "Work submitted",
+                  text: "Freelancer submits milestone work.",
                 },
                 {
                   step: "04",
-                  title: "Work submitted",
-                  text: "Submission history and timeline evidence are created.",
+                  title: "Work approved",
+                  text: "Milestone becomes approved and counted as completed.",
                 },
               ].map((item) => (
                 <div key={item.step} className="flex gap-4">
@@ -336,6 +449,7 @@ export default function FreelancerDealRoomsPage() {
                     <h3 className="text-sm font-black text-[#24130c]">
                       {item.title}
                     </h3>
+
                     <p className="mt-1 text-sm leading-5 text-[#7c6858]">
                       {item.text}
                     </p>

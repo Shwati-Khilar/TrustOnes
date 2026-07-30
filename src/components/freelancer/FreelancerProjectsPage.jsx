@@ -1,9 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
-  AlertTriangle,
   ArrowUpRight,
   CalendarClock,
   CheckCircle2,
@@ -14,122 +13,17 @@ import {
   ListChecks,
   MessageSquare,
   Search,
-  ShieldAlert,
   ShieldCheck,
   UploadCloud,
   UserRound,
 } from "lucide-react";
 
-const projects = [
-  {
-    id: "trustones-client-portal",
-    title: "TrustOnes Client Portal",
-    client: "Cara Wilson",
-    clientEmail: "cara@trustones.demo",
-    category: "Full-stack Development",
-    status: "ACTIVE",
-    budget: 42000,
-    funded: 18500,
-    released: 7500,
-    deadline: "30 Jun 2026",
-    progress: 68,
-    completedMilestones: 3,
-    totalMilestones: 5,
-    nextAction: "Submit Backend API Integration",
-    description:
-      "Build a premium client portal with project creation, milestones, funding status, and client-side review workflow.",
-    unreadMessages: 2,
-    priority: "HIGH",
-  },
-  {
-    id: "healthcare-dashboard-ui",
-    title: "Healthcare Appointment UI",
-    client: "MedLink Labs",
-    clientEmail: "ops@medlinklabs.com",
-    category: "Dashboard Design",
-    status: "ACCEPTED",
-    budget: 30000,
-    funded: 6000,
-    released: 0,
-    deadline: "10 Jul 2026",
-    progress: 35,
-    completedMilestones: 1,
-    totalMilestones: 4,
-    nextAction: "Confirm milestone structure",
-    description:
-      "Create a clean healthcare dashboard for appointments, patient history, documents, and patient communication panels.",
-    unreadMessages: 1,
-    priority: "MEDIUM",
-  },
-  {
-    id: "portfolio-redesign",
-    title: "Portfolio Website Redesign",
-    client: "Ananya Studio",
-    clientEmail: "hello@ananyastudio.in",
-    category: "UI/UX + Frontend",
-    status: "NEGOTIATING",
-    budget: 12500,
-    funded: 0,
-    released: 4000,
-    deadline: "02 Jul 2026",
-    progress: 20,
-    completedMilestones: 1,
-    totalMilestones: 3,
-    nextAction: "Waiting for client milestone confirmation",
-    description:
-      "Redesign a creative portfolio with improved typography, project showcase, responsive layout, and animation polish.",
-    unreadMessages: 0,
-    priority: "LOW",
-  },
-  {
-    id: "dispute-panel-mvp",
-    title: "Dispute Panel MVP",
-    client: "Rohit Sharma",
-    clientEmail: "rohit@demo.in",
-    category: "Admin Dashboard",
-    status: "DISPUTED",
-    budget: 22000,
-    funded: 7000,
-    released: 0,
-    deadline: "25 Jun 2026",
-    progress: 45,
-    completedMilestones: 1,
-    totalMilestones: 4,
-    nextAction: "Check dispute status",
-    description:
-      "Build admin dispute evidence view, timeline inspection panel, and resolution decision interface.",
-    unreadMessages: 4,
-    priority: "HIGH",
-  },
-  {
-    id: "landing-page-build",
-    title: "E-commerce Landing Page",
-    client: "Rahul Mehta",
-    clientEmail: "rahul@mehtadigital.com",
-    category: "Frontend Development",
-    status: "INVITED",
-    budget: 18000,
-    funded: 0,
-    released: 0,
-    deadline: "28 Jun 2026",
-    progress: 0,
-    completedMilestones: 0,
-    totalMilestones: 0,
-    nextAction: "Accept or reject invite",
-    description:
-      "Build a premium product landing page with CTA sections, payment-focused layout, and responsive frontend.",
-    unreadMessages: 0,
-    priority: "MEDIUM",
-  },
-];
-
 const filters = [
   { label: "All", value: "ALL" },
-  { label: "Invited", value: "INVITED" },
-  { label: "Accepted", value: "ACCEPTED" },
   { label: "Active", value: "ACTIVE" },
-  { label: "Disputed", value: "DISPUTED" },
+  { label: "Paused", value: "PAUSED" },
   { label: "Completed", value: "COMPLETED" },
+  { label: "Cancelled", value: "CANCELLED" },
 ];
 
 function formatCurrency(amount) {
@@ -137,27 +31,27 @@ function formatCurrency(amount) {
     style: "currency",
     currency: "INR",
     maximumFractionDigits: 0,
-  }).format(amount);
+  }).format(Number(amount || 0));
 }
 
 function StatusBadge({ status }) {
+  const normalizedStatus = String(status || "ACTIVE");
+
   const styles = {
-    INVITED: "bg-[#eff6ff] text-[#1d4ed8] border-[#bfdbfe]",
-    ACCEPTED: "bg-[#f5f3ff] text-[#6d28d9] border-[#ddd6fe]",
-    NEGOTIATING: "bg-[#fffbeb] text-[#b45309] border-[#fde68a]",
     ACTIVE: "bg-[#ecfdf5] text-[#047857] border-[#a7f3d0]",
+    PAUSED: "bg-[#fffbeb] text-[#b45309] border-[#fde68a]",
     COMPLETED: "bg-[#ecfdf5] text-[#047857] border-[#a7f3d0]",
     CANCELLED: "bg-[#f8fafc] text-[#64748b] border-[#e2e8f0]",
-    DISPUTED: "bg-[#fef2f2] text-[#b91c1c] border-[#fecaca]",
+    OPEN: "bg-[#eff6ff] text-[#1d4ed8] border-[#bfdbfe]",
   };
 
   return (
     <span
       className={`rounded-full border px-3 py-1 text-[11px] font-black uppercase tracking-[0.08em] ${
-        styles[status] || styles.ACTIVE
+        styles[normalizedStatus] || styles.ACTIVE
       }`}
     >
-      {status}
+      {normalizedStatus}
     </span>
   );
 }
@@ -180,30 +74,176 @@ function PriorityBadge({ priority }) {
   );
 }
 
+function EmptyState({ title, text }) {
+  return (
+    <div className="rounded-[1.7rem] border border-dashed border-[#d7c3b2] bg-[#fffaf3] p-10 text-center">
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-[#6f2e1c]">
+        <FolderKanban size={24} />
+      </div>
+
+      <h3 className="mt-4 text-lg font-black text-[#24130c]">{title}</h3>
+
+      <p className="mt-2 text-sm text-[#7c6858]">{text}</p>
+    </div>
+  );
+}
+
+function getPriority(project) {
+  if (project.status === "CANCELLED" || project.status === "COMPLETED") {
+    return "LOW";
+  }
+
+  if (!project.deadline) {
+    return "MEDIUM";
+  }
+
+  const today = new Date();
+  const deadline = new Date(project.deadline);
+
+  today.setHours(0, 0, 0, 0);
+  deadline.setHours(0, 0, 0, 0);
+
+  const diffDays = Math.ceil((deadline - today) / (1000 * 60 * 60 * 24));
+
+  if (diffDays <= 3) return "HIGH";
+  if (diffDays <= 10) return "MEDIUM";
+
+  return "LOW";
+}
+
+function mapApiProject(project) {
+  return {
+    id: project.id,
+    title: project.title,
+    client: project.client?.name || "Client",
+    clientEmail: "Private client profile",
+    category: project.category || "General",
+    status: project.status || "ACTIVE",
+    budget: project.budget || 0,
+    budgetDisplay: project.budgetDisplay || formatCurrency(project.budget),
+    activeAmountDisplay:
+      project.milestoneSummary?.activeAmountDisplay || formatCurrency(0),
+    approvedAmountDisplay:
+      project.milestoneSummary?.approvedAmountDisplay || formatCurrency(0),
+    deadline: project.deadlineDisplay || "No deadline",
+    rawDeadline: project.deadline,
+    progress: project.milestoneSummary?.progress || 0,
+    completedMilestones: project.milestoneSummary?.completed || 0,
+    totalMilestones: project.milestoneSummary?.total || 0,
+    nextAction: project.nextAction || "Open deal room",
+    description: project.description || "No project description available.",
+    unreadMessages: 0,
+    priority: getPriority(project),
+  };
+}
+
 export default function FreelancerProjectsPage() {
   const [activeFilter, setActiveFilter] = useState("ALL");
   const [searchTerm, setSearchTerm] = useState("");
+  const [projectsData, setProjectsData] = useState({
+    stats: {
+      totalProjects: 0,
+      activeProjects: 0,
+      pausedProjects: 0,
+      completedProjects: 0,
+    },
+    projects: [],
+  });
+  const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const filteredProjects = useMemo(() => {
-    return projects.filter((project) => {
-      const matchesFilter =
-        activeFilter === "ALL" || project.status === activeFilter;
+  useEffect(() => {
+    let ignore = false;
 
-      const query = searchTerm.toLowerCase();
+    async function loadProjects() {
+      try {
+        setLoading(true);
+        setErrorMessage("");
 
-      const matchesSearch =
-        project.title.toLowerCase().includes(query) ||
-        project.client.toLowerCase().includes(query) ||
-        project.category.toLowerCase().includes(query);
+        const params = new URLSearchParams();
 
-      return matchesFilter && matchesSearch;
-    });
+        if (activeFilter) {
+          params.set("status", activeFilter);
+        }
+
+        if (searchTerm.trim()) {
+          params.set("search", searchTerm.trim());
+        }
+
+        const response = await fetch(`/api/freelancer/projects?${params}`, {
+          method: "GET",
+          cache: "no-store",
+        });
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          throw new Error(result.message || "Unable to load projects.");
+        }
+
+        if (!ignore) {
+          setProjectsData(result.data);
+        }
+      } catch (error) {
+        if (!ignore) {
+          setErrorMessage(error.message || "Unable to load projects.");
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadProjects();
+
+    return () => {
+      ignore = true;
+    };
   }, [activeFilter, searchTerm]);
 
-  const activeCount = projects.filter((p) => p.status === "ACTIVE").length;
-  const invitedCount = projects.filter((p) => p.status === "INVITED").length;
-  const disputedCount = projects.filter((p) => p.status === "DISPUTED").length;
-  const totalFunded = projects.reduce((sum, p) => sum + p.funded, 0);
+  const projects = useMemo(() => {
+    return (projectsData.projects || []).map(mapApiProject);
+  }, [projectsData.projects]);
+
+  const totalActiveValue = projects.reduce((sum, project) => {
+    const activeValue = Number(
+      String(project.activeAmountDisplay || "0").replace(/[₹,\s]/g, "")
+    );
+
+    return sum + (Number.isFinite(activeValue) ? activeValue : 0);
+  }, 0);
+
+  const activeCount = projectsData.stats?.activeProjects || 0;
+  const pausedCount = projectsData.stats?.pausedProjects || 0;
+  const completedCount = projectsData.stats?.completedProjects || 0;
+
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-[1480px] space-y-6">
+        <div className="rounded-[2rem] border border-[#eadfd2] bg-[#fffaf3] p-8 shadow-sm">
+          <p className="text-sm font-bold text-[#7c6858]">
+            Loading freelancer projects...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (errorMessage) {
+    return (
+      <div className="mx-auto max-w-[1480px] space-y-6">
+        <div className="rounded-[2rem] border border-[#fecaca] bg-[#fff7f7] p-8 shadow-sm">
+          <h2 className="text-xl font-black text-[#24130c]">
+            Unable to load projects
+          </h2>
+          <p className="mt-2 text-sm font-semibold text-[#b91c1c]">
+            {errorMessage}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-[1480px] space-y-6">
@@ -218,8 +258,8 @@ export default function FreelancerProjectsPage() {
           </h1>
 
           <p className="mt-3 max-w-2xl text-sm leading-6 text-[#7c6858]">
-            Track project status, client details, funding, milestone progress,
-            deadlines, messages, and next actions across your freelancer work.
+            Track project status, client details, milestone progress, deadlines,
+            and next actions across your freelancer work.
           </p>
         </div>
 
@@ -241,22 +281,22 @@ export default function FreelancerProjectsPage() {
             icon: FolderKanban,
           },
           {
-            label: "Pending Invites",
-            value: invitedCount,
-            helper: "Awaiting your response",
-            icon: Handshake,
+            label: "Paused Projects",
+            value: pausedCount,
+            helper: "Temporarily stopped",
+            icon: Clock3,
           },
           {
-            label: "Funded Value",
-            value: formatCurrency(totalFunded),
-            helper: "Verified sandbox funding",
+            label: "Active Value",
+            value: formatCurrency(totalActiveValue),
+            helper: "In-progress or submitted milestones",
             icon: IndianRupee,
           },
           {
-            label: "Disputed Projects",
-            value: disputedCount,
-            helper: "Needs admin review",
-            icon: ShieldAlert,
+            label: "Completed Projects",
+            value: completedCount,
+            helper: "Finished client projects",
+            icon: CheckCircle2,
           },
         ].map((stat) => {
           const Icon = stat.icon;
@@ -337,7 +377,7 @@ export default function FreelancerProjectsPage() {
           </div>
 
           <div className="space-y-4">
-            {filteredProjects.map((project) => (
+            {projects.map((project) => (
               <article
                 key={project.id}
                 className="rounded-[1.7rem] border border-[#eadfd2] bg-[#fffaf3] p-5 transition hover:border-[#d7c3b2] hover:bg-white"
@@ -369,14 +409,10 @@ export default function FreelancerProjectsPage() {
                   </div>
 
                   <Link
-                    href={
-                      project.status === "INVITED"
-                        ? "/freelancer/invites"
-                        : `/freelancer/deal-rooms/${project.id}`
-                    }
+                    href={`/freelancer/deal-rooms/${project.id}`}
                     className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#6f2e1c] px-5 text-sm font-black text-white transition hover:bg-[#5b2416]"
                   >
-                    {project.status === "INVITED" ? "View Invite" : "Open Room"}
+                    Open Room
                     <ArrowUpRight size={17} />
                   </Link>
                 </div>
@@ -408,7 +444,7 @@ export default function FreelancerProjectsPage() {
                     </div>
 
                     <p className="text-sm font-black text-[#24130c]">
-                      {formatCurrency(project.budget)}
+                      {project.budgetDisplay}
                     </p>
 
                     <p className="mt-1 text-xs font-semibold text-[#9b7a64]">
@@ -420,16 +456,16 @@ export default function FreelancerProjectsPage() {
                     <div className="mb-2 flex items-center gap-2 text-[#9b7a64]">
                       <ShieldCheck size={15} />
                       <p className="text-[11px] font-black uppercase tracking-[0.16em]">
-                        Funded
+                        Active Value
                       </p>
                     </div>
 
                     <p className="text-sm font-black text-[#24130c]">
-                      {formatCurrency(project.funded)}
+                      {project.activeAmountDisplay}
                     </p>
 
                     <p className="mt-1 text-xs font-semibold text-[#9b7a64]">
-                      Released {formatCurrency(project.released)}
+                      Approved {project.approvedAmountDisplay}
                     </p>
                   </div>
 
@@ -488,37 +524,23 @@ export default function FreelancerProjectsPage() {
                       </button>
                     )}
 
-                    <button className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-[#eadfd2] bg-[#fffaf3] px-4 text-xs font-black text-[#6f2e1c] transition hover:bg-[#fff7ed]">
+                    <Link
+                      href="/freelancer/messages"
+                      className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-[#eadfd2] bg-[#fffaf3] px-4 text-xs font-black text-[#6f2e1c] transition hover:bg-[#fff7ed]"
+                    >
                       <MessageSquare size={15} />
                       Message
-                    </button>
-
-                    {project.status !== "INVITED" &&
-                      project.status !== "COMPLETED" && (
-                        <button className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-[#fecaca] bg-[#fef2f2] px-4 text-xs font-black text-[#b91c1c] transition hover:bg-[#fee2e2]">
-                          <ShieldAlert size={15} />
-                          Dispute
-                        </button>
-                      )}
+                    </Link>
                   </div>
                 </div>
               </article>
             ))}
 
-            {filteredProjects.length === 0 && (
-              <div className="rounded-[1.7rem] border border-dashed border-[#d7c3b2] bg-[#fffaf3] p-10 text-center">
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-[#6f2e1c]">
-                  <FolderKanban size={24} />
-                </div>
-
-                <h3 className="mt-4 text-lg font-black text-[#24130c]">
-                  No projects found
-                </h3>
-
-                <p className="mt-2 text-sm text-[#7c6858]">
-                  Try changing the filter or search term.
-                </p>
-              </div>
+            {projects.length === 0 && (
+              <EmptyState
+                title="No projects found"
+                text="Try changing the filter or search term."
+              />
             )}
           </div>
         </div>
@@ -540,10 +562,10 @@ export default function FreelancerProjectsPage() {
 
             <div className="mt-5 space-y-3">
               {[
-                "Invited projects need accept/reject",
-                "Accepted projects need milestone confirmation",
-                "Active projects allow funded submissions",
-                "Disputed projects require admin review",
+                "Active projects allow milestone progress",
+                "Paused projects should not accept new work",
+                "Completed projects become read-only",
+                "Cancelled projects should stay locked",
               ].map((item) => (
                 <div key={item} className="flex items-center gap-3">
                   <CheckCircle2 size={17} className="text-[#f4b454]" />
@@ -562,11 +584,10 @@ export default function FreelancerProjectsPage() {
 
             <div className="mt-5 space-y-3">
               {[
-                ["INVITED", "Client invited you. Accept or reject first."],
-                ["ACCEPTED", "Invite accepted. Terms and milestones are being confirmed."],
-                ["ACTIVE", "Work is running. Funded milestones can be submitted."],
-                ["DISPUTED", "Project has conflict and needs admin review."],
-                ["COMPLETED", "All milestones completed and released."],
+                ["ACTIVE", "Work is running. Milestones can be progressed."],
+                ["PAUSED", "Project is temporarily stopped."],
+                ["COMPLETED", "All work is completed and closed."],
+                ["CANCELLED", "Project was cancelled and should be read-only."],
               ].map(([status, text]) => (
                 <div
                   key={status}
@@ -594,8 +615,8 @@ export default function FreelancerProjectsPage() {
                   icon: FolderKanban,
                 },
                 {
-                  title: "ProjectInvitation",
-                  text: "Handles invite status and accept/reject flow.",
+                  title: "Proposal",
+                  text: "Shows accepted proposal details for the assigned freelancer.",
                   icon: Handshake,
                 },
                 {
@@ -604,8 +625,8 @@ export default function FreelancerProjectsPage() {
                   icon: ListChecks,
                 },
                 {
-                  title: "ActivityLog",
-                  text: "Records project actions for admin and dispute proof.",
+                  title: "Secure Filtering",
+                  text: "API returns only projects assigned to the logged-in freelancer.",
                   icon: ShieldCheck,
                 },
               ].map((item) => {

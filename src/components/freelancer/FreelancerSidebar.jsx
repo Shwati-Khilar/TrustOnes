@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOut } from "next-auth/react";
 import {
   LayoutDashboard,
   FolderKanban,
@@ -86,6 +88,22 @@ const navItems = [
 
 export default function FreelancerSidebar() {
   const pathname = usePathname();
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  async function handleLogout() {
+    try {
+      setLoggingOut(true);
+
+      await signOut({
+        redirect: false,
+      });
+
+      window.location.href = "/login";
+    } catch (error) {
+      console.error("LOGOUT_ERROR", error);
+      setLoggingOut(false);
+    }
+  }
 
   return (
     <aside className="hidden min-h-screen w-[270px] border-r border-[#eadfd2] bg-[#fffaf3] px-4 py-5 lg:block">
@@ -165,9 +183,14 @@ export default function FreelancerSidebar() {
         </div>
       </div>
 
-      <button className="mt-5 flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-sm font-semibold text-[#7a4a34] transition hover:bg-[#f3eadf]">
+      <button
+        type="button"
+        onClick={handleLogout}
+        disabled={loggingOut}
+        className="mt-5 flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-sm font-semibold text-[#7a4a34] transition hover:bg-[#f3eadf] disabled:cursor-not-allowed disabled:opacity-60"
+      >
         <LogOut size={18} />
-        Logout
+        {loggingOut ? "Logging out..." : "Logout"}
       </button>
     </aside>
   );

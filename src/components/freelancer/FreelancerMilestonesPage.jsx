@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import {
   AlertTriangle,
   ArrowUpRight,
@@ -16,95 +17,13 @@ import {
   UploadCloud,
 } from "lucide-react";
 
-const milestones = [
-  {
-    id: "MS-001",
-    title: "Backend API Integration",
-    project: "TrustOnes Client Portal",
-    client: "Cara Wilson",
-    amount: 8500,
-    deadline: "18 Jun 2026",
-    dueLabel: "Tomorrow",
-    status: "FUNDED",
-    description:
-      "Connect dashboard analytics, project cards, and milestone status data with backend APIs.",
-    nextAction: "Submit work",
-  },
-  {
-    id: "MS-002",
-    title: "Responsive Dashboard UI",
-    project: "Healthcare Appointment UI",
-    client: "MedLink Labs",
-    amount: 6000,
-    deadline: "21 Jun 2026",
-    dueLabel: "4 days left",
-    status: "REVISION_REQUESTED",
-    description:
-      "Client requested spacing and mobile layout improvements for the dashboard panels.",
-    nextAction: "Submit revised work",
-  },
-  {
-    id: "MS-003",
-    title: "Wireframe Approval",
-    project: "Portfolio Website Redesign",
-    client: "Ananya Studio",
-    amount: 4000,
-    deadline: "15 Jun 2026",
-    dueLabel: "Completed",
-    status: "RELEASED",
-    description:
-      "Initial wireframes and information architecture approved and released.",
-    nextAction: "View receipt",
-  },
-  {
-    id: "MS-004",
-    title: "Submission Review Flow",
-    project: "TrustOnes Client Portal",
-    client: "Cara Wilson",
-    amount: 9000,
-    deadline: "24 Jun 2026",
-    dueLabel: "7 days left",
-    status: "PENDING",
-    description:
-      "Build client review, approval, rejection, and revision request screens.",
-    nextAction: "Waiting for funding",
-  },
-  {
-    id: "MS-005",
-    title: "Final Deployment",
-    project: "Portfolio Website Redesign",
-    client: "Ananya Studio",
-    amount: 4500,
-    deadline: "27 Jun 2026",
-    dueLabel: "10 days left",
-    status: "SUBMITTED",
-    description:
-      "Final production deployment submitted for client review.",
-    nextAction: "Awaiting client review",
-  },
-  {
-    id: "MS-006",
-    title: "Admin Evidence Review UI",
-    project: "Dispute Panel MVP",
-    client: "Rohit Sharma",
-    amount: 7000,
-    deadline: "20 Jun 2026",
-    dueLabel: "3 days left",
-    status: "DISPUTED",
-    description:
-      "Work is under dispute because of unclear acceptance criteria.",
-    nextAction: "Check dispute status",
-  },
-];
-
 const filters = [
   { label: "All", value: "ALL" },
-  { label: "Funded", value: "FUNDED" },
+  { label: "Pending", value: "PENDING" },
+  { label: "In Progress", value: "IN_PROGRESS" },
   { label: "Submitted", value: "SUBMITTED" },
   { label: "Revision", value: "REVISION_REQUESTED" },
-  { label: "Pending", value: "PENDING" },
-  { label: "Released", value: "RELEASED" },
-  { label: "Disputed", value: "DISPUTED" },
+  { label: "Approved", value: "APPROVED" },
 ];
 
 function formatCurrency(amount) {
@@ -112,66 +31,163 @@ function formatCurrency(amount) {
     style: "currency",
     currency: "INR",
     maximumFractionDigits: 0,
-  }).format(amount);
+  }).format(Number(amount || 0));
 }
 
 function StatusBadge({ status }) {
+  const normalizedStatus = String(status || "PENDING");
+
   const styles = {
-    FUNDED: "bg-[#eff6ff] text-[#1d4ed8] border-[#bfdbfe]",
+    PENDING: "bg-[#f8fafc] text-[#64748b] border-[#e2e8f0]",
+    IN_PROGRESS: "bg-[#eff6ff] text-[#1d4ed8] border-[#bfdbfe]",
     SUBMITTED: "bg-[#f5f3ff] text-[#6d28d9] border-[#ddd6fe]",
     REVISION_REQUESTED: "bg-[#fffbeb] text-[#b45309] border-[#fde68a]",
-    PENDING: "bg-[#f8fafc] text-[#64748b] border-[#e2e8f0]",
-    RELEASED: "bg-[#ecfdf5] text-[#047857] border-[#a7f3d0]",
-    DISPUTED: "bg-[#fef2f2] text-[#b91c1c] border-[#fecaca]",
+    APPROVED: "bg-[#ecfdf5] text-[#047857] border-[#a7f3d0]",
+    REJECTED: "bg-[#fffbeb] text-[#b45309] border-[#fde68a]",
   };
 
   return (
     <span
       className={`rounded-full border px-3 py-1 text-[11px] font-black uppercase tracking-[0.08em] ${
-        styles[status] || styles.PENDING
+        styles[normalizedStatus] || styles.PENDING
       }`}
     >
-      {status.replace("_", " ")}
+      {normalizedStatus.split("_").join(" ")}
     </span>
   );
 }
 
 function statusIcon(status) {
   const icons = {
-    FUNDED: IndianRupee,
+    PENDING: Clock3,
+    IN_PROGRESS: IndianRupee,
     SUBMITTED: UploadCloud,
     REVISION_REQUESTED: AlertTriangle,
-    PENDING: Clock3,
-    RELEASED: CheckCircle2,
-    DISPUTED: ShieldAlert,
+    APPROVED: CheckCircle2,
+    REJECTED: AlertTriangle,
   };
 
   return icons[status] || Clock3;
 }
 
+function EmptyState({ title, text }) {
+  return (
+    <div className="rounded-[1.6rem] border border-dashed border-[#d7c3b2] bg-[#fffaf3] p-10 text-center">
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-[#6f2e1c]">
+        <ListChecks size={24} />
+      </div>
+
+      <h3 className="mt-4 text-lg font-black text-[#24130c]">{title}</h3>
+
+      <p className="mt-2 text-sm text-[#7c6858]">{text}</p>
+    </div>
+  );
+}
+
 export default function FreelancerMilestonesPage() {
   const [activeFilter, setActiveFilter] = useState("ALL");
+  const [milestoneData, setMilestoneData] = useState({
+    stats: {
+      totalMilestones: 0,
+      pendingMilestones: 0,
+      inProgressMilestones: 0,
+      submittedMilestones: 0,
+      approvedMilestones: 0,
+      revisionRequestedMilestones: 0,
+      approvedAmount: 0,
+      approvedAmountDisplay: "₹0",
+      activeAmount: 0,
+      activeAmountDisplay: "₹0",
+    },
+    milestones: [],
+  });
+  const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const filteredMilestones = useMemo(() => {
-    if (activeFilter === "ALL") return milestones;
-    return milestones.filter((milestone) => milestone.status === activeFilter);
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadMilestones() {
+      try {
+        setLoading(true);
+        setErrorMessage("");
+
+        const params = new URLSearchParams();
+
+        if (activeFilter) {
+          params.set("status", activeFilter);
+        }
+
+        const response = await fetch(`/api/freelancer/milestones?${params}`, {
+          method: "GET",
+          cache: "no-store",
+        });
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          throw new Error(result.message || "Unable to load milestones.");
+        }
+
+        if (!ignore) {
+          setMilestoneData(result.data);
+        }
+      } catch (error) {
+        if (!ignore) {
+          setErrorMessage(error.message || "Unable to load milestones.");
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadMilestones();
+
+    return () => {
+      ignore = true;
+    };
   }, [activeFilter]);
 
-  const totalFunded = milestones
-    .filter((item) => item.status === "FUNDED")
-    .reduce((sum, item) => sum + item.amount, 0);
+  const milestones = milestoneData.milestones || [];
+  const stats = milestoneData.stats || {};
 
-  const totalReleased = milestones
-    .filter((item) => item.status === "RELEASED")
-    .reduce((sum, item) => sum + item.amount, 0);
+  const readyToSubmit = Number(stats.inProgressMilestones || 0);
+  const revisionCount = Number(stats.revisionRequestedMilestones || 0);
 
-  const revisionCount = milestones.filter(
-    (item) => item.status === "REVISION_REQUESTED"
-  ).length;
+  const activeAmountDisplay = stats.activeAmountDisplay || formatCurrency(0);
+  const approvedAmountDisplay = stats.approvedAmountDisplay || formatCurrency(0);
 
-  const readyToSubmit = milestones.filter(
-    (item) => item.status === "FUNDED"
-  ).length;
+  const filteredMilestones = useMemo(() => milestones, [milestones]);
+
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-[1480px] space-y-6">
+        <div className="rounded-[2rem] border border-[#eadfd2] bg-[#fffaf3] p-8 shadow-sm">
+          <p className="text-sm font-bold text-[#7c6858]">
+            Loading freelancer milestones...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (errorMessage) {
+    return (
+      <div className="mx-auto max-w-[1480px] space-y-6">
+        <div className="rounded-[2rem] border border-[#fecaca] bg-[#fff7f7] p-8 shadow-sm">
+          <h2 className="text-xl font-black text-[#24130c]">
+            Unable to load milestones
+          </h2>
+
+          <p className="mt-2 text-sm font-semibold text-[#b91c1c]">
+            {errorMessage}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-[1480px] space-y-6">
@@ -182,18 +198,18 @@ export default function FreelancerMilestonesPage() {
           </p>
 
           <h1 className="mt-2 text-3xl font-black tracking-[-0.05em] text-[#24130c] sm:text-4xl">
-            Track every funded, submitted, and released milestone.
+            Track every pending, submitted, and approved milestone.
           </h1>
 
           <p className="mt-3 max-w-2xl text-sm leading-6 text-[#7c6858]">
-            Manage work submissions, revisions, funding status, deadlines, and
-            dispute-ready milestone proof from one place.
+            Manage work submissions, revisions, milestone progress, deadlines,
+            and proof-ready client work from one place.
           </p>
         </div>
 
         <button className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-[#6f2e1c] px-5 text-sm font-black text-white shadow-lg shadow-[#6f2e1c]/20 transition hover:bg-[#5b2416]">
           <UploadCloud size={18} />
-          Submit Funded Work
+          Submit Work
         </button>
       </section>
 
@@ -202,19 +218,19 @@ export default function FreelancerMilestonesPage() {
           {
             label: "Ready to Submit",
             value: readyToSubmit,
-            helper: "Funded milestones awaiting work",
+            helper: "In-progress milestones",
             icon: UploadCloud,
           },
           {
-            label: "Funded Amount",
-            value: formatCurrency(totalFunded),
-            helper: "Verified sandbox funding",
+            label: "Active Amount",
+            value: activeAmountDisplay,
+            helper: "In-progress or submitted value",
             icon: IndianRupee,
           },
           {
-            label: "Released Earnings",
-            value: formatCurrency(totalReleased),
-            helper: "Completed and approved",
+            label: "Approved Earnings",
+            value: approvedAmountDisplay,
+            helper: "Approved milestone value",
             icon: CheckCircle2,
           },
           {
@@ -236,6 +252,7 @@ export default function FreelancerMilestonesPage() {
                   <p className="text-sm font-bold text-[#7c6858]">
                     {stat.label}
                   </p>
+
                   <h3 className="mt-2 text-3xl font-black tracking-[-0.05em] text-[#24130c]">
                     {stat.value}
                   </h3>
@@ -261,8 +278,10 @@ export default function FreelancerMilestonesPage() {
               <h2 className="text-xl font-black tracking-[-0.03em] text-[#24130c]">
                 All Milestones
               </h2>
+
               <p className="mt-1 text-sm font-medium text-[#9b7a64]">
-                Filter by status and take action on funded or revision milestones.
+                Filter by status and take action on active or revision
+                milestones.
               </p>
             </div>
 
@@ -305,6 +324,7 @@ export default function FreelancerMilestonesPage() {
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
                           <StatusBadge status={milestone.status} />
+
                           <span className="rounded-full bg-white px-3 py-1 text-[11px] font-black uppercase tracking-[0.08em] text-[#9b7a64]">
                             {milestone.id}
                           </span>
@@ -315,7 +335,8 @@ export default function FreelancerMilestonesPage() {
                         </h3>
 
                         <p className="mt-1 text-sm font-semibold text-[#9b7a64]">
-                          {milestone.project} • Client: {milestone.client}
+                          {milestone.project?.title || "Project"} • Client:{" "}
+                          {milestone.client?.name || "Client"}
                         </p>
 
                         <p className="mt-4 max-w-3xl text-sm leading-6 text-[#7c6858]">
@@ -326,13 +347,15 @@ export default function FreelancerMilestonesPage() {
 
                     <div className="shrink-0 rounded-2xl bg-white p-4 text-left lg:text-right">
                       <p className="text-lg font-black text-[#24130c]">
-                        {formatCurrency(milestone.amount)}
+                        {milestone.amountDisplay}
                       </p>
+
                       <p className="mt-1 text-xs font-bold text-[#b45309]">
-                        {milestone.dueLabel}
+                        {milestone.due}
                       </p>
+
                       <p className="mt-1 text-xs font-semibold text-[#9b7a64]">
-                        {milestone.deadline}
+                        {milestone.dueDateDisplay}
                       </p>
                     </div>
                   </div>
@@ -340,6 +363,7 @@ export default function FreelancerMilestonesPage() {
                   <div className="mt-5 flex flex-col gap-3 rounded-2xl border border-[#eadfd2] bg-white p-4 md:flex-row md:items-center md:justify-between">
                     <div className="flex items-center gap-2">
                       <CalendarClock size={16} className="text-[#b45309]" />
+
                       <p className="text-sm font-semibold text-[#7c6858]">
                         Next action:{" "}
                         <span className="font-black text-[#24130c]">
@@ -349,7 +373,7 @@ export default function FreelancerMilestonesPage() {
                     </div>
 
                     <div className="flex flex-wrap gap-3">
-                      {(milestone.status === "FUNDED" ||
+                      {(milestone.status === "IN_PROGRESS" ||
                         milestone.status === "REVISION_REQUESTED") && (
                         <button className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#6f2e1c] px-5 text-sm font-black text-white transition hover:bg-[#5b2416]">
                           <UploadCloud size={17} />
@@ -357,12 +381,15 @@ export default function FreelancerMilestonesPage() {
                         </button>
                       )}
 
-                      <button className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-[#eadfd2] bg-[#fffaf3] px-5 text-sm font-black text-[#6f2e1c] transition hover:bg-[#fff7ed]">
+                      <Link
+                        href={`/freelancer/deal-rooms/${milestone.project?.id}`}
+                        className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-[#eadfd2] bg-[#fffaf3] px-5 text-sm font-black text-[#6f2e1c] transition hover:bg-[#fff7ed]"
+                      >
                         <ArrowUpRight size={17} />
                         Open Room
-                      </button>
+                      </Link>
 
-                      {milestone.status !== "RELEASED" && (
+                      {milestone.status !== "APPROVED" && (
                         <button className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-[#fecaca] bg-[#fef2f2] px-5 text-sm font-black text-[#b91c1c] transition hover:bg-[#fee2e2]">
                           <ShieldAlert size={17} />
                           Dispute
@@ -373,6 +400,13 @@ export default function FreelancerMilestonesPage() {
                 </article>
               );
             })}
+
+            {filteredMilestones.length === 0 && (
+              <EmptyState
+                title="No milestones found"
+                text="Try changing the filter or wait until a client creates milestones."
+              />
+            )}
           </div>
         </div>
 
@@ -387,16 +421,17 @@ export default function FreelancerMilestonesPage() {
             </h2>
 
             <p className="mt-3 text-sm leading-6 text-white/65">
-              Submit work only when the milestone is funded. This protects your
-              proof trail and keeps the project state clean.
+              Submit work only when the milestone is active or revision has been
+              requested. This protects your proof trail and keeps the project
+              state clean.
             </p>
 
             <div className="mt-5 space-y-3">
               {[
-                "Pending means not funded yet",
-                "Funded means safe to start submission",
+                "Pending means not started yet",
+                "In progress means freelancer can work",
                 "Submitted means waiting for client review",
-                "Released means milestone is completed",
+                "Approved means milestone is completed",
               ].map((item) => (
                 <div key={item} className="flex items-center gap-3">
                   <CheckCircle2 size={17} className="text-[#f4b454]" />
@@ -448,6 +483,7 @@ export default function FreelancerMilestonesPage() {
                       <h3 className="text-sm font-black text-[#24130c]">
                         {item.title}
                       </h3>
+
                       <p className="mt-1 text-sm leading-5 text-[#7c6858]">
                         {item.text}
                       </p>
@@ -469,18 +505,18 @@ export default function FreelancerMilestonesPage() {
 
             <div className="space-y-3">
               {[
-                ["PENDING", "Waiting for funding or confirmation."],
-                ["FUNDED", "Payment verified. Freelancer can submit work."],
+                ["PENDING", "Waiting to begin or be confirmed."],
+                ["IN_PROGRESS", "Freelancer can work and submit."],
                 ["SUBMITTED", "Work submitted and awaiting client review."],
                 ["REVISION_REQUESTED", "Client asked for changes."],
-                ["RELEASED", "Milestone completed and released."],
-                ["DISPUTED", "Conflict raised for admin review."],
+                ["APPROVED", "Milestone completed and approved."],
               ].map(([status, text]) => (
                 <div
                   key={status}
                   className="rounded-2xl border border-[#eadfd2] bg-[#fffaf3] p-4"
                 >
                   <StatusBadge status={status} />
+
                   <p className="mt-2 text-sm leading-5 text-[#7c6858]">
                     {text}
                   </p>

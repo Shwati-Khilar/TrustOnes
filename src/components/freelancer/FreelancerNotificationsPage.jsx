@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
   ArrowUpRight,
@@ -13,112 +14,23 @@ import {
   Handshake,
   Inbox,
   IndianRupee,
-  MessageSquare,
   ShieldAlert,
   ShieldCheck,
-  Star,
   UploadCloud,
   Wallet,
 } from "lucide-react";
 
-const notifications = [
-  {
-    id: "NOT-001",
-    type: "INVITE",
-    title: "New project invite received",
-    message:
-      "Rahul Mehta invited you to work on E-commerce Landing Page with an estimated budget of ₹18,000.",
-    project: "E-commerce Landing Page",
-    time: "2 hours ago",
-    status: "UNREAD",
-    priority: "HIGH",
-    actionLabel: "View Invite",
+const initialNotificationData = {
+  stats: {
+    totalNotifications: 0,
+    unreadNotifications: 0,
+    actionRequiredNotifications: 0,
+    highPriorityNotifications: 0,
+    proposalNotifications: 0,
+    milestoneNotifications: 0,
   },
-  {
-    id: "NOT-002",
-    type: "PAYMENT",
-    title: "Milestone funded",
-    message:
-      "Backend API Integration milestone has been funded and is ready for submission.",
-    project: "TrustOnes Client Portal",
-    time: "4 hours ago",
-    status: "UNREAD",
-    priority: "HIGH",
-    actionLabel: "Submit Work",
-  },
-  {
-    id: "NOT-003",
-    type: "DEADLINE",
-    title: "Deadline approaching",
-    message:
-      "Backend API Integration milestone deadline is tomorrow. Submit your work before the due date.",
-    project: "TrustOnes Client Portal",
-    time: "Today",
-    status: "UNREAD",
-    priority: "MEDIUM",
-    actionLabel: "Open Milestone",
-  },
-  {
-    id: "NOT-004",
-    type: "MESSAGE",
-    title: "New message from client",
-    message:
-      "Cara Wilson sent a message regarding API endpoints and submission notes.",
-    project: "TrustOnes Client Portal",
-    time: "Today",
-    status: "UNREAD",
-    priority: "MEDIUM",
-    actionLabel: "Open Chat",
-  },
-  {
-    id: "NOT-005",
-    type: "REVISION",
-    title: "Revision requested",
-    message:
-      "MedLink Labs requested changes in Responsive Dashboard UI milestone.",
-    project: "Healthcare Appointment UI",
-    time: "Yesterday",
-    status: "READ",
-    priority: "MEDIUM",
-    actionLabel: "Review Request",
-  },
-  {
-    id: "NOT-006",
-    type: "DISPUTE",
-    title: "Dispute moved to admin review",
-    message:
-      "Your dispute for unclear revision request is now under admin review.",
-    project: "Healthcare Appointment UI",
-    time: "Yesterday",
-    status: "READ",
-    priority: "HIGH",
-    actionLabel: "View Dispute",
-  },
-  {
-    id: "NOT-007",
-    type: "WALLET",
-    title: "Milestone amount released",
-    message:
-      "₹7,500 was released to your sandbox wallet from Dashboard UI Polish milestone.",
-    project: "TrustOnes Client Portal",
-    time: "2 days ago",
-    status: "READ",
-    priority: "LOW",
-    actionLabel: "Open Wallet",
-  },
-  {
-    id: "NOT-008",
-    type: "REVIEW",
-    title: "New client review received",
-    message:
-      "Cara Wilson gave you a 5-star review for TrustOnes Client Portal.",
-    project: "TrustOnes Client Portal",
-    time: "3 days ago",
-    status: "READ",
-    priority: "LOW",
-    actionLabel: "View Review",
-  },
-];
+  notifications: [],
+};
 
 const filters = [
   {
@@ -126,59 +38,69 @@ const filters = [
     value: "ALL",
   },
   {
-    label: "Unread",
-    value: "UNREAD",
+    label: "Action Required",
+    value: "ACTION_REQUIRED",
   },
   {
-    label: "Invites",
-    value: "INVITE",
+    label: "Proposals",
+    value: "PROPOSAL",
   },
   {
-    label: "Payments",
-    value: "PAYMENT",
+    label: "Milestones",
+    value: "MILESTONE",
   },
   {
-    label: "Deadlines",
-    value: "DEADLINE",
+    label: "Deal Rooms",
+    value: "PROJECT",
   },
   {
-    label: "Disputes",
-    value: "DISPUTE",
-  },
-  {
-    label: "Messages",
-    value: "MESSAGE",
+    label: "High Priority",
+    value: "HIGH",
   },
 ];
 
-function notificationIcon(type) {
-  const icons = {
-    INVITE: Inbox,
-    PAYMENT: IndianRupee,
-    DEADLINE: CalendarClock,
-    MESSAGE: MessageSquare,
-    REVISION: UploadCloud,
-    DISPUTE: ShieldAlert,
-    WALLET: Wallet,
-    REVIEW: Star,
-  };
-
-  return icons[type] || Bell;
+function toTitleCase(value) {
+  return String(value || "")
+    .split("_")
+    .join(" ")
+    .toLowerCase()
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
-function notificationTone(type) {
-  const tones = {
-    INVITE: "bg-[#eff6ff] text-[#1d4ed8] border-[#bfdbfe]",
-    PAYMENT: "bg-[#ecfdf5] text-[#047857] border-[#a7f3d0]",
-    DEADLINE: "bg-[#fffbeb] text-[#b45309] border-[#fde68a]",
-    MESSAGE: "bg-[#f5f3ff] text-[#6d28d9] border-[#ddd6fe]",
-    REVISION: "bg-[#fff7ed] text-[#b45309] border-[#f0d7c3]",
-    DISPUTE: "bg-[#fef2f2] text-[#b91c1c] border-[#fecaca]",
-    WALLET: "bg-[#ecfdf5] text-[#047857] border-[#a7f3d0]",
-    REVIEW: "bg-[#fffbeb] text-[#b45309] border-[#fde68a]",
-  };
+function notificationIcon(notification) {
+  if (notification.category === "PROPOSAL") return Handshake;
+  if (notification.category === "PROJECT") return Inbox;
 
-  return tones[type] || tones.INVITE;
+  if (notification.status === "APPROVED") return IndianRupee;
+  if (notification.status === "REJECTED") return ShieldAlert;
+  if (notification.status === "SUBMITTED") return Clock3;
+  if (notification.status === "IN_PROGRESS") return UploadCloud;
+
+  return Bell;
+}
+
+function notificationTone(notification) {
+  if (notification.priority === "HIGH") {
+    return "bg-[#fef2f2] text-[#b91c1c] border-[#fecaca]";
+  }
+
+  if (notification.category === "PROPOSAL") {
+    return "bg-[#eff6ff] text-[#1d4ed8] border-[#bfdbfe]";
+  }
+
+  if (notification.category === "PROJECT") {
+    return "bg-[#f5f3ff] text-[#6d28d9] border-[#ddd6fe]";
+  }
+
+  if (notification.status === "APPROVED") {
+    return "bg-[#ecfdf5] text-[#047857] border-[#a7f3d0]";
+  }
+
+  if (notification.status === "REJECTED") {
+    return "bg-[#fffbeb] text-[#b45309] border-[#fde68a]";
+  }
+
+  return "bg-[#fff7ed] text-[#b45309] border-[#f0d7c3]";
 }
 
 function PriorityBadge({ priority }) {
@@ -194,69 +116,194 @@ function PriorityBadge({ priority }) {
         styles[priority] || styles.MEDIUM
       }`}
     >
-      {priority}
+      {priority || "MEDIUM"}
     </span>
   );
 }
 
-function ReadBadge({ status }) {
-  const isUnread = status === "UNREAD";
-
+function ReadBadge({ isRead }) {
   return (
     <span
       className={`rounded-full border px-3 py-1 text-[11px] font-black uppercase tracking-[0.08em] ${
-        isUnread
+        !isRead
           ? "border-[#bfdbfe] bg-[#eff6ff] text-[#1d4ed8]"
           : "border-[#e2e8f0] bg-[#f8fafc] text-[#64748b]"
       }`}
     >
-      {isUnread ? "Unread" : "Read"}
+      {!isRead ? "Unread" : "Read"}
     </span>
+  );
+}
+
+function EmptyState() {
+  return (
+    <div className="rounded-[1.6rem] border border-dashed border-[#d7c3b2] bg-[#fffaf3] p-10 text-center">
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-[#6f2e1c]">
+        <Bell size={24} />
+      </div>
+
+      <h3 className="mt-4 text-lg font-black text-[#24130c]">
+        No notifications found
+      </h3>
+
+      <p className="mt-2 text-sm text-[#7c6858]">
+        Alerts will appear here when proposals, milestones, and deal rooms are
+        created.
+      </p>
+    </div>
   );
 }
 
 export default function FreelancerNotificationsPage() {
   const [activeFilter, setActiveFilter] = useState("ALL");
-  const [items, setItems] = useState(notifications);
+  const [notificationData, setNotificationData] = useState(
+    initialNotificationData
+  );
+  const [readIds, setReadIds] = useState(new Set());
+  const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const filteredNotifications = useMemo(() => {
-    if (activeFilter === "ALL") return items;
+  useEffect(() => {
+    let ignore = false;
 
-    if (activeFilter === "UNREAD") {
-      return items.filter((item) => item.status === "UNREAD");
+    async function loadNotifications() {
+      try {
+        setLoading(true);
+        setErrorMessage("");
+
+        const searchParams = new URLSearchParams();
+
+        if (activeFilter === "ACTION_REQUIRED") {
+          searchParams.set("actionRequired", "true");
+        } else if (activeFilter === "HIGH") {
+          searchParams.set("priority", "HIGH");
+        } else if (["PROPOSAL", "MILESTONE", "PROJECT"].includes(activeFilter)) {
+          searchParams.set("type", activeFilter);
+        }
+
+        const query = searchParams.toString();
+
+        const response = await fetch(
+          `/api/freelancer/notifications${query ? `?${query}` : ""}`,
+          {
+            method: "GET",
+            cache: "no-store",
+          }
+        );
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          throw new Error(
+            result.message || "Unable to load freelancer notifications."
+          );
+        }
+
+        if (!ignore) {
+          setNotificationData(result.data);
+        }
+      } catch (error) {
+        if (!ignore) {
+          setErrorMessage(
+            error.message || "Unable to load freelancer notifications."
+          );
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+        }
+      }
     }
 
-    return items.filter((item) => item.type === activeFilter);
-  }, [activeFilter, items]);
+    loadNotifications();
 
-  const unreadCount = items.filter((item) => item.status === "UNREAD").length;
-  const highPriorityCount = items.filter(
-    (item) => item.priority === "HIGH" && item.status === "UNREAD"
-  ).length;
-  const deadlineCount = items.filter((item) => item.type === "DEADLINE").length;
-  const paymentCount = items.filter(
-    (item) => item.type === "PAYMENT" || item.type === "WALLET"
-  ).length;
+    return () => {
+      ignore = true;
+    };
+  }, [activeFilter]);
+
+  const stats = notificationData.stats || {};
+  const notifications = notificationData.notifications || [];
+
+  const unreadCount = useMemo(() => {
+    return Math.max(Number(stats.totalNotifications || 0) - readIds.size, 0);
+  }, [stats.totalNotifications, readIds]);
+
+  const statCards = useMemo(
+    () => [
+      {
+        label: "Total Alerts",
+        value: stats.totalNotifications || 0,
+        helper: "Generated from project activity",
+        icon: Bell,
+      },
+      {
+        label: "Unread Alerts",
+        value: unreadCount,
+        helper: "Local read state for now",
+        icon: AlertTriangle,
+      },
+      {
+        label: "Action Required",
+        value: stats.actionRequiredNotifications || 0,
+        helper: "Needs freelancer action",
+        icon: ShieldAlert,
+      },
+      {
+        label: "High Priority",
+        value: stats.highPriorityNotifications || 0,
+        helper: "Important active alerts",
+        icon: CalendarClock,
+      },
+    ],
+    [stats, unreadCount]
+  );
 
   function markAllAsRead() {
-    setItems((currentItems) =>
-      currentItems.map((item) => ({
-        ...item,
-        status: "READ",
-      }))
-    );
+    setReadIds((current) => {
+      const updated = new Set(current);
+
+      for (const notification of notifications) {
+        updated.add(notification.id);
+      }
+
+      return updated;
+    });
   }
 
   function markOneAsRead(id) {
-    setItems((currentItems) =>
-      currentItems.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              status: "READ",
-            }
-          : item
-      )
+    setReadIds((current) => {
+      const updated = new Set(current);
+      updated.add(id);
+      return updated;
+    });
+  }
+
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-[1480px] space-y-6">
+        <div className="rounded-[2rem] border border-[#eadfd2] bg-[#fffaf3] p-8 shadow-sm">
+          <p className="text-sm font-bold text-[#7c6858]">
+            Loading freelancer notifications...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (errorMessage) {
+    return (
+      <div className="mx-auto max-w-[1480px] space-y-6">
+        <div className="rounded-[2rem] border border-[#fecaca] bg-[#fff7f7] p-8 shadow-sm">
+          <h2 className="text-xl font-black text-[#24130c]">
+            Unable to load notifications
+          </h2>
+
+          <p className="mt-2 text-sm font-semibold text-[#b91c1c]">
+            {errorMessage}
+          </p>
+        </div>
+      </div>
     );
   }
 
@@ -269,52 +316,29 @@ export default function FreelancerNotificationsPage() {
           </p>
 
           <h1 className="mt-2 text-3xl font-black tracking-[-0.05em] text-[#24130c] sm:text-4xl">
-            Stay updated on invites, deadlines, payments, and disputes.
+            Stay updated on proposals, milestones, and deal rooms.
           </h1>
 
           <p className="mt-3 max-w-2xl text-sm leading-6 text-[#7c6858]">
-            Track all important freelancer actions from one notification center.
-            Later, these alerts will be generated from project, milestone,
-            payment, message, and dispute events.
+            These alerts are generated from existing proposal, milestone, and
+            project data. Read/unread state is local until we add a real
+            Notification table.
           </p>
         </div>
 
         <button
+          type="button"
           onClick={markAllAsRead}
-          className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-[#6f2e1c] px-5 text-sm font-black text-white shadow-lg shadow-[#6f2e1c]/20 transition hover:bg-[#5b2416]"
+          disabled={notifications.length === 0}
+          className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-[#6f2e1c] px-5 text-sm font-black text-white shadow-lg shadow-[#6f2e1c]/20 transition hover:bg-[#5b2416] disabled:cursor-not-allowed disabled:opacity-60"
         >
           <CheckCheck size={18} />
-          Mark all as read
+          Mark visible as read
         </button>
       </section>
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {[
-          {
-            label: "Unread Alerts",
-            value: unreadCount,
-            helper: "Need your attention",
-            icon: Bell,
-          },
-          {
-            label: "High Priority",
-            value: highPriorityCount,
-            helper: "Important active alerts",
-            icon: AlertTriangle,
-          },
-          {
-            label: "Deadline Alerts",
-            value: deadlineCount,
-            helper: "Upcoming milestone due dates",
-            icon: CalendarClock,
-          },
-          {
-            label: "Payment Updates",
-            value: paymentCount,
-            helper: "Funding and wallet changes",
-            icon: IndianRupee,
-          },
-        ].map((stat) => {
+        {statCards.map((stat) => {
           const Icon = stat.icon;
 
           return (
@@ -355,7 +379,7 @@ export default function FreelancerNotificationsPage() {
               </h2>
 
               <p className="mt-1 text-sm font-medium text-[#9b7a64]">
-                Filter alerts by type and open the related workspace.
+                Filter alerts and open the related freelancer workspace.
               </p>
             </div>
 
@@ -365,6 +389,7 @@ export default function FreelancerNotificationsPage() {
 
                 return (
                   <button
+                    type="button"
                     key={filter.value}
                     onClick={() => setActiveFilter(filter.value)}
                     className={`rounded-full px-4 py-2 text-xs font-black transition ${
@@ -381,14 +406,15 @@ export default function FreelancerNotificationsPage() {
           </div>
 
           <div className="space-y-4">
-            {filteredNotifications.map((notification) => {
-              const Icon = notificationIcon(notification.type);
+            {notifications.map((notification) => {
+              const Icon = notificationIcon(notification);
+              const isRead = readIds.has(notification.id);
 
               return (
                 <article
                   key={notification.id}
                   className={`rounded-[1.6rem] border p-5 transition hover:border-[#d7c3b2] hover:bg-white ${
-                    notification.status === "UNREAD"
+                    !isRead
                       ? "border-[#d7c3b2] bg-[#fff7ed]"
                       : "border-[#eadfd2] bg-[#fffaf3]"
                   }`}
@@ -397,7 +423,7 @@ export default function FreelancerNotificationsPage() {
                     <div className="flex gap-4">
                       <div
                         className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border ${notificationTone(
-                          notification.type
+                          notification
                         )}`}
                       >
                         <Icon size={20} />
@@ -405,10 +431,16 @@ export default function FreelancerNotificationsPage() {
 
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
-                          <ReadBadge status={notification.status} />
+                          <ReadBadge isRead={isRead} />
+
                           <PriorityBadge priority={notification.priority} />
+
                           <span className="rounded-full bg-white px-3 py-1 text-[11px] font-black uppercase tracking-[0.08em] text-[#9b7a64]">
-                            {notification.type}
+                            {notification.category}
+                          </span>
+
+                          <span className="rounded-full bg-white px-3 py-1 text-[11px] font-black uppercase tracking-[0.08em] text-[#9b7a64]">
+                            {toTitleCase(notification.status)}
                           </span>
                         </div>
 
@@ -417,7 +449,7 @@ export default function FreelancerNotificationsPage() {
                         </h3>
 
                         <p className="mt-2 text-sm font-semibold text-[#9b7a64]">
-                          {notification.project}
+                          {notification.amountDisplay}
                         </p>
 
                         <p className="mt-4 max-w-3xl text-sm leading-6 text-[#7c6858]">
@@ -426,19 +458,25 @@ export default function FreelancerNotificationsPage() {
 
                         <div className="mt-4 flex items-center gap-2 text-xs font-bold text-[#b79d88]">
                           <Clock3 size={14} />
-                          {notification.time}
+                          {notification.relativeTime ||
+                            notification.createdAtDisplay}
                         </div>
                       </div>
                     </div>
 
                     <div className="flex shrink-0 flex-wrap gap-3 lg:flex-col">
-                      <button className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#6f2e1c] px-5 text-sm font-black text-white transition hover:bg-[#5b2416]">
-                        {notification.actionLabel}
+                      <Link
+                        href={notification.actionUrl || "/freelancer/dashboard"}
+                        onClick={() => markOneAsRead(notification.id)}
+                        className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#6f2e1c] px-5 text-sm font-black text-white transition hover:bg-[#5b2416]"
+                      >
+                        {notification.actionLabel || "Open"}
                         <ArrowUpRight size={17} />
-                      </button>
+                      </Link>
 
-                      {notification.status === "UNREAD" && (
+                      {!isRead && (
                         <button
+                          type="button"
                           onClick={() => markOneAsRead(notification.id)}
                           className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-[#eadfd2] bg-white px-5 text-sm font-black text-[#6f2e1c] transition hover:bg-[#fff7ed]"
                         >
@@ -452,21 +490,7 @@ export default function FreelancerNotificationsPage() {
               );
             })}
 
-            {filteredNotifications.length === 0 && (
-              <div className="rounded-[1.6rem] border border-dashed border-[#d7c3b2] bg-[#fffaf3] p-10 text-center">
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-[#6f2e1c]">
-                  <Bell size={24} />
-                </div>
-
-                <h3 className="mt-4 text-lg font-black text-[#24130c]">
-                  No notifications found
-                </h3>
-
-                <p className="mt-2 text-sm text-[#7c6858]">
-                  Try switching filters or check again later.
-                </p>
-              </div>
-            )}
+            {notifications.length === 0 && <EmptyState />}
           </div>
         </div>
 
@@ -482,19 +506,20 @@ export default function FreelancerNotificationsPage() {
 
             <p className="mt-3 text-sm leading-6 text-white/65">
               Notifications should always guide the freelancer to the next
-              correct action — accept invite, submit work, respond to revision,
-              or open dispute.
+              correct action — view proposal, submit work, revise milestone, or
+              open wallet.
             </p>
 
             <div className="mt-5 space-y-3">
               {[
-                "Invites should be accepted quickly",
-                "Funded milestones need submission",
-                "Deadline alerts prevent delays",
-                "Dispute updates need attention",
+                "Accepted proposals open deal rooms",
+                "In-progress milestones need submission",
+                "Rejected milestones need revision",
+                "Approved milestones update wallet",
               ].map((item) => (
                 <div key={item} className="flex items-center gap-3">
                   <CheckCircle2 size={17} className="text-[#f4b454]" />
+
                   <p className="text-sm font-semibold text-white/78">
                     {item}
                   </p>
@@ -506,7 +531,7 @@ export default function FreelancerNotificationsPage() {
           <div className="rounded-[2rem] border border-[#eadfd2] bg-white/80 p-6 shadow-sm">
             <div className="mb-5 flex items-center justify-between">
               <h2 className="text-xl font-black tracking-[-0.03em] text-[#24130c]">
-                Alert Types
+                Alert Sources
               </h2>
 
               <Filter size={20} className="text-[#6f2e1c]" />
@@ -515,28 +540,28 @@ export default function FreelancerNotificationsPage() {
             <div className="space-y-3">
               {[
                 {
-                  type: "INVITE",
-                  title: "Project invites",
-                  text: "Client invites and accept/reject actions.",
+                  type: "PROPOSAL",
+                  title: "Proposal alerts",
+                  text: "Pending, accepted, rejected, and withdrawn proposal updates.",
+                  icon: Handshake,
+                },
+                {
+                  type: "MILESTONE",
+                  title: "Milestone alerts",
+                  text: "In-progress, submitted, approved, and revision states.",
+                  icon: UploadCloud,
+                },
+                {
+                  type: "PROJECT",
+                  title: "Deal room alerts",
+                  text: "Active assigned projects visible in deal rooms.",
                   icon: Inbox,
                 },
                 {
-                  type: "PAYMENT",
-                  title: "Payment updates",
-                  text: "Funding, release, and wallet events.",
-                  icon: IndianRupee,
-                },
-                {
-                  type: "DEADLINE",
-                  title: "Deadline reminders",
-                  text: "Upcoming milestone and project due dates.",
-                  icon: CalendarClock,
-                },
-                {
-                  type: "DISPUTE",
-                  title: "Dispute alerts",
-                  text: "Admin review, decisions, and evidence updates.",
-                  icon: ShieldAlert,
+                  type: "WALLET",
+                  title: "Wallet impact",
+                  text: "Approved milestones are reflected in wallet earnings.",
+                  icon: Wallet,
                 },
               ].map((item) => {
                 const Icon = item.icon;
@@ -547,11 +572,7 @@ export default function FreelancerNotificationsPage() {
                     className="rounded-2xl border border-[#eadfd2] bg-[#fffaf3] p-4"
                   >
                     <div className="flex gap-3">
-                      <div
-                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border ${notificationTone(
-                          item.type
-                        )}`}
-                      >
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-[#f0d7c3] bg-white text-[#6f2e1c]">
                         <Icon size={17} />
                       </div>
 
@@ -573,29 +594,29 @@ export default function FreelancerNotificationsPage() {
 
           <div className="rounded-[2rem] border border-[#eadfd2] bg-white/80 p-6 shadow-sm">
             <h2 className="text-xl font-black tracking-[-0.03em] text-[#24130c]">
-              Backend-ready Mapping
+              Later Upgrade
             </h2>
 
             <div className="mt-5 space-y-4">
               {[
                 {
-                  title: "ProjectInvitation",
-                  text: "Creates invite notifications.",
-                  icon: Handshake,
+                  title: "Notification table",
+                  text: "Needed for persistent read/unread status.",
+                  icon: Bell,
                 },
                 {
-                  title: "Milestone",
-                  text: "Creates deadline, funded, submitted, and revision alerts.",
-                  icon: UploadCloud,
+                  title: "Message alerts",
+                  text: "Needs Message model before real chat notifications.",
+                  icon: Inbox,
                 },
                 {
-                  title: "PaymentTransaction",
-                  text: "Creates funding and wallet notifications.",
-                  icon: Wallet,
+                  title: "Payment alerts",
+                  text: "Needs PaymentTransaction model for escrow events.",
+                  icon: IndianRupee,
                 },
                 {
-                  title: "Dispute",
-                  text: "Creates dispute status and admin decision alerts.",
+                  title: "Dispute alerts",
+                  text: "Needs Dispute model for admin review updates.",
                   icon: ShieldAlert,
                 },
               ].map((item) => {

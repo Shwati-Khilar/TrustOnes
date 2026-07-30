@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { signOut } from "next-auth/react";
 import {
   AlertTriangle,
   BadgeCheck,
@@ -26,29 +27,55 @@ import {
   UserRound,
 } from "lucide-react";
 
-const supportTickets = [
+const availabilityOptions = [
   {
-    id: "SUP-001",
-    title: "Milestone release delay",
-    status: "OPEN",
-    createdAt: "Today",
-    type: "Wallet",
+    label: "Available for new work",
+    value: "AVAILABLE",
   },
   {
-    id: "SUP-002",
-    title: "Unable to upload submission file",
-    status: "RESOLVED",
-    createdAt: "12 Jun 2026",
-    type: "Submission",
+    label: "Busy but open to invites",
+    value: "BUSY_OPEN",
+  },
+  {
+    label: "Not available currently",
+    value: "NOT_AVAILABLE",
   },
 ];
 
-function Toggle({ enabled, onChange }) {
+const initialSettings = {
+  account: {
+    name: "",
+    email: "",
+    provider: "credentials",
+    role: "FREELANCER",
+    status: "ACTIVE",
+    emailVerified: false,
+    hasPassword: false,
+    joinedAtDisplay: "No date",
+    updatedAtDisplay: "No date",
+  },
+  freelancer: {
+    availability: "AVAILABLE",
+    location: "",
+    professionalTitle: "Freelance Developer",
+  },
+  preferences: {
+    emailNotifications: true,
+    milestoneAlerts: true,
+    proposalAlerts: true,
+    walletAlerts: true,
+    theme: "SYSTEM",
+    language: "EN",
+  },
+};
+
+function Toggle({ enabled, onChange, disabled = false }) {
   return (
     <button
       type="button"
+      disabled={disabled}
       onClick={() => onChange(!enabled)}
-      className={`relative h-7 w-12 rounded-full transition ${
+      className={`relative h-7 w-12 rounded-full transition disabled:cursor-not-allowed disabled:opacity-60 ${
         enabled ? "bg-[#6f2e1c]" : "bg-[#d7c3b2]"
       }`}
     >
@@ -61,34 +88,243 @@ function Toggle({ enabled, onChange }) {
   );
 }
 
-function StatusBadge({ status }) {
-  const styles = {
-    OPEN: "bg-[#fffbeb] text-[#b45309] border-[#fde68a]",
-    RESOLVED: "bg-[#ecfdf5] text-[#047857] border-[#a7f3d0]",
-  };
-
-  return (
-    <span
-      className={`rounded-full border px-3 py-1 text-[11px] font-black uppercase tracking-[0.08em] ${
-        styles[status] || styles.OPEN
-      }`}
-    >
-      {status}
-    </span>
-  );
+function statusLabel(value) {
+  return String(value || "")
+    .split("_")
+    .join(" ")
+    .toLowerCase()
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
 export default function FreelancerSettingsPage() {
-  const [emailNotifications, setEmailNotifications] = useState(true);
-  const [pushNotifications, setPushNotifications] = useState(true);
-  const [deadlineAlerts, setDeadlineAlerts] = useState(true);
-  const [paymentAlerts, setPaymentAlerts] = useState(true);
-  const [messageAlerts, setMessageAlerts] = useState(true);
-  const [disputeAlerts, setDisputeAlerts] = useState(true);
-  const [profileVisible, setProfileVisible] = useState(true);
-  const [showEarnings, setShowEarnings] = useState(false);
-  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
+  const [settings, setSettings] = useState(initialSettings);
+
+  const [accountForm, setAccountForm] = useState({
+    name: "",
+    availability: "AVAILABLE",
+  });
+
+  const [preferences, setPreferences] = useState({
+    emailNotifications: true,
+    pushNotifications: true,
+    deadlineAlerts: true,
+    paymentAlerts: true,
+    messageAlerts: true,
+    disputeAlerts: true,
+    profileVisible: true,
+    showEarnings: false,
+    twoFactorEnabled: false,
+  });
+
+  const [selectedTheme, setSelectedTheme] = useState("Warm Premium");
+
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [savingAccount, setSavingAccount] = useState(false);
+  const [savingPassword, setSavingPassword] = useState(false);
+  const [message, setMessage] = useState({
+    type: "",
+    text: "",
+  });
+
+  async function loadSettings() {
+    try {
+      setLoading(true);
+      setMessage({
+        type: "",
+        text: "",
+      });
+
+      const response = await fetch("/api/freelancer/settings", {
+        method: "GET",
+        cache: "no-store",
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || "Unable to load settings.");
+      }
+
+      setSettings(result.data);
+
+      setAccountForm({
+        name: result.data.account?.name || "",
+        availability: result.data.freelancer?.availability || "AVAILABLE",
+      });
+
+      setPreferences((current) => ({
+        ...current,
+        emailNotifications: Boolean(
+          result.data.preferences?.emailNotifications
+        ),
+        deadlineAlerts: Boolean(result.data.preferences?.milestoneAlerts),
+        paymentAlerts: Boolean(result.data.preferences?.walletAlerts),
+      }));
+    } catch (error) {
+      setMessage({
+        type: "error",
+        text: error.message || "Unable to load settings.",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
+  function updatePreference(field, value) {
+    setPreferences((current) => ({
+      ...current,
+      [field]: value,
+    }));
+  }
+
+  async function saveAccountSettings() {
+    try {
+      setSavingAccount(true);
+      setMessage({
+        type: "",
+        text: "",
+      });
+
+      const response = await fetch("/api/freelancer/settings", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        cache: "no-store",
+        body: JSON.stringify({
+          name: accountForm.name,
+          availability: accountForm.availability,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || "Unable to save account settings.");
+      }
+
+      setSettings(result.data);
+
+      setAccountForm({
+        name: result.data.account?.name || "",
+        availability: result.data.freelancer?.availability || "AVAILABLE",
+      });
+
+      setMessage({
+        type: "success",
+        text: "Account settings saved successfully.",
+      });
+    } catch (error) {
+      setMessage({
+        type: "error",
+        text: error.message || "Unable to save account settings.",
+      });
+    } finally {
+      setSavingAccount(false);
+    }
+  }
+
+  async function updatePassword() {
+    try {
+      setSavingPassword(true);
+      setMessage({
+        type: "",
+        text: "",
+      });
+
+      if (!passwordForm.currentPassword) {
+        throw new Error("Current password is required.");
+      }
+
+      if (!passwordForm.newPassword || passwordForm.newPassword.length < 8) {
+        throw new Error("New password must be at least 8 characters.");
+      }
+
+      if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+        throw new Error("New password and confirm password do not match.");
+      }
+
+      const response = await fetch("/api/freelancer/settings", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        cache: "no-store",
+        body: JSON.stringify({
+          currentPassword: passwordForm.currentPassword,
+          newPassword: passwordForm.newPassword,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || "Unable to update password.");
+      }
+
+      setPasswordForm({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+
+      setMessage({
+        type: "success",
+        text: "Password updated successfully.",
+      });
+    } catch (error) {
+      setMessage({
+        type: "error",
+        text: error.message || "Unable to update password.",
+      });
+    } finally {
+      setSavingPassword(false);
+    }
+  }
+
+  const accountHealth = useMemo(
+    () => [
+      {
+        label: "Email",
+        value: settings.account.emailVerified ? "Verified" : "Pending",
+        icon: Mail,
+      },
+      {
+        label: "Role",
+        value: statusLabel(settings.account.role || "Freelancer"),
+        icon: UserRound,
+      },
+      {
+        label: "Account",
+        value: statusLabel(settings.account.status || "Active"),
+        icon: LockKeyhole,
+      },
+    ],
+    [settings]
+  );
+
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-[1480px] space-y-6">
+        <div className="rounded-[2rem] border border-[#eadfd2] bg-[#fffaf3] p-8 shadow-sm">
+          <p className="text-sm font-bold text-[#7c6858]">
+            Loading freelancer settings...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-[1480px] space-y-6">
@@ -103,16 +339,33 @@ export default function FreelancerSettingsPage() {
           </h1>
 
           <p className="mt-3 max-w-2xl text-sm leading-6 text-[#7c6858]">
-            Manage notifications, privacy, password, support requests, and
-            freelancer account preferences from one place.
+            Account name and availability are saved to the backend. Other
+            preferences are UI-ready and need a settings/preferences table later.
           </p>
         </div>
 
-        <button className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-[#6f2e1c] px-5 text-sm font-black text-white shadow-lg shadow-[#6f2e1c]/20 transition hover:bg-[#5b2416]">
+        <button
+          type="button"
+          onClick={saveAccountSettings}
+          disabled={savingAccount}
+          className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-[#6f2e1c] px-5 text-sm font-black text-white shadow-lg shadow-[#6f2e1c]/20 transition hover:bg-[#5b2416] disabled:cursor-not-allowed disabled:opacity-60"
+        >
           <Save size={18} />
-          Save Settings
+          {savingAccount ? "Saving..." : "Save Account"}
         </button>
       </section>
+
+      {message.text && (
+        <section
+          className={`rounded-2xl border p-4 text-sm font-bold ${
+            message.type === "error"
+              ? "border-[#fecaca] bg-[#fef2f2] text-[#b91c1c]"
+              : "border-[#a7f3d0] bg-[#ecfdf5] text-[#047857]"
+          }`}
+        >
+          {message.text}
+        </section>
+      )}
 
       <section className="grid gap-6 xl:grid-cols-[0.8fr_1.2fr]">
         <aside className="space-y-6">
@@ -122,32 +375,16 @@ export default function FreelancerSettingsPage() {
             </div>
 
             <h2 className="mt-5 text-2xl font-black tracking-[-0.04em]">
-              Account health is strong.
+              Account health
             </h2>
 
             <p className="mt-3 text-sm leading-6 text-white/65">
-              Your email is verified, profile is active, and freelancer account
-              is ready to receive client invites.
+              Your account status, email verification, and role are fetched
+              directly from the backend.
             </p>
 
             <div className="mt-6 grid gap-3">
-              {[
-                {
-                  label: "Email Verified",
-                  value: "Active",
-                  icon: Mail,
-                },
-                {
-                  label: "Role",
-                  value: "Freelancer",
-                  icon: UserRound,
-                },
-                {
-                  label: "Session Security",
-                  value: "Protected",
-                  icon: LockKeyhole,
-                },
-              ].map((item) => {
+              {accountHealth.map((item) => {
                 const Icon = item.icon;
 
                 return (
@@ -157,6 +394,7 @@ export default function FreelancerSettingsPage() {
                   >
                     <div className="flex items-center gap-3">
                       <Icon size={18} className="text-[#f4b454]" />
+
                       <p className="text-sm font-semibold text-white/70">
                         {item.label}
                       </p>
@@ -176,27 +414,32 @@ export default function FreelancerSettingsPage() {
               Quick Settings
             </h2>
 
+            <p className="mt-2 text-sm leading-6 text-[#7c6858]">
+              These switches are local UI state for now. Persist them later with
+              a `UserPreference` table.
+            </p>
+
             <div className="mt-5 space-y-4">
               {[
                 {
                   label: "Email notifications",
                   text: "Receive important alerts on email.",
-                  enabled: emailNotifications,
-                  setEnabled: setEmailNotifications,
+                  enabled: preferences.emailNotifications,
+                  field: "emailNotifications",
                   icon: Mail,
                 },
                 {
                   label: "Deadline alerts",
                   text: "Get reminded before milestone due dates.",
-                  enabled: deadlineAlerts,
-                  setEnabled: setDeadlineAlerts,
+                  enabled: preferences.deadlineAlerts,
+                  field: "deadlineAlerts",
                   icon: Clock3,
                 },
                 {
                   label: "Public profile visible",
                   text: "Allow clients to view your display card.",
-                  enabled: profileVisible,
-                  setEnabled: setProfileVisible,
+                  enabled: preferences.profileVisible,
+                  field: "profileVisible",
                   icon: BadgeCheck,
                 },
               ].map((item) => {
@@ -216,13 +459,17 @@ export default function FreelancerSettingsPage() {
                         <h3 className="text-sm font-black text-[#24130c]">
                           {item.label}
                         </h3>
+
                         <p className="mt-1 text-xs font-semibold text-[#9b7a64]">
                           {item.text}
                         </p>
                       </div>
                     </div>
 
-                    <Toggle enabled={item.enabled} onChange={item.setEnabled} />
+                    <Toggle
+                      enabled={item.enabled}
+                      onChange={(value) => updatePreference(item.field, value)}
+                    />
                   </div>
                 );
               })}
@@ -239,19 +486,27 @@ export default function FreelancerSettingsPage() {
             </h2>
 
             <p className="mt-2 text-sm leading-6 text-[#7c6858]">
-              Use these actions carefully. Later, backend confirmation modals
-              and password re-authentication should be added here.
+              Logout works now. Account deletion needs a separate backend flow
+              with re-authentication.
             </p>
 
             <div className="mt-5 space-y-3">
-              <button className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#eadfd2] bg-white text-sm font-black text-[#6f2e1c] transition hover:bg-[#fff7ed]">
+              <button
+                type="button"
+                onClick={() => signOut({ callbackUrl: "/login" })}
+                className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#eadfd2] bg-white text-sm font-black text-[#6f2e1c] transition hover:bg-[#fff7ed]"
+              >
                 <LogOut size={17} />
                 Logout
               </button>
 
-              <button className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#fecaca] bg-[#fef2f2] text-sm font-black text-[#b91c1c] transition hover:bg-[#fee2e2]">
+              <button
+                type="button"
+                disabled
+                className="inline-flex h-11 w-full cursor-not-allowed items-center justify-center gap-2 rounded-xl border border-[#fecaca] bg-[#fef2f2] text-sm font-black text-[#b91c1c]/60"
+              >
                 <Trash2 size={17} />
-                Request Account Deletion
+                Account Deletion Later
               </button>
             </div>
           </div>
@@ -266,7 +521,7 @@ export default function FreelancerSettingsPage() {
                 </h2>
 
                 <p className="mt-1 text-sm font-medium text-[#9b7a64]">
-                  Configure basic freelancer workspace preferences.
+                  Name and availability are backend-connected.
                 </p>
               </div>
 
@@ -278,15 +533,33 @@ export default function FreelancerSettingsPage() {
             <div className="grid gap-5 md:grid-cols-2">
               <label className="block">
                 <span className="text-sm font-black text-[#24130c]">
-                  Default Workspace
+                  Full Name
                 </span>
 
-                <select className="mt-2 h-12 w-full rounded-2xl border border-[#eadfd2] bg-[#fffaf3] px-4 text-sm font-semibold text-[#24130c] outline-none focus:border-[#6f2e1c]">
-                  <option>Dashboard</option>
-                  <option>Deal Rooms</option>
-                  <option>Milestones</option>
-                  <option>Messages</option>
-                </select>
+                <input
+                  type="text"
+                  value={accountForm.name}
+                  onChange={(event) =>
+                    setAccountForm((current) => ({
+                      ...current,
+                      name: event.target.value,
+                    }))
+                  }
+                  className="mt-2 h-12 w-full rounded-2xl border border-[#eadfd2] bg-[#fffaf3] px-4 text-sm font-semibold text-[#24130c] outline-none focus:border-[#6f2e1c]"
+                />
+              </label>
+
+              <label className="block">
+                <span className="text-sm font-black text-[#24130c]">
+                  Email Address
+                </span>
+
+                <input
+                  type="email"
+                  value={settings.account.email || ""}
+                  readOnly
+                  className="mt-2 h-12 w-full rounded-2xl border border-[#eadfd2] bg-[#fffaf3] px-4 text-sm font-semibold text-[#7c6858] outline-none"
+                />
               </label>
 
               <label className="block">
@@ -294,35 +567,61 @@ export default function FreelancerSettingsPage() {
                   Availability Status
                 </span>
 
-                <select className="mt-2 h-12 w-full rounded-2xl border border-[#eadfd2] bg-[#fffaf3] px-4 text-sm font-semibold text-[#24130c] outline-none focus:border-[#6f2e1c]">
-                  <option>Available for new work</option>
-                  <option>Busy but open to invites</option>
-                  <option>Not available currently</option>
+                <select
+                  value={accountForm.availability}
+                  onChange={(event) =>
+                    setAccountForm((current) => ({
+                      ...current,
+                      availability: event.target.value,
+                    }))
+                  }
+                  className="mt-2 h-12 w-full rounded-2xl border border-[#eadfd2] bg-[#fffaf3] px-4 text-sm font-semibold text-[#24130c] outline-none focus:border-[#6f2e1c]"
+                >
+                  {availabilityOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
                 </select>
               </label>
 
               <label className="block">
                 <span className="text-sm font-black text-[#24130c]">
-                  Preferred Currency
+                  Provider
                 </span>
 
-                <select className="mt-2 h-12 w-full rounded-2xl border border-[#eadfd2] bg-[#fffaf3] px-4 text-sm font-semibold text-[#24130c] outline-none focus:border-[#6f2e1c]">
-                  <option>INR - Indian Rupee</option>
-                  <option>USD - US Dollar</option>
-                  <option>EUR - Euro</option>
-                </select>
+                <input
+                  type="text"
+                  value={settings.account.provider || "credentials"}
+                  readOnly
+                  className="mt-2 h-12 w-full rounded-2xl border border-[#eadfd2] bg-[#fffaf3] px-4 text-sm font-semibold text-[#7c6858] outline-none"
+                />
               </label>
 
               <label className="block">
                 <span className="text-sm font-black text-[#24130c]">
-                  Timezone
+                  Joined On
                 </span>
 
-                <select className="mt-2 h-12 w-full rounded-2xl border border-[#eadfd2] bg-[#fffaf3] px-4 text-sm font-semibold text-[#24130c] outline-none focus:border-[#6f2e1c]">
-                  <option>Asia/Kolkata</option>
-                  <option>UTC</option>
-                  <option>America/New_York</option>
-                </select>
+                <input
+                  type="text"
+                  value={settings.account.joinedAtDisplay || "No date"}
+                  readOnly
+                  className="mt-2 h-12 w-full rounded-2xl border border-[#eadfd2] bg-[#fffaf3] px-4 text-sm font-semibold text-[#7c6858] outline-none"
+                />
+              </label>
+
+              <label className="block">
+                <span className="text-sm font-black text-[#24130c]">
+                  Last Updated
+                </span>
+
+                <input
+                  type="text"
+                  value={settings.account.updatedAtDisplay || "No date"}
+                  readOnly
+                  className="mt-2 h-12 w-full rounded-2xl border border-[#eadfd2] bg-[#fffaf3] px-4 text-sm font-semibold text-[#7c6858] outline-none"
+                />
               </label>
             </div>
           </section>
@@ -335,7 +634,7 @@ export default function FreelancerSettingsPage() {
                 </h2>
 
                 <p className="mt-1 text-sm font-medium text-[#9b7a64]">
-                  Choose which alerts should reach you.
+                  UI-ready toggles. Persist later with `UserPreference`.
                 </p>
               </div>
 
@@ -349,29 +648,29 @@ export default function FreelancerSettingsPage() {
                 {
                   label: "Push notifications",
                   text: "Show browser/app alerts.",
-                  enabled: pushNotifications,
-                  setEnabled: setPushNotifications,
+                  enabled: preferences.pushNotifications,
+                  field: "pushNotifications",
                   icon: Smartphone,
                 },
                 {
                   label: "Payment alerts",
                   text: "Funding, release, and wallet updates.",
-                  enabled: paymentAlerts,
-                  setEnabled: setPaymentAlerts,
+                  enabled: preferences.paymentAlerts,
+                  field: "paymentAlerts",
                   icon: BadgeCheck,
                 },
                 {
                   label: "Message alerts",
                   text: "New client chat notifications.",
-                  enabled: messageAlerts,
-                  setEnabled: setMessageAlerts,
+                  enabled: preferences.messageAlerts,
+                  field: "messageAlerts",
                   icon: MessageSquareText,
                 },
                 {
                   label: "Dispute alerts",
-                  text: "Admin review and dispute decision updates.",
-                  enabled: disputeAlerts,
-                  setEnabled: setDisputeAlerts,
+                  text: "Admin review and dispute decisions.",
+                  enabled: preferences.disputeAlerts,
+                  field: "disputeAlerts",
                   icon: AlertTriangle,
                 },
               ].map((item) => {
@@ -398,7 +697,10 @@ export default function FreelancerSettingsPage() {
                       </div>
                     </div>
 
-                    <Toggle enabled={item.enabled} onChange={item.setEnabled} />
+                    <Toggle
+                      enabled={item.enabled}
+                      onChange={(value) => updatePreference(item.field, value)}
+                    />
                   </div>
                 );
               })}
@@ -413,7 +715,7 @@ export default function FreelancerSettingsPage() {
                 </h2>
 
                 <p className="mt-1 text-sm font-medium text-[#9b7a64]">
-                  Protect your freelancer account and payment-related actions.
+                  Password update is backend-connected for credential accounts.
                 </p>
               </div>
 
@@ -421,6 +723,12 @@ export default function FreelancerSettingsPage() {
                 <LockKeyhole size={21} />
               </div>
             </div>
+
+            {!settings.account.hasPassword && (
+              <div className="mb-5 rounded-2xl border border-[#fde68a] bg-[#fffbeb] p-4 text-sm font-bold text-[#92400e]">
+                Password change is not available for social login accounts.
+              </div>
+            )}
 
             <div className="grid gap-5 md:grid-cols-2">
               <label className="block">
@@ -430,11 +738,21 @@ export default function FreelancerSettingsPage() {
 
                 <div className="mt-2 flex h-12 items-center gap-3 rounded-2xl border border-[#eadfd2] bg-[#fffaf3] px-4">
                   <KeyRound size={17} className="text-[#9b7a64]" />
+
                   <input
                     type={showPassword ? "text" : "password"}
+                    value={passwordForm.currentPassword}
+                    disabled={!settings.account.hasPassword}
+                    onChange={(event) =>
+                      setPasswordForm((current) => ({
+                        ...current,
+                        currentPassword: event.target.value,
+                      }))
+                    }
                     placeholder="Enter current password"
-                    className="w-full bg-transparent text-sm font-semibold text-[#24130c] outline-none placeholder:text-[#b79d88]"
+                    className="w-full bg-transparent text-sm font-semibold text-[#24130c] outline-none placeholder:text-[#b79d88] disabled:cursor-not-allowed"
                   />
+
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
@@ -452,10 +770,43 @@ export default function FreelancerSettingsPage() {
 
                 <div className="mt-2 flex h-12 items-center gap-3 rounded-2xl border border-[#eadfd2] bg-[#fffaf3] px-4">
                   <KeyRound size={17} className="text-[#9b7a64]" />
+
                   <input
                     type="password"
-                    placeholder="Enter new password"
-                    className="w-full bg-transparent text-sm font-semibold text-[#24130c] outline-none placeholder:text-[#b79d88]"
+                    value={passwordForm.newPassword}
+                    disabled={!settings.account.hasPassword}
+                    onChange={(event) =>
+                      setPasswordForm((current) => ({
+                        ...current,
+                        newPassword: event.target.value,
+                      }))
+                    }
+                    placeholder="Minimum 8 characters"
+                    className="w-full bg-transparent text-sm font-semibold text-[#24130c] outline-none placeholder:text-[#b79d88] disabled:cursor-not-allowed"
+                  />
+                </div>
+              </label>
+
+              <label className="block md:col-span-2">
+                <span className="text-sm font-black text-[#24130c]">
+                  Confirm New Password
+                </span>
+
+                <div className="mt-2 flex h-12 items-center gap-3 rounded-2xl border border-[#eadfd2] bg-[#fffaf3] px-4">
+                  <KeyRound size={17} className="text-[#9b7a64]" />
+
+                  <input
+                    type="password"
+                    value={passwordForm.confirmPassword}
+                    disabled={!settings.account.hasPassword}
+                    onChange={(event) =>
+                      setPasswordForm((current) => ({
+                        ...current,
+                        confirmPassword: event.target.value,
+                      }))
+                    }
+                    placeholder="Confirm new password"
+                    className="w-full bg-transparent text-sm font-semibold text-[#24130c] outline-none placeholder:text-[#b79d88] disabled:cursor-not-allowed"
                   />
                 </div>
               </label>
@@ -473,16 +824,26 @@ export default function FreelancerSettingsPage() {
                   </h3>
 
                   <p className="mt-1 text-xs font-semibold text-[#9b7a64]">
-                    Later this can use phone OTP or authenticator app.
+                    UI-ready only. Needs OTP/authenticator backend later.
                   </p>
                 </div>
               </div>
 
-              <Toggle enabled={twoFactorEnabled} onChange={setTwoFactorEnabled} />
+              <Toggle
+                enabled={preferences.twoFactorEnabled}
+                onChange={(value) =>
+                  updatePreference("twoFactorEnabled", value)
+                }
+              />
             </div>
 
-            <button className="mt-5 h-11 rounded-xl bg-[#6f2e1c] px-5 text-sm font-black text-white shadow-lg shadow-[#6f2e1c]/20 transition hover:bg-[#5b2416]">
-              Update Password
+            <button
+              type="button"
+              onClick={updatePassword}
+              disabled={!settings.account.hasPassword || savingPassword}
+              className="mt-5 h-11 rounded-xl bg-[#6f2e1c] px-5 text-sm font-black text-white shadow-lg shadow-[#6f2e1c]/20 transition hover:bg-[#5b2416] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {savingPassword ? "Updating..." : "Update Password"}
             </button>
           </section>
 
@@ -495,7 +856,7 @@ export default function FreelancerSettingsPage() {
                   </h2>
 
                   <p className="mt-1 text-sm font-medium text-[#9b7a64]">
-                    Control what clients can see.
+                    Local UI state until privacy settings table is added.
                   </p>
                 </div>
 
@@ -508,12 +869,18 @@ export default function FreelancerSettingsPage() {
                     <h3 className="text-sm font-black text-[#24130c]">
                       Show public profile
                     </h3>
+
                     <p className="mt-1 text-xs font-semibold text-[#9b7a64]">
                       Clients can view your freelancer card.
                     </p>
                   </div>
 
-                  <Toggle enabled={profileVisible} onChange={setProfileVisible} />
+                  <Toggle
+                    enabled={preferences.profileVisible}
+                    onChange={(value) =>
+                      updatePreference("profileVisible", value)
+                    }
+                  />
                 </div>
 
                 <div className="flex items-center justify-between gap-4 rounded-2xl border border-[#eadfd2] bg-[#fffaf3] p-4">
@@ -521,12 +888,18 @@ export default function FreelancerSettingsPage() {
                     <h3 className="text-sm font-black text-[#24130c]">
                       Show earnings publicly
                     </h3>
+
                     <p className="mt-1 text-xs font-semibold text-[#9b7a64]">
                       Display earnings on public card.
                     </p>
                   </div>
 
-                  <Toggle enabled={showEarnings} onChange={setShowEarnings} />
+                  <Toggle
+                    enabled={preferences.showEarnings}
+                    onChange={(value) =>
+                      updatePreference("showEarnings", value)
+                    }
+                  />
                 </div>
               </div>
             </div>
@@ -539,7 +912,7 @@ export default function FreelancerSettingsPage() {
                   </h2>
 
                   <p className="mt-1 text-sm font-medium text-[#9b7a64]">
-                    UI preferences for your workspace.
+                    Local UI selection only.
                   </p>
                 </div>
 
@@ -549,9 +922,11 @@ export default function FreelancerSettingsPage() {
               <div className="grid gap-3">
                 {["Warm Premium", "Light Minimal", "Dark SaaS"].map((theme) => (
                   <button
+                    type="button"
                     key={theme}
+                    onClick={() => setSelectedTheme(theme)}
                     className={`flex items-center justify-between rounded-2xl border p-4 text-left transition ${
-                      theme === "Warm Premium"
+                      selectedTheme === theme
                         ? "border-[#6f2e1c] bg-[#fff7ed]"
                         : "border-[#eadfd2] bg-[#fffaf3] hover:bg-white"
                     }`}
@@ -560,7 +935,7 @@ export default function FreelancerSettingsPage() {
                       {theme}
                     </span>
 
-                    {theme === "Warm Premium" && (
+                    {selectedTheme === theme && (
                       <CheckCircle2 size={18} className="text-[#6f2e1c]" />
                     )}
                   </button>
@@ -577,8 +952,7 @@ export default function FreelancerSettingsPage() {
                 </h2>
 
                 <p className="mt-1 text-sm font-medium text-[#9b7a64]">
-                  Raise support issues related to projects, wallet, submissions,
-                  or account access.
+                  UI-ready only. Needs a `SupportTicket` model and API.
                 </p>
               </div>
 
@@ -594,12 +968,11 @@ export default function FreelancerSettingsPage() {
                     Issue Type
                   </span>
 
-                  <select className="mt-2 h-12 w-full rounded-2xl border border-[#eadfd2] bg-white px-4 text-sm font-semibold text-[#24130c] outline-none focus:border-[#6f2e1c]">
-                    <option>Project issue</option>
-                    <option>Payment / wallet issue</option>
-                    <option>Submission issue</option>
-                    <option>Account access issue</option>
-                    <option>Other support request</option>
+                  <select
+                    disabled
+                    className="mt-2 h-12 w-full cursor-not-allowed rounded-2xl border border-[#eadfd2] bg-white px-4 text-sm font-semibold text-[#24130c] outline-none"
+                  >
+                    <option>Support backend not connected yet</option>
                   </select>
                 </label>
 
@@ -610,40 +983,33 @@ export default function FreelancerSettingsPage() {
 
                   <textarea
                     rows={5}
-                    placeholder="Explain the support issue clearly..."
-                    className="mt-2 w-full resize-none rounded-2xl border border-[#eadfd2] bg-white px-4 py-3 text-sm font-semibold leading-6 text-[#24130c] outline-none placeholder:text-[#b79d88] focus:border-[#6f2e1c]"
+                    disabled
+                    placeholder="Support ticket API will be added later..."
+                    className="mt-2 w-full resize-none rounded-2xl border border-[#eadfd2] bg-white px-4 py-3 text-sm font-semibold leading-6 text-[#24130c] outline-none placeholder:text-[#b79d88]"
                   />
                 </label>
 
                 <button
                   type="button"
-                  className="mt-4 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#6f2e1c] px-5 text-sm font-black text-white shadow-lg shadow-[#6f2e1c]/20 transition hover:bg-[#5b2416]"
+                  disabled
+                  className="mt-4 inline-flex h-11 cursor-not-allowed items-center justify-center gap-2 rounded-xl bg-[#6f2e1c]/60 px-5 text-sm font-black text-white shadow-lg shadow-[#6f2e1c]/20"
                 >
                   <HelpCircle size={17} />
-                  Submit Support Request
+                  Submit Later
                 </button>
               </form>
 
-              <div className="space-y-3">
-                {supportTickets.map((ticket) => (
-                  <div
-                    key={ticket.id}
-                    className="rounded-[1.5rem] border border-[#eadfd2] bg-[#fffaf3] p-5"
-                  >
-                    <div className="mb-3 flex items-center justify-between gap-3">
-                      <StatusBadge status={ticket.status} />
-                      <FileText size={17} className="text-[#9b7a64]" />
-                    </div>
+              <div className="rounded-[1.5rem] border border-dashed border-[#d7c3b2] bg-[#fffaf3] p-8 text-center">
+                <FileText size={24} className="mx-auto text-[#6f2e1c]" />
 
-                    <h3 className="text-sm font-black text-[#24130c]">
-                      {ticket.title}
-                    </h3>
+                <h3 className="mt-4 text-lg font-black text-[#24130c]">
+                  No support tickets connected
+                </h3>
 
-                    <p className="mt-1 text-xs font-semibold text-[#9b7a64]">
-                      {ticket.type} • {ticket.createdAt}
-                    </p>
-                  </div>
-                ))}
+                <p className="mt-2 text-sm leading-6 text-[#7c6858]">
+                  We will add real support tickets after the main freelancer
+                  workflow modules are completed.
+                </p>
               </div>
             </div>
           </section>

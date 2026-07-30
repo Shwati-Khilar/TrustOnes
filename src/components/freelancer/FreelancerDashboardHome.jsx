@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import {
   ArrowUpRight,
   CalendarClock,
@@ -14,141 +17,6 @@ import {
   Wallet,
 } from "lucide-react";
 
-const stats = [
-  {
-    label: "Active Projects",
-    value: "4",
-    helper: "2 require updates this week",
-    icon: Handshake,
-    tone: "brown",
-  },
-  {
-    label: "Pending Invites",
-    value: "2",
-    helper: "Awaiting your response",
-    icon: Inbox,
-    tone: "amber",
-  },
-  {
-    label: "Funded Milestones",
-    value: "3",
-    helper: "Ready for submission",
-    icon: ListChecks,
-    tone: "green",
-  },
-  {
-    label: "Wallet Balance",
-    value: "₹12,400",
-    helper: "Sandbox released earnings",
-    icon: Wallet,
-    tone: "blue",
-  },
-];
-
-const projectInvites = [
-  {
-    id: 1,
-    title: "E-commerce Landing Page",
-    client: "Rahul Mehta",
-    budget: "₹18,000",
-    deadline: "28 Jun",
-    summary: "Frontend landing page with payment CTA and admin preview.",
-    status: "New Invite",
-  },
-  {
-    id: 2,
-    title: "Portfolio Website Redesign",
-    client: "Ananya Studio",
-    budget: "₹12,500",
-    deadline: "02 Jul",
-    summary: "Modern portfolio revamp with responsive animations.",
-    status: "Review Terms",
-  },
-];
-
-const activeProjects = [
-  {
-    id: 1,
-    title: "TrustOnes Client Portal",
-    client: "Cara Wilson",
-    budget: "₹42,000",
-    progress: 68,
-    completed: 3,
-    total: 5,
-    next: "Submit dashboard polish",
-    status: "Active",
-  },
-  {
-    id: 2,
-    title: "Healthcare Appointment UI",
-    client: "MedLink Labs",
-    budget: "₹30,000",
-    progress: 42,
-    completed: 2,
-    total: 6,
-    next: "Waiting for milestone funding",
-    status: "Accepted",
-  },
-];
-
-const milestones = [
-  {
-    id: 1,
-    title: "Backend API Integration",
-    project: "TrustOnes Client Portal",
-    amount: "₹8,500",
-    due: "Tomorrow",
-    status: "FUNDED",
-  },
-  {
-    id: 2,
-    title: "Responsive Dashboard UI",
-    project: "Healthcare Appointment UI",
-    amount: "₹6,000",
-    due: "21 Jun",
-    status: "REVISION_REQUESTED",
-  },
-  {
-    id: 3,
-    title: "Final Deployment",
-    project: "Portfolio Website Redesign",
-    amount: "₹4,500",
-    due: "24 Jun",
-    status: "PENDING",
-  },
-];
-
-const activities = [
-  {
-    id: 1,
-    title: "Milestone funded",
-    description: "Backend API Integration funded by Cara Wilson.",
-    time: "2 hours ago",
-    icon: IndianRupee,
-  },
-  {
-    id: 2,
-    title: "New project invite",
-    description: "Rahul Mehta invited you to E-commerce Landing Page.",
-    time: "Yesterday",
-    icon: Inbox,
-  },
-  {
-    id: 3,
-    title: "Revision requested",
-    description: "Client requested changes in Responsive Dashboard UI.",
-    time: "2 days ago",
-    icon: FileText,
-  },
-  {
-    id: 4,
-    title: "Submission approved",
-    description: "Wireframe milestone approved successfully.",
-    time: "3 days ago",
-    icon: CheckCircle2,
-  },
-];
-
 function toneClasses(tone) {
   const tones = {
     brown: "bg-[#fff7ed] text-[#7c341d] border-[#f0d7c3]",
@@ -161,25 +29,163 @@ function toneClasses(tone) {
 }
 
 function StatusBadge({ status }) {
+  const normalizedStatus = String(status || "PENDING");
+
   const styles = {
     FUNDED: "bg-[#ecfdf5] text-[#047857] border-[#a7f3d0]",
     REVISION_REQUESTED: "bg-[#fffbeb] text-[#b45309] border-[#fde68a]",
     PENDING: "bg-[#f8fafc] text-[#64748b] border-[#e2e8f0]",
     ACTIVE: "bg-[#eff6ff] text-[#1d4ed8] border-[#bfdbfe]",
+    SUBMITTED: "bg-[#f5f3ff] text-[#6d28d9] border-[#ddd6fe]",
+    APPROVED: "bg-[#ecfdf5] text-[#047857] border-[#a7f3d0]",
+    IN_PROGRESS: "bg-[#eff6ff] text-[#1d4ed8] border-[#bfdbfe]",
+    REJECTED: "bg-[#fffbeb] text-[#b45309] border-[#fde68a]",
   };
 
   return (
     <span
       className={`rounded-full border px-2.5 py-1 text-[11px] font-black tracking-wide ${
-        styles[status] || styles.PENDING
+        styles[normalizedStatus] || styles.PENDING
       }`}
     >
-      {status.replace("_", " ")}
+      {normalizedStatus.split("_").join(" ")}
     </span>
   );
 }
 
+function EmptyState({ message }) {
+  return (
+    <div className="rounded-[1.5rem] border border-dashed border-[#d7c3b2] bg-[#fffaf3] p-6 text-center">
+      <p className="text-sm font-bold text-[#9b7a64]">{message}</p>
+    </div>
+  );
+}
+
 export default function FreelancerDashboardHome() {
+  const [dashboard, setDashboard] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadDashboard() {
+      try {
+        setLoading(true);
+        setErrorMessage("");
+
+        const response = await fetch("/api/freelancer/dashboard", {
+          method: "GET",
+          cache: "no-store",
+        });
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          throw new Error(result.message || "Unable to load dashboard.");
+        }
+
+        if (!ignore) {
+          setDashboard(result.data);
+        }
+      } catch (error) {
+        if (!ignore) {
+          setErrorMessage(error.message || "Unable to load dashboard.");
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadDashboard();
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  const dashboardStats = [
+    {
+      label: "Active Projects",
+      value: String(dashboard?.stats?.activeProjects ?? 0),
+      helper: "Currently assigned to you",
+      icon: Handshake,
+      tone: "brown",
+    },
+    {
+      label: "Pending Proposals",
+      value: String(dashboard?.stats?.pendingProposals ?? 0),
+      helper: "Awaiting client response",
+      icon: Inbox,
+      tone: "amber",
+    },
+    {
+      label: "Active Milestones",
+      value: String(dashboard?.stats?.activeMilestones ?? 0),
+      helper: "In progress or submitted",
+      icon: ListChecks,
+      tone: "green",
+    },
+    {
+      label: "Approved Earnings",
+      value: dashboard?.stats?.approvedEarnings || "₹0",
+      helper: "Approved milestone value",
+      icon: Wallet,
+      tone: "blue",
+    },
+  ];
+
+  const dashboardProposals = dashboard?.pendingProposals || [];
+  const dashboardProjects = dashboard?.activeProjects || [];
+  const dashboardMilestones = dashboard?.upcomingMilestones || [];
+
+  const activityIconMap = {
+    MILESTONE: ListChecks,
+    SUBMISSION: UploadCloud,
+    REVISION: FileText,
+    APPROVED: CheckCircle2,
+    PAYMENT: IndianRupee,
+    INVITE: Inbox,
+  };
+
+  const dashboardActivities =
+    dashboard?.recentActivities?.map((activity) => ({
+      ...activity,
+      icon: activityIconMap[activity.type] || FileText,
+    })) || [];
+
+  const pendingResponsesCount = dashboard?.stats?.pendingProposals ?? 0;
+  const activeMilestoneCount = dashboard?.stats?.activeMilestones ?? 0;
+
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-[1480px] space-y-6">
+        <div className="rounded-[2rem] border border-[#eadfd2] bg-[#fffaf3] p-8 shadow-sm">
+          <p className="text-sm font-bold text-[#7c6858]">
+            Loading freelancer dashboard...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (errorMessage) {
+    return (
+      <div className="mx-auto max-w-[1480px] space-y-6">
+        <div className="rounded-[2rem] border border-[#fecaca] bg-[#fff7f7] p-8 shadow-sm">
+          <h2 className="text-xl font-black text-[#24130c]">
+            Unable to load dashboard
+          </h2>
+          <p className="mt-2 text-sm font-semibold text-[#b91c1c]">
+            {errorMessage}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-[1480px] space-y-6">
       <section className="grid gap-5 xl:grid-cols-[1.6fr_0.9fr]">
@@ -195,27 +201,27 @@ export default function FreelancerDashboardHome() {
                 </p>
 
                 <h1 className="mt-3 max-w-2xl text-3xl font-black tracking-[-0.04em] text-[#24130c] sm:text-4xl">
-                  Welcome back, Kushaagra. Your secure deals are moving forward.
+                  Welcome back. Your secure deals are moving forward.
                 </h1>
 
                 <p className="mt-4 max-w-xl text-sm leading-6 text-[#7c6858]">
-                  Track invites, funded milestones, deadlines, submissions, and
+                  Track proposals, active projects, milestones, deadlines, and
                   client actions from one trusted workspace.
                 </p>
               </div>
 
               <div className="grid gap-3 sm:grid-cols-2 lg:w-[340px]">
                 <button className="rounded-2xl bg-[#6f2e1c] px-5 py-4 text-left text-sm font-black text-white shadow-lg shadow-[#6f2e1c]/20 transition hover:bg-[#5b2416]">
-                  View Invites
+                  View Proposals
                   <span className="mt-1 block text-xs font-semibold text-white/65">
-                    2 pending responses
+                    {pendingResponsesCount} pending responses
                   </span>
                 </button>
 
                 <button className="rounded-2xl border border-[#eadfd2] bg-white px-5 py-4 text-left text-sm font-black text-[#6f2e1c] shadow-sm transition hover:bg-[#fff7ed]">
                   Open Deal Room
                   <span className="mt-1 block text-xs font-semibold text-[#9b7a64]">
-                    Continue negotiation
+                    Continue active work
                   </span>
                 </button>
               </div>
@@ -274,7 +280,7 @@ export default function FreelancerDashboardHome() {
       </section>
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {stats.map((stat) => {
+        {dashboardStats.map((stat) => {
           const Icon = stat.icon;
 
           return (
@@ -314,10 +320,10 @@ export default function FreelancerDashboardHome() {
           <div className="mb-5 flex items-center justify-between">
             <div>
               <h2 className="text-xl font-black tracking-[-0.03em] text-[#24130c]">
-                Pending Project Invites
+                Pending Proposals
               </h2>
               <p className="mt-1 text-sm font-medium text-[#9b7a64]">
-                Accept or reject client invitations
+                Track proposals waiting for client response
               </p>
             </div>
 
@@ -326,63 +332,67 @@ export default function FreelancerDashboardHome() {
             </button>
           </div>
 
-          <div className="grid gap-4 lg:grid-cols-2">
-            {projectInvites.map((invite) => (
-              <div
-                key={invite.id}
-                className="rounded-[1.5rem] border border-[#eadfd2] bg-[#fffaf3] p-5"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <StatusBadge status="PENDING" />
-                    <h3 className="mt-4 text-lg font-black tracking-[-0.03em] text-[#24130c]">
-                      {invite.title}
-                    </h3>
-                    <p className="mt-1 text-sm font-semibold text-[#9b7a64]">
-                      Client: {invite.client}
-                    </p>
+          {dashboardProposals.length === 0 ? (
+            <EmptyState message="No pending proposals right now." />
+          ) : (
+            <div className="grid gap-4 lg:grid-cols-2">
+              {dashboardProposals.map((invite) => (
+                <div
+                  key={invite.id}
+                  className="rounded-[1.5rem] border border-[#eadfd2] bg-[#fffaf3] p-5"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <StatusBadge status="PENDING" />
+                      <h3 className="mt-4 text-lg font-black tracking-[-0.03em] text-[#24130c]">
+                        {invite.title}
+                      </h3>
+                      <p className="mt-1 text-sm font-semibold text-[#9b7a64]">
+                        Client: {invite.client}
+                      </p>
+                    </div>
+
+                    <button className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-[#6f2e1c] shadow-sm">
+                      <ArrowUpRight size={18} />
+                    </button>
                   </div>
 
-                  <button className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-[#6f2e1c] shadow-sm">
-                    <ArrowUpRight size={18} />
-                  </button>
-                </div>
+                  <p className="mt-4 line-clamp-3 text-sm leading-6 text-[#7c6858]">
+                    {invite.summary}
+                  </p>
 
-                <p className="mt-4 text-sm leading-6 text-[#7c6858]">
-                  {invite.summary}
-                </p>
+                  <div className="mt-5 grid grid-cols-2 gap-3">
+                    <div className="rounded-2xl bg-white p-3">
+                      <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#b79d88]">
+                        Budget
+                      </p>
+                      <p className="mt-1 text-sm font-black text-[#24130c]">
+                        {invite.budget}
+                      </p>
+                    </div>
 
-                <div className="mt-5 grid grid-cols-2 gap-3">
-                  <div className="rounded-2xl bg-white p-3">
-                    <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#b79d88]">
-                      Budget
-                    </p>
-                    <p className="mt-1 text-sm font-black text-[#24130c]">
-                      {invite.budget}
-                    </p>
+                    <div className="rounded-2xl bg-white p-3">
+                      <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#b79d88]">
+                        Deadline
+                      </p>
+                      <p className="mt-1 text-sm font-black text-[#24130c]">
+                        {invite.deadline}
+                      </p>
+                    </div>
                   </div>
 
-                  <div className="rounded-2xl bg-white p-3">
-                    <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#b79d88]">
-                      Deadline
-                    </p>
-                    <p className="mt-1 text-sm font-black text-[#24130c]">
-                      {invite.deadline}
-                    </p>
+                  <div className="mt-5 flex gap-3">
+                    <button className="h-11 flex-1 rounded-xl bg-[#6f2e1c] text-sm font-black text-white transition hover:bg-[#5b2416]">
+                      View
+                    </button>
+                    <button className="h-11 flex-1 rounded-xl border border-[#eadfd2] bg-white text-sm font-black text-[#6f2e1c] transition hover:bg-[#fff7ed]">
+                      Details
+                    </button>
                   </div>
                 </div>
-
-                <div className="mt-5 flex gap-3">
-                  <button className="h-11 flex-1 rounded-xl bg-[#6f2e1c] text-sm font-black text-white transition hover:bg-[#5b2416]">
-                    Accept
-                  </button>
-                  <button className="h-11 flex-1 rounded-xl border border-[#eadfd2] bg-white text-sm font-black text-[#6f2e1c] transition hover:bg-[#fff7ed]">
-                    Reject
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="rounded-[2rem] border border-[#eadfd2] bg-white/80 p-6 shadow-sm">
@@ -399,36 +409,40 @@ export default function FreelancerDashboardHome() {
             <CalendarClock className="text-[#6f2e1c]" size={22} />
           </div>
 
-          <div className="space-y-3">
-            {milestones.map((item) => (
-              <div
-                key={item.id}
-                className="rounded-2xl border border-[#eadfd2] bg-[#fffaf3] p-4"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h3 className="text-sm font-black text-[#24130c]">
-                      {item.title}
-                    </h3>
-                    <p className="mt-1 text-xs font-semibold text-[#9b7a64]">
-                      {item.project}
+          {dashboardMilestones.length === 0 ? (
+            <EmptyState message="No upcoming milestones found." />
+          ) : (
+            <div className="space-y-3">
+              {dashboardMilestones.map((item) => (
+                <div
+                  key={item.id}
+                  className="rounded-2xl border border-[#eadfd2] bg-[#fffaf3] p-4"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h3 className="text-sm font-black text-[#24130c]">
+                        {item.title}
+                      </h3>
+                      <p className="mt-1 text-xs font-semibold text-[#9b7a64]">
+                        {item.project}
+                      </p>
+                    </div>
+
+                    <p className="text-xs font-black text-[#b45309]">
+                      {item.due}
                     </p>
                   </div>
 
-                  <p className="text-xs font-black text-[#b45309]">
-                    {item.due}
-                  </p>
+                  <div className="mt-3 flex items-center justify-between">
+                    <StatusBadge status={item.status} />
+                    <p className="text-sm font-black text-[#24130c]">
+                      {item.amount}
+                    </p>
+                  </div>
                 </div>
-
-                <div className="mt-3 flex items-center justify-between">
-                  <StatusBadge status={item.status} />
-                  <p className="text-sm font-black text-[#24130c]">
-                    {item.amount}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -449,56 +463,60 @@ export default function FreelancerDashboardHome() {
             </button>
           </div>
 
-          <div className="space-y-4">
-            {activeProjects.map((project) => (
-              <div
-                key={project.id}
-                className="rounded-[1.5rem] border border-[#eadfd2] bg-[#fffaf3] p-5"
-              >
-                <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
-                  <div>
-                    <StatusBadge status="ACTIVE" />
-                    <h3 className="mt-3 text-lg font-black tracking-[-0.03em] text-[#24130c]">
-                      {project.title}
-                    </h3>
-                    <p className="mt-1 text-sm font-semibold text-[#9b7a64]">
-                      Client: {project.client} • Budget: {project.budget}
+          {dashboardProjects.length === 0 ? (
+            <EmptyState message="No active projects assigned yet." />
+          ) : (
+            <div className="space-y-4">
+              {dashboardProjects.map((project) => (
+                <div
+                  key={project.id}
+                  className="rounded-[1.5rem] border border-[#eadfd2] bg-[#fffaf3] p-5"
+                >
+                  <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+                    <div>
+                      <StatusBadge status={project.status || "ACTIVE"} />
+                      <h3 className="mt-3 text-lg font-black tracking-[-0.03em] text-[#24130c]">
+                        {project.title}
+                      </h3>
+                      <p className="mt-1 text-sm font-semibold text-[#9b7a64]">
+                        Client: {project.client} • Budget: {project.budget}
+                      </p>
+                    </div>
+
+                    <button className="rounded-xl border border-[#eadfd2] bg-white px-4 py-2 text-sm font-black text-[#6f2e1c] transition hover:bg-[#fff7ed]">
+                      Open Deal Room
+                    </button>
+                  </div>
+
+                  <div className="mt-5">
+                    <div className="mb-2 flex items-center justify-between text-xs font-bold text-[#9b7a64]">
+                      <span>
+                        Milestones {project.completed}/{project.total} completed
+                      </span>
+                      <span>{project.progress}%</span>
+                    </div>
+
+                    <div className="h-2.5 overflow-hidden rounded-full bg-[#eadfd2]">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-[#6f2e1c] to-[#f4b454]"
+                        style={{ width: `${project.progress}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mt-4 flex items-center gap-2 rounded-2xl bg-white px-4 py-3">
+                    <Clock3 size={16} className="text-[#b45309]" />
+                    <p className="text-sm font-semibold text-[#7c6858]">
+                      Next action:{" "}
+                      <span className="font-black text-[#24130c]">
+                        {project.next}
+                      </span>
                     </p>
                   </div>
-
-                  <button className="rounded-xl border border-[#eadfd2] bg-white px-4 py-2 text-sm font-black text-[#6f2e1c] transition hover:bg-[#fff7ed]">
-                    Open Deal Room
-                  </button>
                 </div>
-
-                <div className="mt-5">
-                  <div className="mb-2 flex items-center justify-between text-xs font-bold text-[#9b7a64]">
-                    <span>
-                      Milestones {project.completed}/{project.total} completed
-                    </span>
-                    <span>{project.progress}%</span>
-                  </div>
-
-                  <div className="h-2.5 overflow-hidden rounded-full bg-[#eadfd2]">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-[#6f2e1c] to-[#f4b454]"
-                      style={{ width: `${project.progress}%` }}
-                    />
-                  </div>
-                </div>
-
-                <div className="mt-4 flex items-center gap-2 rounded-2xl bg-white px-4 py-3">
-                  <Clock3 size={16} className="text-[#b45309]" />
-                  <p className="text-sm font-semibold text-[#7c6858]">
-                    Next action:{" "}
-                    <span className="font-black text-[#24130c]">
-                      {project.next}
-                    </span>
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="rounded-[2rem] border border-[#eadfd2] bg-white/80 p-6 shadow-sm">
@@ -515,31 +533,35 @@ export default function FreelancerDashboardHome() {
             <ShieldCheck className="text-[#047857]" size={22} />
           </div>
 
-          <div className="space-y-5">
-            {activities.map((activity) => {
-              const Icon = activity.icon;
+          {dashboardActivities.length === 0 ? (
+            <EmptyState message="No recent activity yet." />
+          ) : (
+            <div className="space-y-5">
+              {dashboardActivities.map((activity) => {
+                const Icon = activity.icon;
 
-              return (
-                <div key={activity.id} className="flex gap-4">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#fff7ed] text-[#6f2e1c]">
-                    <Icon size={17} />
-                  </div>
+                return (
+                  <div key={activity.id} className="flex gap-4">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#fff7ed] text-[#6f2e1c]">
+                      <Icon size={17} />
+                    </div>
 
-                  <div className="min-w-0">
-                    <h3 className="text-sm font-black text-[#24130c]">
-                      {activity.title}
-                    </h3>
-                    <p className="mt-1 text-sm leading-5 text-[#7c6858]">
-                      {activity.description}
-                    </p>
-                    <p className="mt-1 text-xs font-bold text-[#b79d88]">
-                      {activity.time}
-                    </p>
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-black text-[#24130c]">
+                        {activity.title}
+                      </h3>
+                      <p className="mt-1 text-sm leading-5 text-[#7c6858]">
+                        {activity.description}
+                      </p>
+                      <p className="mt-1 text-xs font-bold text-[#b79d88]">
+                        {activity.time}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </section>
 
@@ -551,11 +573,12 @@ export default function FreelancerDashboardHome() {
             </p>
 
             <h2 className="mt-3 text-2xl font-black tracking-[-0.04em]">
-              You have 3 funded milestones waiting for work submission.
+              You have {activeMilestoneCount} active milestones waiting for
+              progress or submission.
             </h2>
 
             <p className="mt-2 max-w-2xl text-sm leading-6 text-white/65">
-              Submit funded milestones with notes, file links, GitHub links, or
+              Submit active milestones with notes, file links, GitHub links, or
               demo URLs. Each submission will later become part of the audit
               timeline.
             </p>

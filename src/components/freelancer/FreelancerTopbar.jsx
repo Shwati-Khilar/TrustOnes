@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
 import {
   Bell,
   Search,
@@ -6,7 +9,81 @@ import {
   ChevronDown,
 } from "lucide-react";
 
+function getInitial(name, email) {
+  const value = name || email || "F";
+  return value.charAt(0).toUpperCase();
+}
+
+function getFirstName(name, email) {
+  if (name) return name.split(" ")[0];
+  if (email) return email.split("@")[0];
+  return "Freelancer";
+}
+
 export default function FreelancerTopbar() {
+  const [user, setUser] = useState(null);
+  const [topbarData, setTopbarData] = useState({
+    walletBalance: "₹0",
+    messageCount: 0,
+    notificationCount: 0,
+  });
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadTopbarData() {
+      try {
+        const [userResponse, dashboardResponse] = await Promise.all([
+          fetch("/api/user/me", {
+            method: "GET",
+            cache: "no-store",
+          }),
+          fetch("/api/freelancer/dashboard", {
+            method: "GET",
+            cache: "no-store",
+          }),
+        ]);
+
+        const userResult = await userResponse.json();
+        const dashboardResult = await dashboardResponse.json();
+
+        if (!ignore && userResponse.ok && userResult?.user) {
+          setUser(userResult.user);
+        }
+
+        if (!ignore && dashboardResponse.ok && dashboardResult?.success) {
+          const stats = dashboardResult.data?.stats || {};
+
+          const notificationCount =
+            Number(stats.pendingProposals || 0) +
+            Number(stats.activeMilestones || 0);
+
+          setTopbarData({
+            walletBalance: stats.approvedEarnings || "₹0",
+            messageCount: 0,
+            notificationCount,
+          });
+        }
+      } catch (error) {
+        console.error("FREELANCER_TOPBAR_ERROR", error);
+      }
+    }
+
+    loadTopbarData();
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  const displayName = useMemo(() => {
+    return getFirstName(user?.name, user?.email);
+  }, [user]);
+
+  const initial = useMemo(() => {
+    return getInitial(user?.name, user?.email);
+  }, [user]);
+
   return (
     <header className="sticky top-0 z-20 border-b border-[#eadfd2]/80 bg-[#f8f4ed]/85 px-5 py-4 backdrop-blur-xl sm:px-7 lg:px-8">
       <div className="flex items-center justify-between gap-5">
@@ -26,31 +103,37 @@ export default function FreelancerTopbar() {
         <div className="flex items-center gap-3">
           <button className="hidden h-11 items-center gap-2 rounded-2xl border border-[#eadfd2] bg-white/80 px-4 text-sm font-bold text-[#6f2e1c] shadow-sm transition hover:bg-white sm:flex">
             <Wallet size={17} />
-            ₹12,400
+            {topbarData.walletBalance}
           </button>
 
           <button className="relative flex h-11 w-11 items-center justify-center rounded-2xl border border-[#eadfd2] bg-white/80 text-[#6f2e1c] shadow-sm transition hover:bg-white">
             <MessageSquare size={18} />
-            <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#6f2e1c] px-1 text-[10px] font-black text-white">
-              3
-            </span>
+
+            {topbarData.messageCount > 0 && (
+              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#6f2e1c] px-1 text-[10px] font-black text-white">
+                {topbarData.messageCount}
+              </span>
+            )}
           </button>
 
           <button className="relative flex h-11 w-11 items-center justify-center rounded-2xl border border-[#eadfd2] bg-white/80 text-[#6f2e1c] shadow-sm transition hover:bg-white">
             <Bell size={18} />
-            <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#f4b454] px-1 text-[10px] font-black text-[#32180e]">
-              5
-            </span>
+
+            {topbarData.notificationCount > 0 && (
+              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#f4b454] px-1 text-[10px] font-black text-[#32180e]">
+                {topbarData.notificationCount}
+              </span>
+            )}
           </button>
 
           <button className="flex items-center gap-3 rounded-2xl border border-[#eadfd2] bg-white/80 px-3 py-2 shadow-sm transition hover:bg-white">
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#35170f] text-sm font-black text-[#f8d6a3]">
-              K
+              {initial}
             </div>
 
             <div className="hidden text-left lg:block">
               <p className="text-sm font-extrabold text-[#24130c]">
-                Kushaagra
+                {displayName}
               </p>
               <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#9b7a64]">
                 Freelancer

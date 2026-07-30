@@ -42,21 +42,22 @@ enum MilestoneStatus {
 }
 
 model User {
-  id                      String     @id @default(cuid())
+  id                      String             @id @default(cuid())
   name                    String
-  email                   String     @unique
+  email                   String             @unique
   passwordHash            String?
-  provider                String     @default("credentials")
+  provider                String             @default("credentials")
   image                   String?
-  emailVerified           Boolean    @default(false)
+  emailVerified           Boolean            @default(false)
   verificationToken       String?
   verificationTokenExpiry DateTime?
   resetPasswordToken      String?
   resetPasswordExpiry     DateTime?
   role                    UserRole?
-  status                  UserStatus @default(ACTIVE)
-  createdAt               DateTime   @default(now())
-  updatedAt               DateTime   @updatedAt
+  freelancerProfile       FreelancerProfile?
+  status                  UserStatus         @default(ACTIVE)
+  createdAt               DateTime           @default(now())
+  updatedAt               DateTime           @updatedAt
 
   clientProjects     Project[]  @relation("ClientProjects")
   freelancerProjects Project[]  @relation("FreelancerProjects")
@@ -66,12 +67,12 @@ model User {
 }
 
 model Project {
-  id          String     @id @default(cuid())
+  id          String      @id @default(cuid())
   title       String
   description String
   category    String
   proposals   Proposal[]
-  milestones Milestone[]
+  milestones  Milestone[]
 
   budget   Decimal  @db.Decimal(12, 2)
   deadline DateTime
@@ -125,7 +126,7 @@ model Milestone {
 
   title       String
   description String?
-  amount      Decimal @db.Decimal(12, 2)
+  amount      Decimal  @db.Decimal(12, 2)
   dueDate     DateTime
 
   status MilestoneStatus @default(PENDING)
@@ -140,4 +141,44 @@ model Milestone {
   @@index([status])
   @@index([createdAt])
   @@map("milestones")
+}
+
+enum FreelancerAvailability {
+  AVAILABLE
+  BUSY_OPEN
+  NOT_AVAILABLE
+}
+
+enum FreelancerExperienceLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  EXPERT
+}
+
+model FreelancerProfile {
+  id String @id @default(cuid())
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  phone        String?
+  location     String?
+  availability FreelancerAvailability @default(AVAILABLE)
+
+  professionalTitle String?
+  bio               String?
+  experienceLevel   FreelancerExperienceLevel @default(INTERMEDIATE)
+  startingPrice     Decimal?                  @db.Decimal(12, 2)
+
+  skills             String[] @default([])
+  portfolioLinks     Json?
+  educationHighlight String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([availability])
+  @@index([experienceLevel])
+  @@map("freelancer_profiles")
 }
