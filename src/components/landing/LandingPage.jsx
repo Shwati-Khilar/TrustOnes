@@ -139,13 +139,25 @@ const trustCards = [
   },
 ];
 
+function Logo({ className = "" }) {
+  return (
+    <img
+      src="/landing/trustones-logo.png"
+      alt="TrustOnes"
+      className={`object-contain object-left drop-shadow-[0_0_18px_rgba(213,168,91,0.28)] ${className}`}
+    />
+  );
+}
+
 function RoleImageStage({ role, compact = false }) {
   const [failed, setFailed] = useState(false);
 
   return (
     <div
       className={`relative flex w-full items-center justify-center overflow-hidden rounded-[2rem] border border-white/10 bg-[#030507] ${
-        compact ? "min-h-[360px] lg:min-h-[520px]" : "min-h-[460px] lg:min-h-[620px]"
+        compact
+          ? "min-h-[360px] lg:min-h-[500px]"
+          : "min-h-[440px] lg:min-h-[620px]"
       }`}
     >
       <div
@@ -171,8 +183,8 @@ function RoleImageStage({ role, compact = false }) {
           onError={() => setFailed(true)}
           className={`relative z-10 w-full object-contain object-center ${
             compact
-              ? "h-[340px] sm:h-[430px] lg:h-[500px]"
-              : "h-[440px] sm:h-[520px] lg:h-[600px]"
+              ? "h-[340px] sm:h-[430px] lg:h-[480px]"
+              : "h-[430px] sm:h-[520px] lg:h-[590px]"
           }`}
         />
       )}
@@ -182,7 +194,7 @@ function RoleImageStage({ role, compact = false }) {
 
 function HeroRoleVisual({ activeRole, activeRoleId, setActiveRoleId }) {
   return (
-    <div className="relative mx-auto w-full max-w-[680px]">
+    <div className="relative mx-auto w-full max-w-[720px]">
       <div className="absolute -left-10 top-16 h-60 w-60 rounded-full bg-[#d5a85b]/20 blur-3xl" />
       <div className="absolute -right-8 bottom-10 h-64 w-64 rounded-full bg-[#16446b]/25 blur-3xl" />
 
@@ -198,7 +210,7 @@ function HeroRoleVisual({ activeRole, activeRoleId, setActiveRoleId }) {
           </div>
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-[0.46fr_0.54fr] lg:items-stretch">
+        <div className="grid gap-4 lg:grid-cols-[0.44fr_0.56fr] lg:items-stretch">
           <div className="flex flex-col gap-3">
             {roles.map((role) => {
               const Icon = role.icon;
@@ -313,21 +325,13 @@ export default function LandingPage() {
       />
 
       <nav className="sticky top-0 z-50 border-b border-white/10 bg-black/60 backdrop-blur-2xl">
-        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-5 sm:px-8">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[#d5a85b]/35 bg-[#d5a85b]/15 text-sm font-black text-[#f5c66f] shadow-lg shadow-[#d5a85b]/10">
-              T
-            </div>
-
-            <div>
-              <p className="text-base font-black tracking-[-0.03em] text-white">
-                TrustOnes
-              </p>
-
-              <p className="hidden text-[10px] font-black uppercase tracking-[0.24em] text-white/40 sm:block">
-                Freelance Trust System
-              </p>
-            </div>
+        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between gap-4 px-5 sm:px-8">
+          <Link
+            href="/"
+            className="group flex min-w-[190px] items-center"
+            aria-label="TrustOnes home"
+          >
+            <Logo className="h-12 w-[220px] transition group-hover:opacity-90 sm:h-14 sm:w-[260px]" />
           </Link>
 
           <div className="hidden items-center gap-8 text-sm font-bold text-white/55 md:flex">
@@ -362,7 +366,7 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      <section className="relative z-10 mx-auto grid min-h-[calc(100vh-80px)] max-w-7xl items-center gap-12 px-5 py-16 sm:px-8 lg:grid-cols-[0.9fr_1.1fr] lg:py-20">
+      <section className="relative z-10 mx-auto grid min-h-[calc(100vh-80px)] max-w-7xl items-center gap-12 px-5 py-16 sm:px-8 lg:grid-cols-[0.84fr_1.16fr] lg:py-20">
         <div className="max-w-2xl">
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#d5a85b]/25 bg-[#d5a85b]/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-[#f5c66f] sm:text-[11px]">
             <Sparkles size={14} />
@@ -607,7 +611,7 @@ export default function LandingPage() {
 
                 <Link
                   href={activeRole.href}
-                  className="mt-8 inline-flex h-13 items-center justify-center rounded-2xl bg-[#d5a85b] px-5 py-4 text-sm font-black text-[#120d08] transition hover:bg-[#efc978]"
+                  className="mt-8 inline-flex items-center justify-center rounded-2xl bg-[#d5a85b] px-5 py-4 text-sm font-black text-[#120d08] transition hover:bg-[#efc978]"
                 >
                   Continue as {activeRole.title}
                 </Link>
@@ -685,6 +689,8 @@ export default function LandingPage() {
 
       <section className="relative z-10 mx-auto max-w-7xl px-5 py-16 sm:px-8 lg:py-20">
         <div className="rounded-[2.5rem] border border-[#d5a85b]/20 bg-[#100d09] px-6 py-16 text-center text-white shadow-2xl shadow-black/50 sm:px-10">
+          <Logo className="mx-auto mb-8 h-12 w-[240px] opacity-90" />
+
           <h2 className="mx-auto max-w-3xl text-4xl font-black tracking-[-0.06em] sm:text-6xl">
             Start your next freelance deal with clarity.
           </h2>
@@ -713,8 +719,11 @@ export default function LandingPage() {
       </section>
 
       <footer className="relative z-10 border-t border-white/10 px-5 py-8 sm:px-8">
-        <div className="mx-auto flex max-w-7xl flex-col justify-between gap-4 text-sm font-semibold text-white/35 md:flex-row md:items-center">
-          <p>© 2026 TrustOnes. Built for safer freelance collaboration.</p>
+        <div className="mx-auto flex max-w-7xl flex-col justify-between gap-5 text-sm font-semibold text-white/35 md:flex-row md:items-center">
+          <div className="flex flex-col gap-3">
+            <Logo className="h-10 w-[190px] opacity-90" />
+            <p>© 2026 TrustOnes. Built for safer freelance collaboration.</p>
+          </div>
 
           <div className="flex gap-5">
             <Link href="/login" className="hover:text-[#d5a85b]">
