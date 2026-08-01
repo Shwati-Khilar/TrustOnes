@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
   ArrowUpRight,
@@ -178,6 +179,7 @@ export default function FreelancerDashboardHome() {
           <h2 className="text-xl font-black text-[#24130c]">
             Unable to load dashboard
           </h2>
+
           <p className="mt-2 text-sm font-semibold text-[#b91c1c]">
             {errorMessage}
           </p>
@@ -211,19 +213,25 @@ export default function FreelancerDashboardHome() {
               </div>
 
               <div className="grid gap-3 sm:grid-cols-2 lg:w-[340px]">
-                <button className="rounded-2xl bg-[#6f2e1c] px-5 py-4 text-left text-sm font-black text-white shadow-lg shadow-[#6f2e1c]/20 transition hover:bg-[#5b2416]">
+                <Link
+                  href="/freelancer/invites"
+                  className="rounded-2xl bg-[#6f2e1c] px-5 py-4 text-left text-sm font-black text-white shadow-lg shadow-[#6f2e1c]/20 transition hover:bg-[#5b2416]"
+                >
                   View Proposals
                   <span className="mt-1 block text-xs font-semibold text-white/65">
                     {pendingResponsesCount} pending responses
                   </span>
-                </button>
+                </Link>
 
-                <button className="rounded-2xl border border-[#eadfd2] bg-white px-5 py-4 text-left text-sm font-black text-[#6f2e1c] shadow-sm transition hover:bg-[#fff7ed]">
+                <Link
+                  href="/freelancer/deal-rooms"
+                  className="rounded-2xl border border-[#eadfd2] bg-white px-5 py-4 text-left text-sm font-black text-[#6f2e1c] shadow-sm transition hover:bg-[#fff7ed]"
+                >
                   Open Deal Room
                   <span className="mt-1 block text-xs font-semibold text-[#9b7a64]">
                     Continue active work
                   </span>
-                </button>
+                </Link>
               </div>
             </div>
           </div>
@@ -264,9 +272,7 @@ export default function FreelancerDashboardHome() {
 
             <div className="rounded-2xl bg-white p-3">
               <p className="text-sm font-black text-[#24130c]">18</p>
-              <p className="text-[11px] font-semibold text-[#9b7a64]">
-                Jobs
-              </p>
+              <p className="text-[11px] font-semibold text-[#9b7a64]">Jobs</p>
             </div>
 
             <div className="rounded-2xl bg-white p-3">
@@ -293,6 +299,7 @@ export default function FreelancerDashboardHome() {
                   <p className="text-sm font-bold text-[#7c6858]">
                     {stat.label}
                   </p>
+
                   <h3 className="mt-2 text-3xl font-black tracking-[-0.05em] text-[#24130c]">
                     {stat.value}
                   </h3>
@@ -322,14 +329,18 @@ export default function FreelancerDashboardHome() {
               <h2 className="text-xl font-black tracking-[-0.03em] text-[#24130c]">
                 Pending Proposals
               </h2>
+
               <p className="mt-1 text-sm font-medium text-[#9b7a64]">
                 Track proposals waiting for client response
               </p>
             </div>
 
-            <button className="hidden text-sm font-black text-[#6f2e1c] sm:block">
+            <Link
+              href="/freelancer/invites"
+              className="hidden text-sm font-black text-[#6f2e1c] sm:block"
+            >
               View all →
-            </button>
+            </Link>
           </div>
 
           {dashboardProposals.length === 0 ? (
@@ -344,17 +355,22 @@ export default function FreelancerDashboardHome() {
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <StatusBadge status="PENDING" />
+
                       <h3 className="mt-4 text-lg font-black tracking-[-0.03em] text-[#24130c]">
                         {invite.title}
                       </h3>
+
                       <p className="mt-1 text-sm font-semibold text-[#9b7a64]">
                         Client: {invite.client}
                       </p>
                     </div>
 
-                    <button className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-[#6f2e1c] shadow-sm">
+                    <Link
+                      href="/freelancer/invites"
+                      className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-[#6f2e1c] shadow-sm transition hover:bg-[#fff7ed]"
+                    >
                       <ArrowUpRight size={18} />
-                    </button>
+                    </Link>
                   </div>
 
                   <p className="mt-4 line-clamp-3 text-sm leading-6 text-[#7c6858]">
@@ -366,6 +382,7 @@ export default function FreelancerDashboardHome() {
                       <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#b79d88]">
                         Budget
                       </p>
+
                       <p className="mt-1 text-sm font-black text-[#24130c]">
                         {invite.budget}
                       </p>
@@ -375,6 +392,7 @@ export default function FreelancerDashboardHome() {
                       <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#b79d88]">
                         Deadline
                       </p>
+
                       <p className="mt-1 text-sm font-black text-[#24130c]">
                         {invite.deadline}
                       </p>
@@ -382,12 +400,19 @@ export default function FreelancerDashboardHome() {
                   </div>
 
                   <div className="mt-5 flex gap-3">
-                    <button className="h-11 flex-1 rounded-xl bg-[#6f2e1c] text-sm font-black text-white transition hover:bg-[#5b2416]">
+                    <Link
+                      href="/freelancer/invites"
+                      className="inline-flex h-11 flex-1 items-center justify-center rounded-xl bg-[#6f2e1c] text-sm font-black text-white transition hover:bg-[#5b2416]"
+                    >
                       View
-                    </button>
-                    <button className="h-11 flex-1 rounded-xl border border-[#eadfd2] bg-white text-sm font-black text-[#6f2e1c] transition hover:bg-[#fff7ed]">
+                    </Link>
+
+                    <Link
+                      href="/freelancer/invites"
+                      className="inline-flex h-11 flex-1 items-center justify-center rounded-xl border border-[#eadfd2] bg-white text-sm font-black text-[#6f2e1c] transition hover:bg-[#fff7ed]"
+                    >
                       Details
-                    </button>
+                    </Link>
                   </div>
                 </div>
               ))}
@@ -401,6 +426,7 @@ export default function FreelancerDashboardHome() {
               <h2 className="text-xl font-black tracking-[-0.03em] text-[#24130c]">
                 Upcoming Deadlines
               </h2>
+
               <p className="mt-1 text-sm font-medium text-[#9b7a64]">
                 Your nearest project commitments
               </p>
@@ -414,15 +440,17 @@ export default function FreelancerDashboardHome() {
           ) : (
             <div className="space-y-3">
               {dashboardMilestones.map((item) => (
-                <div
+                <Link
                   key={item.id}
-                  className="rounded-2xl border border-[#eadfd2] bg-[#fffaf3] p-4"
+                  href="/freelancer/milestones"
+                  className="block rounded-2xl border border-[#eadfd2] bg-[#fffaf3] p-4 transition hover:bg-white"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <h3 className="text-sm font-black text-[#24130c]">
                         {item.title}
                       </h3>
+
                       <p className="mt-1 text-xs font-semibold text-[#9b7a64]">
                         {item.project}
                       </p>
@@ -435,11 +463,12 @@ export default function FreelancerDashboardHome() {
 
                   <div className="mt-3 flex items-center justify-between">
                     <StatusBadge status={item.status} />
+
                     <p className="text-sm font-black text-[#24130c]">
                       {item.amount}
                     </p>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           )}
@@ -453,14 +482,18 @@ export default function FreelancerDashboardHome() {
               <h2 className="text-xl font-black tracking-[-0.03em] text-[#24130c]">
                 Active Projects
               </h2>
+
               <p className="mt-1 text-sm font-medium text-[#9b7a64]">
                 Current work progress and next actions
               </p>
             </div>
 
-            <button className="text-sm font-black text-[#6f2e1c]">
+            <Link
+              href="/freelancer/projects"
+              className="text-sm font-black text-[#6f2e1c]"
+            >
               All projects →
-            </button>
+            </Link>
           </div>
 
           {dashboardProjects.length === 0 ? (
@@ -475,17 +508,22 @@ export default function FreelancerDashboardHome() {
                   <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
                     <div>
                       <StatusBadge status={project.status || "ACTIVE"} />
+
                       <h3 className="mt-3 text-lg font-black tracking-[-0.03em] text-[#24130c]">
                         {project.title}
                       </h3>
+
                       <p className="mt-1 text-sm font-semibold text-[#9b7a64]">
                         Client: {project.client} • Budget: {project.budget}
                       </p>
                     </div>
 
-                    <button className="rounded-xl border border-[#eadfd2] bg-white px-4 py-2 text-sm font-black text-[#6f2e1c] transition hover:bg-[#fff7ed]">
+                    <Link
+                      href={`/freelancer/deal-rooms/${project.id}`}
+                      className="inline-flex items-center justify-center rounded-xl border border-[#eadfd2] bg-white px-4 py-2 text-sm font-black text-[#6f2e1c] transition hover:bg-[#fff7ed]"
+                    >
                       Open Deal Room
-                    </button>
+                    </Link>
                   </div>
 
                   <div className="mt-5">
@@ -506,6 +544,7 @@ export default function FreelancerDashboardHome() {
 
                   <div className="mt-4 flex items-center gap-2 rounded-2xl bg-white px-4 py-3">
                     <Clock3 size={16} className="text-[#b45309]" />
+
                     <p className="text-sm font-semibold text-[#7c6858]">
                       Next action:{" "}
                       <span className="font-black text-[#24130c]">
@@ -525,6 +564,7 @@ export default function FreelancerDashboardHome() {
               <h2 className="text-xl font-black tracking-[-0.03em] text-[#24130c]">
                 Recent Activity
               </h2>
+
               <p className="mt-1 text-sm font-medium text-[#9b7a64]">
                 Latest timeline events
               </p>
@@ -550,9 +590,11 @@ export default function FreelancerDashboardHome() {
                       <h3 className="text-sm font-black text-[#24130c]">
                         {activity.title}
                       </h3>
+
                       <p className="mt-1 text-sm leading-5 text-[#7c6858]">
                         {activity.description}
                       </p>
+
                       <p className="mt-1 text-xs font-bold text-[#b79d88]">
                         {activity.time}
                       </p>
@@ -578,16 +620,18 @@ export default function FreelancerDashboardHome() {
             </h2>
 
             <p className="mt-2 max-w-2xl text-sm leading-6 text-white/65">
-              Submit active milestones with notes, file links, GitHub links, or
-              demo URLs. Each submission will later become part of the audit
-              timeline.
+              Submit active milestones with preview proof, demo links, delivery
+              notes, and locked final delivery.
             </p>
           </div>
 
-          <button className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-[#f4b454] px-5 text-sm font-black text-[#2b1810] transition hover:bg-[#ffd28c]">
+          <Link
+            href="/freelancer/milestones"
+            className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-[#f4b454] px-5 text-sm font-black text-[#2b1810] transition hover:bg-[#ffd28c]"
+          >
             <UploadCloud size={18} />
             Submit Work
-          </button>
+          </Link>
         </div>
       </section>
     </div>

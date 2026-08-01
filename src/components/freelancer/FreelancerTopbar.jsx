@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
   Bell,
@@ -89,6 +90,7 @@ export default function FreelancerTopbar() {
       <div className="flex items-center justify-between gap-5">
         <div className="hidden min-w-[280px] max-w-xl flex-1 items-center gap-3 rounded-2xl border border-[#eadfd2] bg-white/80 px-4 py-3 shadow-sm md:flex">
           <Search size={18} className="text-[#9b7a64]" />
+
           <input
             type="text"
             placeholder="Search projects, clients, milestones..."
@@ -101,12 +103,18 @@ export default function FreelancerTopbar() {
         </div>
 
         <div className="flex items-center gap-3">
-          <button className="hidden h-11 items-center gap-2 rounded-2xl border border-[#eadfd2] bg-white/80 px-4 text-sm font-bold text-[#6f2e1c] shadow-sm transition hover:bg-white sm:flex">
+          <Link
+            href="/freelancer/wallet"
+            className="hidden h-11 items-center gap-2 rounded-2xl border border-[#eadfd2] bg-white/80 px-4 text-sm font-bold text-[#6f2e1c] shadow-sm transition hover:bg-white sm:flex"
+          >
             <Wallet size={17} />
             {topbarData.walletBalance}
-          </button>
+          </Link>
 
-          <button className="relative flex h-11 w-11 items-center justify-center rounded-2xl border border-[#eadfd2] bg-white/80 text-[#6f2e1c] shadow-sm transition hover:bg-white">
+          <Link
+            href="/freelancer/messages"
+            className="relative flex h-11 w-11 items-center justify-center rounded-2xl border border-[#eadfd2] bg-white/80 text-[#6f2e1c] shadow-sm transition hover:bg-white"
+          >
             <MessageSquare size={18} />
 
             {topbarData.messageCount > 0 && (
@@ -114,9 +122,12 @@ export default function FreelancerTopbar() {
                 {topbarData.messageCount}
               </span>
             )}
-          </button>
+          </Link>
 
-          <button className="relative flex h-11 w-11 items-center justify-center rounded-2xl border border-[#eadfd2] bg-white/80 text-[#6f2e1c] shadow-sm transition hover:bg-white">
+          <Link
+            href="/freelancer/notifications"
+            className="relative flex h-11 w-11 items-center justify-center rounded-2xl border border-[#eadfd2] bg-white/80 text-[#6f2e1c] shadow-sm transition hover:bg-white"
+          >
             <Bell size={18} />
 
             {topbarData.notificationCount > 0 && (
@@ -124,9 +135,12 @@ export default function FreelancerTopbar() {
                 {topbarData.notificationCount}
               </span>
             )}
-          </button>
+          </Link>
 
-          <button className="flex items-center gap-3 rounded-2xl border border-[#eadfd2] bg-white/80 px-3 py-2 shadow-sm transition hover:bg-white">
+          <Link
+            href="/freelancer/profile"
+            className="flex items-center gap-3 rounded-2xl border border-[#eadfd2] bg-white/80 px-3 py-2 shadow-sm transition hover:bg-white"
+          >
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#35170f] text-sm font-black text-[#f8d6a3]">
               {initial}
             </div>
@@ -135,13 +149,14 @@ export default function FreelancerTopbar() {
               <p className="text-sm font-extrabold text-[#24130c]">
                 {displayName}
               </p>
+
               <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#9b7a64]">
                 Freelancer
               </p>
             </div>
 
             <ChevronDown size={16} className="hidden text-[#9b7a64] lg:block" />
-          </button>
+          </Link>
         </div>
       </div>
     </header>

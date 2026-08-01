@@ -1,23 +1,23 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
+import { useEffect, useMemo, useState } from "react";
 import {
-  LayoutDashboard,
-  FolderKanban,
-  Inbox,
-  Handshake,
-  MessageSquare,
-  ListChecks,
-  ShieldAlert,
-  Wallet,
-  Star,
   Bell,
-  UserRound,
-  Settings,
+  FolderKanban,
+  Handshake,
+  Inbox,
+  LayoutDashboard,
+  ListChecks,
   LogOut,
+  MessageSquare,
+  Settings,
+  ShieldAlert,
+  Star,
+  UserRound,
+  Wallet,
 } from "lucide-react";
 
 const navItems = [
@@ -25,70 +25,183 @@ const navItems = [
     label: "Dashboard",
     href: "/freelancer/dashboard",
     icon: LayoutDashboard,
+    badgeKey: null,
   },
   {
     label: "Projects",
     href: "/freelancer/projects",
     icon: FolderKanban,
+    badgeKey: null,
   },
   {
     label: "Invites",
     href: "/freelancer/invites",
     icon: Inbox,
-    badge: "2",
+    badgeKey: "invites",
   },
   {
     label: "Deal Rooms",
     href: "/freelancer/deal-rooms",
     icon: Handshake,
+    badgeKey: null,
   },
   {
     label: "Messages",
     href: "/freelancer/messages",
     icon: MessageSquare,
-    badge: "3",
+    badgeKey: "messages",
   },
   {
     label: "Milestones",
     href: "/freelancer/milestones",
     icon: ListChecks,
+    badgeKey: "milestones",
   },
   {
     label: "Disputes",
     href: "/freelancer/disputes",
     icon: ShieldAlert,
+    badgeKey: "disputes",
   },
   {
     label: "Wallet",
     href: "/freelancer/wallet",
     icon: Wallet,
+    badgeKey: null,
   },
   {
     label: "Reviews",
     href: "/freelancer/reviews",
     icon: Star,
+    badgeKey: null,
   },
   {
     label: "Notifications",
     href: "/freelancer/notifications",
     icon: Bell,
-    badge: "5",
+    badgeKey: "notifications",
   },
   {
     label: "Profile",
     href: "/freelancer/profile",
     icon: UserRound,
+    badgeKey: null,
   },
   {
     label: "Settings",
     href: "/freelancer/settings",
     icon: Settings,
+    badgeKey: null,
   },
 ];
 
+function isActivePath(pathname, href) {
+  if (!pathname) return false;
+  if (pathname === href) return true;
+  return pathname.startsWith(`${href}/`);
+}
+
+function formatBadge(value) {
+  const count = Number(value || 0);
+
+  if (count <= 0) return "";
+  if (count > 99) return "99+";
+
+  return String(count);
+}
+
 export default function FreelancerSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const [mounted, setMounted] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+
+  const [badgeCounts, setBadgeCounts] = useState({
+    invites: 0,
+    milestones: 0,
+    notifications: 0,
+    messages: 0,
+    disputes: 0,
+  });
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+
+    let ignore = false;
+
+    async function loadSidebarCounts() {
+      try {
+        const [dashboardResult, notificationsResult] = await Promise.allSettled([
+          fetch("/api/freelancer/dashboard", {
+            method: "GET",
+            cache: "no-store",
+          }),
+          fetch("/api/freelancer/notifications", {
+            method: "GET",
+            cache: "no-store",
+          }),
+        ]);
+
+        let pendingProposals = 0;
+        let activeMilestones = 0;
+        let actionRequiredNotifications = 0;
+
+        if (dashboardResult.status === "fulfilled") {
+          const dashboardResponse = dashboardResult.value;
+          const dashboardJson = await dashboardResponse.json();
+
+          if (dashboardResponse.ok && dashboardJson?.success) {
+            const stats = dashboardJson.data?.stats || {};
+            pendingProposals = Number(stats.pendingProposals || 0);
+            activeMilestones = Number(stats.activeMilestones || 0);
+          }
+        }
+
+        if (notificationsResult.status === "fulfilled") {
+          const notificationsResponse = notificationsResult.value;
+          const notificationsJson = await notificationsResponse.json();
+
+          if (notificationsResponse.ok && notificationsJson?.success) {
+            const stats = notificationsJson.data?.stats || {};
+            actionRequiredNotifications = Number(
+              stats.actionRequiredNotifications || 0
+            );
+          }
+        }
+
+        if (!ignore) {
+          setBadgeCounts({
+            invites: pendingProposals,
+            milestones: activeMilestones,
+            notifications: actionRequiredNotifications,
+            messages: 0,
+            disputes: 0,
+          });
+        }
+      } catch (error) {
+        console.error("FREELANCER_SIDEBAR_COUNTS_ERROR", error);
+      }
+    }
+
+    loadSidebarCounts();
+
+    return () => {
+      ignore = true;
+    };
+  }, [mounted]);
+
+  const navItemsWithBadges = useMemo(() => {
+    return navItems.map((item) => ({
+      ...item,
+      badge:
+        mounted && item.badgeKey ? formatBadge(badgeCounts[item.badgeKey]) : "",
+    }));
+  }, [badgeCounts, mounted]);
 
   async function handleLogout() {
     try {
@@ -96,26 +209,35 @@ export default function FreelancerSidebar() {
 
       await signOut({
         redirect: false,
+        callbackUrl: "/login",
       });
 
-      window.location.href = "/login";
+      router.replace("/login");
+      router.refresh();
     } catch (error) {
-      console.error("LOGOUT_ERROR", error);
+      console.error("FREELANCER_LOGOUT_ERROR", error);
       setLoggingOut(false);
     }
   }
 
   return (
-    <aside className="hidden min-h-screen w-[270px] border-r border-[#eadfd2] bg-[#fffaf3] px-4 py-5 lg:block">
+    <aside className="hidden min-h-screen w-[270px] shrink-0 border-r border-[#eadfd2] bg-[#fffaf3] px-4 py-5 lg:block">
       <div className="mb-8 flex items-center gap-3 px-2">
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#35170f] text-lg font-bold text-[#f8d6a3] shadow-lg shadow-[#35170f]/20">
+        <Link
+          href="/freelancer/dashboard"
+          className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#35170f] text-lg font-bold text-[#f8d6a3] shadow-lg shadow-[#35170f]/20"
+        >
           T
-        </div>
+        </Link>
 
         <div>
-          <h2 className="text-base font-extrabold tracking-tight text-[#24130c]">
+          <Link
+            href="/freelancer/dashboard"
+            className="text-base font-extrabold tracking-tight text-[#24130c]"
+          >
             TrustOnes
-          </h2>
+          </Link>
+
           <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#9b7a64]">
             Freelancer Portal
           </p>
@@ -123,9 +245,9 @@ export default function FreelancerSidebar() {
       </div>
 
       <nav className="space-y-1.5">
-        {navItems.map((item) => {
+        {navItemsWithBadges.map((item) => {
           const Icon = item.icon;
-          const active = pathname === item.href;
+          const active = mounted && isActivePath(pathname, item.href);
 
           return (
             <Link
@@ -143,14 +265,15 @@ export default function FreelancerSidebar() {
                   strokeWidth={2.1}
                   className={active ? "text-white" : "text-[#9b7a64]"}
                 />
-                {item.label}
+
+                <span>{item.label}</span>
               </span>
 
               {item.badge && (
                 <span
-                  className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${
+                  className={`flex h-6 min-w-6 items-center justify-center rounded-full px-2 text-[11px] font-black ${
                     active
-                      ? "bg-white/15 text-white"
+                      ? "bg-white/20 text-white"
                       : "bg-[#eadfd2] text-[#7a4a34]"
                   }`}
                 >
@@ -169,6 +292,7 @@ export default function FreelancerSidebar() {
 
         <div className="mt-3 flex items-end justify-between">
           <h3 className="text-4xl font-black tracking-tight">94</h3>
+
           <span className="rounded-full bg-[#f4b454]/15 px-2 py-1 text-xs font-bold text-[#ffd28c]">
             +4%
           </span>

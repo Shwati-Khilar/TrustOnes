@@ -7,7 +7,7 @@ export default function FreelancerPortalShell({ children }) {
       <div className="flex min-h-screen">
         <FreelancerSidebar />
 
-        <section className="flex min-h-screen flex-1 flex-col">
+        <section className="flex min-h-screen flex-1 flex-col overflow-x-hidden">
           <FreelancerTopbar />
 
           <div className="flex-1 px-5 py-5 sm:px-7 lg:px-8">

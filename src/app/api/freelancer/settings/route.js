@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { requireRole } from "@/lib/permissions";
 import {
+  createFreelancerSupportTicket,
   getFreelancerSettings,
   updateFreelancerAccountSettings,
   updateFreelancerPassword,
@@ -116,7 +117,7 @@ export async function PATCH(request) {
     return NextResponse.json(
       {
         success: true,
-        message: "Freelancer account settings updated successfully.",
+        message: "Freelancer settings updated successfully.",
         data,
       },
       {
@@ -176,6 +177,49 @@ export async function PUT(request) {
       {
         success: false,
         message: error.message || "Unable to update password.",
+      },
+      {
+        status: 400,
+      }
+    );
+  }
+}
+
+export async function POST(request) {
+  try {
+    const sessionResult = await getFreelancerSession();
+
+    if (sessionResult.error) {
+      return sessionResult.error;
+    }
+
+    const payload = await request.json();
+
+    const data = await createFreelancerSupportTicket(
+      sessionResult.session.user.id,
+      payload
+    );
+
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Support ticket created successfully.",
+        data,
+      },
+      {
+        status: 201,
+        headers: {
+          "Cache-Control": "no-store",
+        },
+      }
+    );
+  } catch (error) {
+    console.error("FREELANCER_SUPPORT_TICKET_API_ERROR", error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: error.message || "Unable to create support ticket.",
       },
       {
         status: 400,

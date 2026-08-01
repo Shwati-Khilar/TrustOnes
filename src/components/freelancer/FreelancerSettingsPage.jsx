@@ -27,20 +27,21 @@ import {
   UserRound,
 } from "lucide-react";
 
-const availabilityOptions = [
-  {
-    label: "Available for new work",
-    value: "AVAILABLE",
-  },
-  {
-    label: "Busy but open to invites",
-    value: "BUSY_OPEN",
-  },
-  {
-    label: "Not available currently",
-    value: "NOT_AVAILABLE",
-  },
-];
+const initialPreferences = {
+  emailNotifications: true,
+  pushNotifications: true,
+  deadlineAlerts: true,
+  paymentAlerts: true,
+  messageAlerts: true,
+  disputeAlerts: true,
+  profileVisible: true,
+  showEarnings: false,
+  theme: "WARM_PREMIUM",
+  language: "EN",
+  timezone: "Asia/Kolkata",
+  defaultWorkspace: "DASHBOARD",
+  preferredCurrency: "INR",
+};
 
 const initialSettings = {
   account: {
@@ -59,15 +60,51 @@ const initialSettings = {
     location: "",
     professionalTitle: "Freelance Developer",
   },
-  preferences: {
-    emailNotifications: true,
-    milestoneAlerts: true,
-    proposalAlerts: true,
-    walletAlerts: true,
-    theme: "SYSTEM",
-    language: "EN",
-  },
+  preferences: initialPreferences,
+  supportTickets: [],
 };
+
+const availabilityOptions = [
+  { label: "Available for new work", value: "AVAILABLE" },
+  { label: "Busy but open to invites", value: "BUSY_OPEN" },
+  { label: "Not available currently", value: "NOT_AVAILABLE" },
+];
+
+const workspaceOptions = [
+  { label: "Dashboard", value: "DASHBOARD" },
+  { label: "Deal Rooms", value: "DEAL_ROOMS" },
+  { label: "Milestones", value: "MILESTONES" },
+  { label: "Messages", value: "MESSAGES" },
+  { label: "Wallet", value: "WALLET" },
+  { label: "Settings", value: "SETTINGS" },
+];
+
+const currencyOptions = [
+  { label: "INR - Indian Rupee", value: "INR" },
+  { label: "USD - US Dollar", value: "USD" },
+  { label: "EUR - Euro", value: "EUR" },
+];
+
+const languageOptions = [
+  { label: "English", value: "EN" },
+  { label: "Hindi", value: "HI" },
+];
+
+const timezoneOptions = ["Asia/Kolkata", "UTC", "America/New_York"];
+
+const themeOptions = [
+  { label: "Warm Premium", value: "WARM_PREMIUM" },
+  { label: "Light Minimal", value: "LIGHT_MINIMAL" },
+  { label: "Dark SaaS", value: "DARK_SAAS" },
+];
+
+const supportTypeOptions = [
+  { label: "Project issue", value: "PROJECT" },
+  { label: "Payment / wallet issue", value: "WALLET" },
+  { label: "Submission issue", value: "SUBMISSION" },
+  { label: "Account access issue", value: "ACCOUNT_ACCESS" },
+  { label: "Other support request", value: "OTHER" },
+];
 
 function Toggle({ enabled, onChange, disabled = false }) {
   return (
@@ -88,7 +125,28 @@ function Toggle({ enabled, onChange, disabled = false }) {
   );
 }
 
-function statusLabel(value) {
+function StatusBadge({ status }) {
+  const styles = {
+    OPEN: "bg-[#fffbeb] text-[#b45309] border-[#fde68a]",
+    IN_REVIEW: "bg-[#eff6ff] text-[#1d4ed8] border-[#bfdbfe]",
+    RESOLVED: "bg-[#ecfdf5] text-[#047857] border-[#a7f3d0]",
+    CLOSED: "bg-[#f8fafc] text-[#64748b] border-[#e2e8f0]",
+  };
+
+  const value = status || "OPEN";
+
+  return (
+    <span
+      className={`rounded-full border px-3 py-1 text-[11px] font-black uppercase tracking-[0.08em] ${
+        styles[value] || styles.OPEN
+      }`}
+    >
+      {value.split("_").join(" ")}
+    </span>
+  );
+}
+
+function toLabel(value) {
   return String(value || "")
     .split("_")
     .join(" ")
@@ -104,19 +162,7 @@ export default function FreelancerSettingsPage() {
     availability: "AVAILABLE",
   });
 
-  const [preferences, setPreferences] = useState({
-    emailNotifications: true,
-    pushNotifications: true,
-    deadlineAlerts: true,
-    paymentAlerts: true,
-    messageAlerts: true,
-    disputeAlerts: true,
-    profileVisible: true,
-    showEarnings: false,
-    twoFactorEnabled: false,
-  });
-
-  const [selectedTheme, setSelectedTheme] = useState("Warm Premium");
+  const [preferences, setPreferences] = useState(initialPreferences);
 
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: "",
@@ -124,22 +170,23 @@ export default function FreelancerSettingsPage() {
     confirmPassword: "",
   });
 
+  const [supportForm, setSupportForm] = useState({
+    type: "PROJECT",
+    title: "",
+    message: "",
+  });
+
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [savingAccount, setSavingAccount] = useState(false);
+  const [savingSettings, setSavingSettings] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
-  const [message, setMessage] = useState({
-    type: "",
-    text: "",
-  });
+  const [creatingTicket, setCreatingTicket] = useState(false);
+  const [message, setMessage] = useState({ type: "", text: "" });
 
   async function loadSettings() {
     try {
       setLoading(true);
-      setMessage({
-        type: "",
-        text: "",
-      });
+      setMessage({ type: "", text: "" });
 
       const response = await fetch("/api/freelancer/settings", {
         method: "GET",
@@ -152,21 +199,17 @@ export default function FreelancerSettingsPage() {
         throw new Error(result.message || "Unable to load settings.");
       }
 
-      setSettings(result.data);
+      const data = result.data;
 
+      setSettings(data);
       setAccountForm({
-        name: result.data.account?.name || "",
-        availability: result.data.freelancer?.availability || "AVAILABLE",
+        name: data.account?.name || "",
+        availability: data.freelancer?.availability || "AVAILABLE",
       });
-
-      setPreferences((current) => ({
-        ...current,
-        emailNotifications: Boolean(
-          result.data.preferences?.emailNotifications
-        ),
-        deadlineAlerts: Boolean(result.data.preferences?.milestoneAlerts),
-        paymentAlerts: Boolean(result.data.preferences?.walletAlerts),
-      }));
+      setPreferences({
+        ...initialPreferences,
+        ...(data.preferences || {}),
+      });
     } catch (error) {
       setMessage({
         type: "error",
@@ -188,13 +231,10 @@ export default function FreelancerSettingsPage() {
     }));
   }
 
-  async function saveAccountSettings() {
+  async function saveSettings() {
     try {
-      setSavingAccount(true);
-      setMessage({
-        type: "",
-        text: "",
-      });
+      setSavingSettings(true);
+      setMessage({ type: "", text: "" });
 
       const response = await fetch("/api/freelancer/settings", {
         method: "PATCH",
@@ -205,43 +245,46 @@ export default function FreelancerSettingsPage() {
         body: JSON.stringify({
           name: accountForm.name,
           availability: accountForm.availability,
+          preferences,
         }),
       });
 
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        throw new Error(result.message || "Unable to save account settings.");
+        throw new Error(result.message || "Unable to save settings.");
       }
 
-      setSettings(result.data);
+      const data = result.data;
 
+      setSettings(data);
       setAccountForm({
-        name: result.data.account?.name || "",
-        availability: result.data.freelancer?.availability || "AVAILABLE",
+        name: data.account?.name || "",
+        availability: data.freelancer?.availability || "AVAILABLE",
+      });
+      setPreferences({
+        ...initialPreferences,
+        ...(data.preferences || {}),
       });
 
       setMessage({
         type: "success",
-        text: "Account settings saved successfully.",
+        text: "Settings saved successfully.",
       });
     } catch (error) {
       setMessage({
         type: "error",
-        text: error.message || "Unable to save account settings.",
+        text: error.message || "Unable to save settings.",
       });
     } finally {
-      setSavingAccount(false);
+      setSavingSettings(false);
     }
   }
 
   async function updatePassword() {
     try {
       setSavingPassword(true);
-      setMessage({
-        type: "",
-        text: "",
-      });
+      setMessage({ type: "", text: "" });
 
       if (!passwordForm.currentPassword) {
         throw new Error("Current password is required.");
@@ -293,6 +336,63 @@ export default function FreelancerSettingsPage() {
     }
   }
 
+  async function createSupportTicket(payloadOverride) {
+    try {
+      setCreatingTicket(true);
+      setMessage({ type: "", text: "" });
+
+      const payload = payloadOverride || supportForm;
+
+      const response = await fetch("/api/freelancer/settings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        cache: "no-store",
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || "Unable to create support ticket.");
+      }
+
+      setSettings(result.data);
+
+      if (!payloadOverride) {
+        setSupportForm({
+          type: "PROJECT",
+          title: "",
+          message: "",
+        });
+      }
+
+      setMessage({
+        type: "success",
+        text: payloadOverride
+          ? "Account deletion request submitted."
+          : "Support ticket created successfully.",
+      });
+    } catch (error) {
+      setMessage({
+        type: "error",
+        text: error.message || "Unable to create support ticket.",
+      });
+    } finally {
+      setCreatingTicket(false);
+    }
+  }
+
+  function requestAccountDeletion() {
+    createSupportTicket({
+      type: "ACCOUNT_DELETION",
+      title: "Account deletion request",
+      message:
+        "I want to request account deletion. Please review this request and guide me through the required confirmation process.",
+    });
+  }
+
   const accountHealth = useMemo(
     () => [
       {
@@ -302,12 +402,12 @@ export default function FreelancerSettingsPage() {
       },
       {
         label: "Role",
-        value: statusLabel(settings.account.role || "Freelancer"),
+        value: toLabel(settings.account.role || "FREELANCER"),
         icon: UserRound,
       },
       {
         label: "Account",
-        value: statusLabel(settings.account.status || "Active"),
+        value: toLabel(settings.account.status || "ACTIVE"),
         icon: LockKeyhole,
       },
     ],
@@ -339,19 +439,19 @@ export default function FreelancerSettingsPage() {
           </h1>
 
           <p className="mt-3 max-w-2xl text-sm leading-6 text-[#7c6858]">
-            Account name and availability are saved to the backend. Other
-            preferences are UI-ready and need a settings/preferences table later.
+            Manage account preferences, notification settings, privacy,
+            appearance, password, and support tickets from one workspace.
           </p>
         </div>
 
         <button
           type="button"
-          onClick={saveAccountSettings}
-          disabled={savingAccount}
+          onClick={saveSettings}
+          disabled={savingSettings}
           className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-[#6f2e1c] px-5 text-sm font-black text-white shadow-lg shadow-[#6f2e1c]/20 transition hover:bg-[#5b2416] disabled:cursor-not-allowed disabled:opacity-60"
         >
           <Save size={18} />
-          {savingAccount ? "Saving..." : "Save Account"}
+          {savingSettings ? "Saving..." : "Save Settings"}
         </button>
       </section>
 
@@ -379,8 +479,8 @@ export default function FreelancerSettingsPage() {
             </h2>
 
             <p className="mt-3 text-sm leading-6 text-white/65">
-              Your account status, email verification, and role are fetched
-              directly from the backend.
+              Your account status, email verification, and role are fetched from
+              the backend.
             </p>
 
             <div className="mt-6 grid gap-3">
@@ -394,7 +494,6 @@ export default function FreelancerSettingsPage() {
                   >
                     <div className="flex items-center gap-3">
                       <Icon size={18} className="text-[#f4b454]" />
-
                       <p className="text-sm font-semibold text-white/70">
                         {item.label}
                       </p>
@@ -413,11 +512,6 @@ export default function FreelancerSettingsPage() {
             <h2 className="text-xl font-black tracking-[-0.03em] text-[#24130c]">
               Quick Settings
             </h2>
-
-            <p className="mt-2 text-sm leading-6 text-[#7c6858]">
-              These switches are local UI state for now. Persist them later with
-              a `UserPreference` table.
-            </p>
 
             <div className="mt-5 space-y-4">
               {[
@@ -486,8 +580,8 @@ export default function FreelancerSettingsPage() {
             </h2>
 
             <p className="mt-2 text-sm leading-6 text-[#7c6858]">
-              Logout works now. Account deletion needs a separate backend flow
-              with re-authentication.
+              Logout works directly. Account deletion is submitted as a support
+              request for review.
             </p>
 
             <div className="mt-5 space-y-3">
@@ -502,11 +596,12 @@ export default function FreelancerSettingsPage() {
 
               <button
                 type="button"
-                disabled
-                className="inline-flex h-11 w-full cursor-not-allowed items-center justify-center gap-2 rounded-xl border border-[#fecaca] bg-[#fef2f2] text-sm font-black text-[#b91c1c]/60"
+                onClick={requestAccountDeletion}
+                disabled={creatingTicket}
+                className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#fecaca] bg-[#fef2f2] text-sm font-black text-[#b91c1c] transition hover:bg-[#fee2e2] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <Trash2 size={17} />
-                Account Deletion Later
+                Request Account Deletion
               </button>
             </div>
           </div>
@@ -521,7 +616,7 @@ export default function FreelancerSettingsPage() {
                 </h2>
 
                 <p className="mt-1 text-sm font-medium text-[#9b7a64]">
-                  Name and availability are backend-connected.
+                  These values are saved in the backend.
                 </p>
               </div>
 
@@ -564,6 +659,26 @@ export default function FreelancerSettingsPage() {
 
               <label className="block">
                 <span className="text-sm font-black text-[#24130c]">
+                  Default Workspace
+                </span>
+
+                <select
+                  value={preferences.defaultWorkspace}
+                  onChange={(event) =>
+                    updatePreference("defaultWorkspace", event.target.value)
+                  }
+                  className="mt-2 h-12 w-full rounded-2xl border border-[#eadfd2] bg-[#fffaf3] px-4 text-sm font-semibold text-[#24130c] outline-none focus:border-[#6f2e1c]"
+                >
+                  {workspaceOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="block">
+                <span className="text-sm font-black text-[#24130c]">
                   Availability Status
                 </span>
 
@@ -587,41 +702,62 @@ export default function FreelancerSettingsPage() {
 
               <label className="block">
                 <span className="text-sm font-black text-[#24130c]">
-                  Provider
+                  Preferred Currency
                 </span>
 
-                <input
-                  type="text"
-                  value={settings.account.provider || "credentials"}
-                  readOnly
-                  className="mt-2 h-12 w-full rounded-2xl border border-[#eadfd2] bg-[#fffaf3] px-4 text-sm font-semibold text-[#7c6858] outline-none"
-                />
+                <select
+                  value={preferences.preferredCurrency}
+                  onChange={(event) =>
+                    updatePreference("preferredCurrency", event.target.value)
+                  }
+                  className="mt-2 h-12 w-full rounded-2xl border border-[#eadfd2] bg-[#fffaf3] px-4 text-sm font-semibold text-[#24130c] outline-none focus:border-[#6f2e1c]"
+                >
+                  {currencyOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
               </label>
 
               <label className="block">
                 <span className="text-sm font-black text-[#24130c]">
-                  Joined On
+                  Timezone
                 </span>
 
-                <input
-                  type="text"
-                  value={settings.account.joinedAtDisplay || "No date"}
-                  readOnly
-                  className="mt-2 h-12 w-full rounded-2xl border border-[#eadfd2] bg-[#fffaf3] px-4 text-sm font-semibold text-[#7c6858] outline-none"
-                />
+                <select
+                  value={preferences.timezone}
+                  onChange={(event) =>
+                    updatePreference("timezone", event.target.value)
+                  }
+                  className="mt-2 h-12 w-full rounded-2xl border border-[#eadfd2] bg-[#fffaf3] px-4 text-sm font-semibold text-[#24130c] outline-none focus:border-[#6f2e1c]"
+                >
+                  {timezoneOptions.map((timezone) => (
+                    <option key={timezone} value={timezone}>
+                      {timezone}
+                    </option>
+                  ))}
+                </select>
               </label>
 
               <label className="block">
                 <span className="text-sm font-black text-[#24130c]">
-                  Last Updated
+                  Language
                 </span>
 
-                <input
-                  type="text"
-                  value={settings.account.updatedAtDisplay || "No date"}
-                  readOnly
-                  className="mt-2 h-12 w-full rounded-2xl border border-[#eadfd2] bg-[#fffaf3] px-4 text-sm font-semibold text-[#7c6858] outline-none"
-                />
+                <select
+                  value={preferences.language}
+                  onChange={(event) =>
+                    updatePreference("language", event.target.value)
+                  }
+                  className="mt-2 h-12 w-full rounded-2xl border border-[#eadfd2] bg-[#fffaf3] px-4 text-sm font-semibold text-[#24130c] outline-none focus:border-[#6f2e1c]"
+                >
+                  {languageOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
               </label>
             </div>
           </section>
@@ -634,7 +770,7 @@ export default function FreelancerSettingsPage() {
                 </h2>
 
                 <p className="mt-1 text-sm font-medium text-[#9b7a64]">
-                  UI-ready toggles. Persist later with `UserPreference`.
+                  Saved to your user preference record.
                 </p>
               </div>
 
@@ -812,29 +948,9 @@ export default function FreelancerSettingsPage() {
               </label>
             </div>
 
-            <div className="mt-5 flex items-center justify-between gap-4 rounded-2xl border border-[#eadfd2] bg-[#fffaf3] p-4">
-              <div className="flex gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white text-[#6f2e1c]">
-                  <ShieldCheck size={17} />
-                </div>
-
-                <div>
-                  <h3 className="text-sm font-black text-[#24130c]">
-                    Two-factor authentication
-                  </h3>
-
-                  <p className="mt-1 text-xs font-semibold text-[#9b7a64]">
-                    UI-ready only. Needs OTP/authenticator backend later.
-                  </p>
-                </div>
-              </div>
-
-              <Toggle
-                enabled={preferences.twoFactorEnabled}
-                onChange={(value) =>
-                  updatePreference("twoFactorEnabled", value)
-                }
-              />
+            <div className="mt-5 rounded-2xl border border-[#fde68a] bg-[#fffbeb] p-4 text-sm font-bold text-[#92400e]">
+              Two-factor authentication is intentionally not enabled yet. It
+              needs a real OTP/authenticator backend.
             </div>
 
             <button
@@ -856,7 +972,7 @@ export default function FreelancerSettingsPage() {
                   </h2>
 
                   <p className="mt-1 text-sm font-medium text-[#9b7a64]">
-                    Local UI state until privacy settings table is added.
+                    Saved in user preferences.
                   </p>
                 </div>
 
@@ -912,7 +1028,7 @@ export default function FreelancerSettingsPage() {
                   </h2>
 
                   <p className="mt-1 text-sm font-medium text-[#9b7a64]">
-                    Local UI selection only.
+                    Saved theme preference.
                   </p>
                 </div>
 
@@ -920,22 +1036,22 @@ export default function FreelancerSettingsPage() {
               </div>
 
               <div className="grid gap-3">
-                {["Warm Premium", "Light Minimal", "Dark SaaS"].map((theme) => (
+                {themeOptions.map((theme) => (
                   <button
                     type="button"
-                    key={theme}
-                    onClick={() => setSelectedTheme(theme)}
+                    key={theme.value}
+                    onClick={() => updatePreference("theme", theme.value)}
                     className={`flex items-center justify-between rounded-2xl border p-4 text-left transition ${
-                      selectedTheme === theme
+                      preferences.theme === theme.value
                         ? "border-[#6f2e1c] bg-[#fff7ed]"
                         : "border-[#eadfd2] bg-[#fffaf3] hover:bg-white"
                     }`}
                   >
                     <span className="text-sm font-black text-[#24130c]">
-                      {theme}
+                      {theme.label}
                     </span>
 
-                    {selectedTheme === theme && (
+                    {preferences.theme === theme.value && (
                       <CheckCircle2 size={18} className="text-[#6f2e1c]" />
                     )}
                   </button>
@@ -952,7 +1068,7 @@ export default function FreelancerSettingsPage() {
                 </h2>
 
                 <p className="mt-1 text-sm font-medium text-[#9b7a64]">
-                  UI-ready only. Needs a `SupportTicket` model and API.
+                  Support tickets are saved in the backend.
                 </p>
               </div>
 
@@ -969,11 +1085,40 @@ export default function FreelancerSettingsPage() {
                   </span>
 
                   <select
-                    disabled
-                    className="mt-2 h-12 w-full cursor-not-allowed rounded-2xl border border-[#eadfd2] bg-white px-4 text-sm font-semibold text-[#24130c] outline-none"
+                    value={supportForm.type}
+                    onChange={(event) =>
+                      setSupportForm((current) => ({
+                        ...current,
+                        type: event.target.value,
+                      }))
+                    }
+                    className="mt-2 h-12 w-full rounded-2xl border border-[#eadfd2] bg-white px-4 text-sm font-semibold text-[#24130c] outline-none focus:border-[#6f2e1c]"
                   >
-                    <option>Support backend not connected yet</option>
+                    {supportTypeOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
                   </select>
+                </label>
+
+                <label className="mt-4 block">
+                  <span className="text-sm font-black text-[#24130c]">
+                    Title
+                  </span>
+
+                  <input
+                    type="text"
+                    value={supportForm.title}
+                    onChange={(event) =>
+                      setSupportForm((current) => ({
+                        ...current,
+                        title: event.target.value,
+                      }))
+                    }
+                    placeholder="Short issue title"
+                    className="mt-2 h-12 w-full rounded-2xl border border-[#eadfd2] bg-white px-4 text-sm font-semibold text-[#24130c] outline-none placeholder:text-[#b79d88] focus:border-[#6f2e1c]"
+                  />
                 </label>
 
                 <label className="mt-4 block">
@@ -983,33 +1128,69 @@ export default function FreelancerSettingsPage() {
 
                   <textarea
                     rows={5}
-                    disabled
-                    placeholder="Support ticket API will be added later..."
-                    className="mt-2 w-full resize-none rounded-2xl border border-[#eadfd2] bg-white px-4 py-3 text-sm font-semibold leading-6 text-[#24130c] outline-none placeholder:text-[#b79d88]"
+                    value={supportForm.message}
+                    onChange={(event) =>
+                      setSupportForm((current) => ({
+                        ...current,
+                        message: event.target.value,
+                      }))
+                    }
+                    placeholder="Explain the support issue clearly..."
+                    className="mt-2 w-full resize-none rounded-2xl border border-[#eadfd2] bg-white px-4 py-3 text-sm font-semibold leading-6 text-[#24130c] outline-none placeholder:text-[#b79d88] focus:border-[#6f2e1c]"
                   />
                 </label>
 
                 <button
                   type="button"
-                  disabled
-                  className="mt-4 inline-flex h-11 cursor-not-allowed items-center justify-center gap-2 rounded-xl bg-[#6f2e1c]/60 px-5 text-sm font-black text-white shadow-lg shadow-[#6f2e1c]/20"
+                  onClick={() => createSupportTicket()}
+                  disabled={creatingTicket}
+                  className="mt-4 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#6f2e1c] px-5 text-sm font-black text-white shadow-lg shadow-[#6f2e1c]/20 transition hover:bg-[#5b2416] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <HelpCircle size={17} />
-                  Submit Later
+                  {creatingTicket ? "Submitting..." : "Submit Support Request"}
                 </button>
               </form>
 
-              <div className="rounded-[1.5rem] border border-dashed border-[#d7c3b2] bg-[#fffaf3] p-8 text-center">
-                <FileText size={24} className="mx-auto text-[#6f2e1c]" />
+              <div className="space-y-3">
+                {(settings.supportTickets || []).map((ticket) => (
+                  <div
+                    key={ticket.id}
+                    className="rounded-[1.5rem] border border-[#eadfd2] bg-[#fffaf3] p-5"
+                  >
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <StatusBadge status={ticket.status} />
 
-                <h3 className="mt-4 text-lg font-black text-[#24130c]">
-                  No support tickets connected
-                </h3>
+                      <FileText size={17} className="text-[#9b7a64]" />
+                    </div>
 
-                <p className="mt-2 text-sm leading-6 text-[#7c6858]">
-                  We will add real support tickets after the main freelancer
-                  workflow modules are completed.
-                </p>
+                    <h3 className="text-sm font-black text-[#24130c]">
+                      {ticket.title}
+                    </h3>
+
+                    <p className="mt-1 text-xs font-semibold text-[#9b7a64]">
+                      {toLabel(ticket.type)} • {ticket.createdAtDisplay}
+                    </p>
+
+                    <p className="mt-3 line-clamp-3 text-sm leading-5 text-[#7c6858]">
+                      {ticket.message}
+                    </p>
+                  </div>
+                ))}
+
+                {(!settings.supportTickets ||
+                  settings.supportTickets.length === 0) && (
+                  <div className="rounded-[1.5rem] border border-dashed border-[#d7c3b2] bg-[#fffaf3] p-8 text-center">
+                    <FileText size={24} className="mx-auto text-[#6f2e1c]" />
+
+                    <h3 className="mt-4 text-lg font-black text-[#24130c]">
+                      No support tickets yet
+                    </h3>
+
+                    <p className="mt-2 text-sm leading-6 text-[#7c6858]">
+                      Submit a support request and it will appear here.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </section>

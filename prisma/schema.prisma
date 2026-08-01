@@ -42,22 +42,31 @@ enum MilestoneStatus {
 }
 
 model User {
-  id                      String             @id @default(cuid())
-  name                    String
-  email                   String             @unique
-  passwordHash            String?
-  provider                String             @default("credentials")
-  image                   String?
-  emailVerified           Boolean            @default(false)
-  verificationToken       String?
-  verificationTokenExpiry DateTime?
-  resetPasswordToken      String?
-  resetPasswordExpiry     DateTime?
-  role                    UserRole?
-  freelancerProfile       FreelancerProfile?
-  status                  UserStatus         @default(ACTIVE)
-  createdAt               DateTime           @default(now())
-  updatedAt               DateTime           @updatedAt
+  id                          String                @id @default(cuid())
+  name                        String
+  email                       String                @unique
+  passwordHash                String?
+  provider                    String                @default("credentials")
+  image                       String?
+  emailVerified               Boolean               @default(false)
+  verificationToken           String?
+  verificationTokenExpiry     DateTime?
+  resetPasswordToken          String?
+  resetPasswordExpiry         DateTime?
+  role                        UserRole?
+  freelancerProfile           FreelancerProfile?
+  userPreference              UserPreference?
+  supportTickets              SupportTicket[]
+  milestoneFundingClients     MilestoneFunding[]    @relation("MilestoneFundingClient")
+  milestoneFundingFreelancers MilestoneFunding[]    @relation("MilestoneFundingFreelancer")
+  paymentTransactions         PaymentTransaction[]  @relation("PaymentTransactionClient")
+  payoutTransactions          PayoutTransaction[]   @relation("PayoutTransactionFreelancer")
+  refundTransactions          RefundTransaction[]   @relation("RefundTransactionClient")
+  milestoneSubmissions        MilestoneSubmission[] @relation("MilestoneSubmissionFreelancer")
+  submissionAccessLogs        SubmissionAccessLog[] @relation("SubmissionAccessUser")
+  status                      UserStatus            @default(ACTIVE)
+  createdAt                   DateTime              @default(now())
+  updatedAt                   DateTime              @updatedAt
 
   clientProjects     Project[]  @relation("ClientProjects")
   freelancerProjects Project[]  @relation("FreelancerProjects")
@@ -134,6 +143,9 @@ model Milestone {
   projectId String
   project   Project @relation(fields: [projectId], references: [id], onDelete: Restrict)
 
+  funding     MilestoneFunding?
+  submissions MilestoneSubmission[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -181,4 +193,403 @@ model FreelancerProfile {
   @@index([availability])
   @@index([experienceLevel])
   @@map("freelancer_profiles")
+}
+
+enum DefaultWorkspace {
+  DASHBOARD
+  DEAL_ROOMS
+  MILESTONES
+  MESSAGES
+  WALLET
+  SETTINGS
+}
+
+enum PreferredCurrency {
+  INR
+  USD
+  EUR
+}
+
+enum UserThemePreference {
+  WARM_PREMIUM
+  LIGHT_MINIMAL
+  DARK_SAAS
+}
+
+enum UserLanguage {
+  EN
+  HI
+}
+
+enum SupportTicketStatus {
+  OPEN
+  IN_REVIEW
+  RESOLVED
+  CLOSED
+}
+
+enum SupportTicketType {
+  PROJECT
+  WALLET
+  SUBMISSION
+  ACCOUNT_ACCESS
+  ACCOUNT_DELETION
+  OTHER
+}
+
+model UserPreference {
+  id String @id @default(cuid())
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  emailNotifications Boolean @default(true)
+  pushNotifications  Boolean @default(true)
+  deadlineAlerts     Boolean @default(true)
+  paymentAlerts      Boolean @default(true)
+  messageAlerts      Boolean @default(true)
+  disputeAlerts      Boolean @default(true)
+
+  profileVisible Boolean @default(true)
+  showEarnings   Boolean @default(false)
+
+  theme             UserThemePreference @default(WARM_PREMIUM)
+  language          UserLanguage        @default(EN)
+  timezone          String              @default("Asia/Kolkata")
+  defaultWorkspace  DefaultWorkspace    @default(DASHBOARD)
+  preferredCurrency PreferredCurrency   @default(INR)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("user_preferences")
+}
+
+model SupportTicket {
+  id String @id @default(cuid())
+
+  title   String
+  message String
+  type    SupportTicketType   @default(OTHER)
+  status  SupportTicketStatus @default(OPEN)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([type])
+  @@index([createdAt])
+  @@map("support_tickets")
+}
+
+enum MilestoneFundingStatus {
+  UNFUNDED
+  PAYMENT_PENDING
+  FUNDED_LOCKED
+  UNDER_REVIEW
+  REVISION_REQUESTED
+  RELEASED
+  REFUND_PENDING
+  REFUNDED
+  DISPUTED
+  PARTIALLY_RELEASED
+}
+
+enum PaymentTransactionStatus {
+  CREATED
+  AUTHORIZED
+  CAPTURED
+  FAILED
+  VERIFIED
+  CANCELLED
+}
+
+enum PayoutTransactionStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum RefundTransactionStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum SubmissionType {
+  DEVELOPMENT
+  DESIGN
+  VIDEO
+  DOCUMENT
+  WRITING
+  GENERAL
+}
+
+enum MilestoneSubmissionStatus {
+  DRAFT
+  UNDER_REVIEW
+  REVISION_REQUESTED
+  APPROVED
+  DISPUTED
+  CANCELLED
+}
+
+enum SubmissionAttachmentVisibility {
+  PREVIEW
+  FINAL_LOCKED
+}
+
+enum SubmissionAttachmentType {
+  LINK
+  IMAGE
+  VIDEO
+  DOCUMENT
+  ARCHIVE
+  SOURCE_CODE
+  DESIGN_FILE
+  OTHER
+}
+
+enum SubmissionAccessAction {
+  VIEW_PREVIEW
+  ATTEMPT_FINAL_ACCESS
+  DOWNLOAD_FINAL
+}
+
+model MilestoneFunding {
+  id String @id @default(cuid())
+
+  milestoneId String    @unique
+  milestone   Milestone @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+
+  clientId String
+  client   User   @relation("MilestoneFundingClient", fields: [clientId], references: [id], onDelete: Cascade)
+
+  freelancerId String
+  freelancer   User   @relation("MilestoneFundingFreelancer", fields: [freelancerId], references: [id], onDelete: Cascade)
+
+  amount               Decimal @db.Decimal(12, 2)
+  platformFee          Decimal @default(0) @db.Decimal(12, 2)
+  freelancerReceivable Decimal @db.Decimal(12, 2)
+
+  status MilestoneFundingStatus @default(UNFUNDED)
+
+  fundedAt    DateTime?
+  submittedAt DateTime?
+  reviewDueAt DateTime?
+  releasedAt  DateTime?
+  refundedAt  DateTime?
+  disputedAt  DateTime?
+
+  payments PaymentTransaction[]
+  payouts  PayoutTransaction[]
+  refunds  RefundTransaction[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clientId])
+  @@index([freelancerId])
+  @@index([status])
+  @@index([reviewDueAt])
+  @@map("milestone_fundings")
+}
+
+model PaymentTransaction {
+  id String @id @default(cuid())
+
+  milestoneFundingId String
+  funding            MilestoneFunding @relation(fields: [milestoneFundingId], references: [id], onDelete: Cascade)
+
+  clientId String
+  client   User   @relation("PaymentTransactionClient", fields: [clientId], references: [id], onDelete: Cascade)
+
+  provider          String  @default("RAZORPAY_TEST")
+  providerOrderId   String?
+  providerPaymentId String?
+
+  amount   Decimal @db.Decimal(12, 2)
+  currency String  @default("INR")
+
+  status PaymentTransactionStatus @default(CREATED)
+
+  verifiedAt        DateTime?
+  rawWebhookEventId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clientId])
+  @@index([milestoneFundingId])
+  @@index([providerOrderId])
+  @@index([providerPaymentId])
+  @@index([status])
+  @@map("payment_transactions")
+}
+
+model PayoutTransaction {
+  id String @id @default(cuid())
+
+  milestoneFundingId String
+  funding            MilestoneFunding @relation(fields: [milestoneFundingId], references: [id], onDelete: Cascade)
+
+  freelancerId String
+  freelancer   User   @relation("PayoutTransactionFreelancer", fields: [freelancerId], references: [id], onDelete: Cascade)
+
+  amount   Decimal @db.Decimal(12, 2)
+  currency String  @default("INR")
+
+  status PayoutTransactionStatus @default(PENDING)
+
+  providerPayoutId String?
+  releasedAt       DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([freelancerId])
+  @@index([milestoneFundingId])
+  @@index([status])
+  @@map("payout_transactions")
+}
+
+model RefundTransaction {
+  id String @id @default(cuid())
+
+  milestoneFundingId String
+  funding            MilestoneFunding @relation(fields: [milestoneFundingId], references: [id], onDelete: Cascade)
+
+  clientId String
+  client   User   @relation("RefundTransactionClient", fields: [clientId], references: [id], onDelete: Cascade)
+
+  amount   Decimal @db.Decimal(12, 2)
+  currency String  @default("INR")
+
+  reason String?
+  status RefundTransactionStatus @default(PENDING)
+
+  providerRefundId String?
+  refundedAt       DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clientId])
+  @@index([milestoneFundingId])
+  @@index([status])
+  @@map("refund_transactions")
+}
+
+model MilestoneSubmission {
+  id String @id @default(cuid())
+
+  milestoneId String
+  milestone   Milestone @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+
+  freelancerId String
+  freelancer   User   @relation("MilestoneSubmissionFreelancer", fields: [freelancerId], references: [id], onDelete: Cascade)
+
+  submissionType SubmissionType            @default(GENERAL)
+  status         MilestoneSubmissionStatus @default(UNDER_REVIEW)
+
+  title String
+  note  String?
+
+  previewUrl    String?
+  proofUrl      String?
+  repositoryUrl String?
+  liveUrl       String?
+  sourceFileUrl String?
+
+  finalDeliveryUrl      String?
+  finalDeliveryNote     String?
+  isFinalDeliveryLocked Boolean @default(true)
+
+  versionNumber Int @default(1)
+
+  submittedAt DateTime  @default(now())
+  reviewDueAt DateTime?
+  reviewedAt  DateTime?
+
+  clientFeedback String?
+  revisionReason String?
+
+  attachments SubmissionAttachment[]
+  accessLogs  SubmissionAccessLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([milestoneId])
+  @@index([freelancerId])
+  @@index([status])
+  @@index([submissionType])
+  @@index([versionNumber])
+  @@map("milestone_submissions")
+}
+
+model SubmissionAttachment {
+  id String @id @default(cuid())
+
+  submissionId String
+  submission   MilestoneSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  label          String
+  description    String?
+  attachmentType SubmissionAttachmentType       @default(LINK)
+  visibility     SubmissionAttachmentVisibility @default(PREVIEW)
+
+  storageKey  String?
+  externalUrl String?
+
+  fileName String?
+  mimeType String?
+  fileSize Int?
+  checksum String?
+
+  watermarkEnabled Boolean @default(true)
+
+  accessLogs SubmissionAccessLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([submissionId])
+  @@index([visibility])
+  @@index([attachmentType])
+  @@map("submission_attachments")
+}
+
+model SubmissionAccessLog {
+  id String @id @default(cuid())
+
+  submissionId String
+  submission   MilestoneSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  attachmentId String?
+  attachment   SubmissionAttachment? @relation(fields: [attachmentId], references: [id], onDelete: SetNull)
+
+  userId String?
+  user   User?   @relation("SubmissionAccessUser", fields: [userId], references: [id], onDelete: SetNull)
+
+  action    SubmissionAccessAction
+  ipAddress String?
+  userAgent String?
+
+  createdAt DateTime @default(now())
+
+  @@index([submissionId])
+  @@index([attachmentId])
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("submission_access_logs")
 }
