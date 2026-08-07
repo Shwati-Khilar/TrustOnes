@@ -1,4 +1,4 @@
-export default function ProjectsHero({ projects }) {
+export default function ProjectsHero({ projects = [] }) {
   const totalProjects = projects.length;
 
   const totalBudget = projects.reduce(

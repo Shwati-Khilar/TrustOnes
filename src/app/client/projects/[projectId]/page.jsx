@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 
 import ClientSidebar from "@/components/client/ClientSidebar";
 import ClientTopNav from "@/components/client/ClientTopNav";
-import CreateMilestoneModal from "@/components/client/ProjectContents/CreateMilestoneModal";
+import CreateMilestoneModal from "@/components/client/project/CreateMilestoneModel";
+import EditMilestonesModel from "@/components/client/project/EditMilestonesModel";
 
 export default function ProjectDetailsPage({ params }) {
   const { projectId } = use(params);
@@ -43,6 +44,7 @@ export default function ProjectDetailsPage({ params }) {
   const [showCreateMilestone, setShowCreateMilestone] =
     useState(false);
 
+  const [editingMilestone, setEditingMilestone] = useState(null);
 
   useEffect(() => {
     async function fetchProject() {
@@ -74,7 +76,7 @@ export default function ProjectDetailsPage({ params }) {
     fetchProject();
   }, [projectId]);
 
- 
+
 
   useEffect(() => {
     async function fetchProposals() {
@@ -138,7 +140,7 @@ export default function ProjectDetailsPage({ params }) {
     fetchMilestones();
   }, [projectId]);
 
- 
+
 
   async function handleCancelProject() {
     const confirmed = window.confirm(
@@ -177,7 +179,7 @@ export default function ProjectDetailsPage({ params }) {
     }
   }
 
- 
+
 
   async function handleAcceptProposal(proposalId) {
     const confirmed = window.confirm(
@@ -237,8 +239,38 @@ export default function ProjectDetailsPage({ params }) {
       setAcceptingProposalId(null);
     }
   }
+  async function handleDeleteMilestone(milestoneId) {
+    const confirmed = window.confirm(
+      "Delete this milestone? This action cannot be undone."
+    );
 
- 
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `/api/projects/${projectId}/milestones/${milestoneId}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message);
+      }
+
+      setMilestones((current) =>
+        current.filter((m) => m.id !== milestoneId)
+      );
+    } catch (error) {
+      alert(error.message);
+    }
+  }
+
+
 
   if (loading) {
     return (
@@ -255,7 +287,7 @@ export default function ProjectDetailsPage({ params }) {
     );
   }
 
- 
+
   if (error) {
     return (
       <>
@@ -613,10 +645,28 @@ export default function ProjectDetailsPage({ params }) {
                             <p className="mt-2 font-semibold text-[#3D2414]">
                               {formattedDueDate}
                             </p>
+                            
 
                           </div>
 
                         </div>
+                        <div className="mt-6 flex justify-end gap-3">
+
+                              <button
+                                onClick={() => setEditingMilestone(milestone)}
+                                className="rounded-xl border border-[#E7DDD2] px-5 py-2.5 text-[#8B5A2B] hover:bg-[#F7F3EE]"
+                              >
+                                Edit
+                              </button>
+
+                              <button
+                                onClick={() => handleDeleteMilestone(milestone.id)}
+                                className="rounded-xl border border-red-200 px-5 py-2.5 text-red-600 hover:bg-red-50"
+                              >
+                                Delete
+                              </button>
+
+                            </div>
 
                       </article>
                     );
@@ -819,7 +869,7 @@ export default function ProjectDetailsPage({ params }) {
                                 "
                               >
                                 {acceptingProposalId ===
-                                proposal.id
+                                  proposal.id
                                   ? "Accepting..."
                                   : "Accept Proposal"}
                               </button>
@@ -854,6 +904,27 @@ export default function ProjectDetailsPage({ params }) {
               ...currentMilestones,
               newMilestone,
             ]);
+          }}
+        />
+      )}
+      {editingMilestone && (
+        <EditMilestonesModel
+          projectId={projectId}
+          projectBudget={project.budget}
+          existingMilestones={milestones}
+          milestone={editingMilestone}
+          onClose={() => setEditingMilestone(null)}
+          onMilestoneUpdated={(updatedMilestone) => {
+
+            setMilestones((currentMilestones) =>
+              currentMilestones.map((milestone) =>
+                milestone.id === updatedMilestone.id
+                  ? updatedMilestone
+                  : milestone
+              )
+            );
+
+            setEditingMilestone(null);
           }}
         />
       )}

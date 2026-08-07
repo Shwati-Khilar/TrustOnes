@@ -77,6 +77,24 @@ export async function getProjectById(userId, projectId) {
         id: projectId,
         clientId: userId,
       },
+      include: {
+
+        freelancer: {
+          select: {
+            id: true,
+            name: true,
+            image: true,
+            email: true,
+          },
+        },
+
+        milestones: {
+          orderBy: {
+            createdAt: "asc",
+          },
+        },
+
+      },
     });
 
     if (!project) {
@@ -93,6 +111,10 @@ export async function getProjectById(userId, projectId) {
       project: {
         ...project,
         budget: project.budget.toString(),
+        milestones: project.milestones.map((m) => ({
+          ...m,
+          amount: m.amount.toString(),
+        })),
       },
     };
   } catch (error) {
@@ -279,6 +301,8 @@ export async function getClientProjects(userId) {
           select: {
             id: true,
             title: true,
+            amount: true,
+            dueDate: true,
             status: true,
           },
         },
@@ -290,18 +314,58 @@ export async function getClientProjects(userId) {
     });
 
     const formattedProjects = projects.map((project) => {
+
       const completedMilestones = project.milestones.filter(
-        (milestone) => milestone.status === "COMPLETED"
-      ).length;
+        (m) => m.status === "COMPLETED"
+      );
+
+      const totalMilestones = project.milestones.length;
+
+      const completedCount = completedMilestones.length;
+
+      const progress =
+        totalMilestones === 0
+          ? 0
+          : Math.round((completedCount / totalMilestones) * 100);
+
+      const spent = completedMilestones.reduce(
+        (sum, m) => sum + Number(m.amount),
+        0
+      );
+
+      const remainingBudget =
+        Number(project.budget) - spent;
+
+      const nextMilestone = project.milestones.find(
+        (m) => m.status === "PENDING"
+      );
 
       return {
         ...project,
 
         budget: project.budget.toString(),
 
-        totalMilestones: project.milestones.length,
+        milestones: project.milestones.map((m) => ({
+          ...m,
+          amount: m.amount.toString(),
+        })),
 
-        completedMilestones,
+        totalMilestones,
+
+        completedMilestones: completedCount,
+
+        progress,
+
+        spent: spent.toString(),
+
+remainingBudget: remainingBudget.toString(),
+
+        nextMilestone: nextMilestone
+  ? {
+      ...nextMilestone,
+      amount: nextMilestone.amount.toString(),
+    }
+  : null,
       };
     });
 

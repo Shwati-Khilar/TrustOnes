@@ -176,3 +176,189 @@ export async function getProjectMilestones(userId, projectId) {
     };
   }
 }
+export async function updateMilestone(userId, milestoneId, data) {
+  const title = String(data.title || "").trim();
+  const description = String(data.description || "").trim();
+  const amount = Number(data.amount);
+  const dueDate = new Date(data.dueDate);
+
+  if (!title || !data.amount || !data.dueDate) {
+    return {
+      success: false,
+      status: 400,
+      message: "Title, amount and due date are required.",
+    };
+  }
+
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return {
+      success: false,
+      status: 400,
+      message: "Milestone amount must be greater than 0.",
+    };
+  }
+
+  if (Number.isNaN(dueDate.getTime())) {
+    return {
+      success: false,
+      status: 400,
+      message: "Invalid milestone due date.",
+    };
+  }
+
+  try {
+    const milestone = await prisma.milestone.findUnique({
+      where: {
+        id: milestoneId,
+      },
+      include: {
+        project: true,
+      },
+    });
+
+    if (!milestone) {
+      return {
+        success: false,
+        status: 404,
+        message: "Milestone not found.",
+      };
+    }
+
+    if (milestone.project.clientId !== userId) {
+      return {
+        success: false,
+        status: 403,
+        message: "You are not allowed to edit this milestone.",
+      };
+    }
+
+    if (
+      milestone.project.status === "COMPLETED" ||
+      milestone.project.status === "CANCELLED"
+    ) {
+      return {
+        success: false,
+        status: 400,
+        message: "Project can no longer be modified.",
+      };
+    }
+
+    const aggregate = await prisma.milestone.aggregate({
+      where: {
+        projectId: milestone.projectId,
+        id: {
+          not: milestoneId,
+        },
+      },
+      _sum: {
+        amount: true,
+      },
+    });
+
+    const allocated = Number(
+      aggregate._sum.amount || 0
+    );
+
+    const budget = Number(
+      milestone.project.budget
+    );
+
+    if (allocated + amount > budget) {
+      return {
+        success: false,
+        status: 400,
+        message:
+          "Total milestone amount cannot exceed project budget.",
+      };
+    }
+
+    const updated = await prisma.milestone.update({
+      where: {
+        id: milestoneId,
+      },
+      data: {
+        title,
+        description: description || null,
+        amount,
+        dueDate,
+      },
+    });
+
+    return {
+      success: true,
+      status: 200,
+      message: "Milestone updated successfully.",
+      milestone: {
+        ...updated,
+        amount: updated.amount.toString(),
+      },
+    };
+  } catch (error) {
+    console.error("UPDATE_MILESTONE_SERVICE_ERROR", error);
+
+    return {
+      success: false,
+      status: 500,
+      message: "Unable to update milestone.",
+    };
+  }
+}
+export async function deleteMilestone(userId, milestoneId) {
+  try {
+    const milestone = await prisma.milestone.findUnique({
+      where: {
+        id: milestoneId,
+      },
+      include: {
+        project: true,
+      },
+    });
+
+    if (!milestone) {
+      return {
+        success: false,
+        status: 404,
+        message: "Milestone not found.",
+      };
+    }
+
+    if (milestone.project.clientId !== userId) {
+      return {
+        success: false,
+        status: 403,
+        message: "You are not allowed to delete this milestone.",
+      };
+    }
+
+    if (
+      milestone.project.status === "COMPLETED" ||
+      milestone.project.status === "CANCELLED"
+    ) {
+      return {
+        success: false,
+        status: 400,
+        message: "Project can no longer be modified.",
+      };
+    }
+
+    await prisma.milestone.delete({
+      where: {
+        id: milestoneId,
+      },
+    });
+
+    return {
+      success: true,
+      status: 200,
+      message: "Milestone deleted successfully.",
+    };
+  } catch (error) {
+    console.error("DELETE_MILESTONE_SERVICE_ERROR", error);
+
+    return {
+      success: false,
+      status: 500,
+      message: "Unable to delete milestone.",
+    };
+  }
+}
