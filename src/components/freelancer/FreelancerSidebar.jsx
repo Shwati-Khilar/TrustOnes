@@ -114,7 +114,6 @@ export default function FreelancerSidebar() {
   const pathname = usePathname();
   const router = useRouter();
 
-  const [mounted, setMounted] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
 
   const [badgeCounts, setBadgeCounts] = useState({
@@ -126,11 +125,6 @@ export default function FreelancerSidebar() {
   });
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!mounted) return;
 
     let ignore = false;
 
@@ -193,15 +187,15 @@ export default function FreelancerSidebar() {
     return () => {
       ignore = true;
     };
-  }, [mounted]);
+  }, []);
 
   const navItemsWithBadges = useMemo(() => {
     return navItems.map((item) => ({
       ...item,
       badge:
-        mounted && item.badgeKey ? formatBadge(badgeCounts[item.badgeKey]) : "",
+        item.badgeKey ? formatBadge(badgeCounts[item.badgeKey]) : "",
     }));
-  }, [badgeCounts, mounted]);
+  }, [badgeCounts]);
 
   async function handleLogout() {
     try {
@@ -247,7 +241,7 @@ export default function FreelancerSidebar() {
       <nav className="space-y-1.5">
         {navItemsWithBadges.map((item) => {
           const Icon = item.icon;
-          const active = mounted && isActivePath(pathname, item.href);
+          const active = isActivePath(pathname, item.href);
 
           return (
             <Link

@@ -29,7 +29,6 @@ export async function GET(req) {
       },
       select: {
         id: true,
-        emailVerified: true,
         verificationTokenExpiry: true,
       },
     });
@@ -38,30 +37,19 @@ export async function GET(req) {
       return redirectTo(req, "/verify-email?status=invalid-token");
     }
 
-    if (user.emailVerified) {
-      return redirectTo(req, "/login?verified=already");
-    }
-
-    if (
-      !user.verificationTokenExpiry ||
-      user.verificationTokenExpiry <= new Date()
-    ) {
-      await prisma.user.update({
-        where: {
-          id: user.id,
-        },
-        data: {
-          verificationToken: null,
-          verificationTokenExpiry: null,
-        },
-      });
-
+    if (!user.verificationTokenExpiry || user.verificationTokenExpiry <= new Date()) {
       return redirectTo(req, "/verify-email?status=expired-token");
     }
 
-    await prisma.user.update({
+    const { count } = await prisma.user.updateMany({
       where: {
         id: user.id,
+        verificationToken: hashedToken,
+        verificationTokenExpiry: { gt: new Date() },
+        emailVerified: false,
+        status: { in: ["PENDING", "ACTIVE"] },
+        role: { not: null },
+        provider: "credentials",
       },
       data: {
         emailVerified: true,
@@ -70,6 +58,7 @@ export async function GET(req) {
         verificationTokenExpiry: null,
       },
     });
+    if (!count) return redirectTo(req, "/verify-email?status=invalid-token");
 
     return redirectTo(req, "/login?verified=true");
   } catch (error) {

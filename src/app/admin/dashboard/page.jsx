@@ -1,21 +1,9 @@
-import { redirect } from "next/navigation";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { requirePortal } from "@/lib/portal-session";
 import { prisma } from "@/lib/prisma";
 import LogoutButton from "@/components/auth/LogoutButton";
-import { logoutUser } from '@/services/auth.client.service';
 
 export default async function AdminDashboardPage() {
-  const session = await getServerSession(authOptions);
-
-  if (!session?.user) {
-    redirect("/login");
-  }
-
-  if (session.user.role !== "ADMIN") {
-    redirect("/unauthorized");
-  }
-
+  const user = await requirePortal("ADMIN");
   const totalUsers = await prisma.user.count();
 
   return (
@@ -31,7 +19,7 @@ export default async function AdminDashboardPage() {
           </h1>
 
           <p className="mt-3 text-slate-600">
-            Welcome, {session.user.name}
+            Welcome, {user.name}
           </p>
 
           <div className="mt-6 grid gap-4 md:grid-cols-3">

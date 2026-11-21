@@ -2,8 +2,6 @@
 
 import { useState } from "react";
 
-import ClientSidebar from "../../../components/client/ClientSidebar";
-import ClientTopNav from "../../../components/client/ClientTopNav";
 
 import EscrowHero from "../../../components/client/EscrowContents/EscrowHero";
 import EscrowStats from "../../../components/client/EscrowContents/EscrowStats";
@@ -27,10 +25,10 @@ export default function EscrowPage() {
 
     return (
         <>
-            <ClientSidebar />
-            <ClientTopNav />
 
-            <main className="ml-64 pt-20 min-h-screen bg-[#F8F4EF]">
+
+
+            <section>
 
                 <div className="p-8">
 
@@ -50,7 +48,7 @@ export default function EscrowPage() {
 
                 </div>
 
-            </main>
+            </section>
         </>
     );
 }

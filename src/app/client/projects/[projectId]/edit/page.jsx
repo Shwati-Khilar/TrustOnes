@@ -9,8 +9,6 @@ import {
   Loader2,
 } from "lucide-react";
 
-import ClientSidebar from "@/components/client/ClientSidebar";
-import ClientTopNav from "@/components/client/ClientTopNav";
 
 const categories = [
   "Development",
@@ -145,24 +143,24 @@ export default function EditProjectPage({ params }) {
   if (loading) {
     return (
       <>
-        <ClientSidebar />
-        <ClientTopNav />
 
-        <main className="ml-64 min-h-screen bg-[#F8F4EF] pt-20">
+
+
+        <section>
           <div className="p-6 text-[#8B5A2B]">
             Loading project...
           </div>
-        </main>
+        </section>
       </>
     );
   }
 
   return (
     <>
-      <ClientSidebar />
-      <ClientTopNav />
 
-      <main className="ml-64 min-h-screen bg-[#F8F4EF] pt-20">
+
+
+      <section>
         <div className="mx-auto max-w-5xl p-6">
           <button
             type="button"
@@ -186,7 +184,7 @@ export default function EditProjectPage({ params }) {
             </h1>
 
             <p className="mt-3 max-w-2xl text-[#EED8C7]">
-              Update the project's basic information, budget,
+              Update the project&apos;s basic information, budget,
               category and deadline.
             </p>
           </section>
@@ -362,7 +360,7 @@ export default function EditProjectPage({ params }) {
             </div>
           </form>
         </div>
-      </main>
+      </section>
     </>
   );
 }

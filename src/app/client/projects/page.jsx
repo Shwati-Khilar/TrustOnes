@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 import ProjectsHero from "../../../components/client/project/ProjectsHero";
 import ProjectsStats from "../../../components/client/project/ProjectsStats";
-import ProjectsFilters from "../../../components/client/project/ProjectsFilters";
+import ProjectsFilters from "../../../components/client/project/ProjectsFIlters";
 import ProjectsGrid from "../../../components/client/project/ProjectsGrid";
 
 export default function ProjectsPage() {

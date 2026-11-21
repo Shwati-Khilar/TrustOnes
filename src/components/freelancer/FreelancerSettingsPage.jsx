@@ -183,45 +183,46 @@ export default function FreelancerSettingsPage() {
   const [creatingTicket, setCreatingTicket] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
 
-  async function loadSettings() {
-    try {
-      setLoading(true);
-      setMessage({ type: "", text: "" });
-
-      const response = await fetch("/api/freelancer/settings", {
-        method: "GET",
-        cache: "no-store",
-      });
-
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        throw new Error(result.message || "Unable to load settings.");
-      }
-
-      const data = result.data;
-
-      setSettings(data);
-      setAccountForm({
-        name: data.account?.name || "",
-        availability: data.freelancer?.availability || "AVAILABLE",
-      });
-      setPreferences({
-        ...initialPreferences,
-        ...(data.preferences || {}),
-      });
-    } catch (error) {
-      setMessage({
-        type: "error",
-        text: error.message || "Unable to load settings.",
-      });
-    } finally {
-      setLoading(false);
-    }
-  }
-
   useEffect(() => {
+    const controller = new AbortController();
+    async function loadSettings() {
+      try {
+
+        const response = await fetch("/api/freelancer/settings", {
+          method: "GET",
+          cache: "no-store",
+          signal: controller.signal,
+        });
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          throw new Error(result.message || "Unable to load settings.");
+        }
+
+        const data = result.data;
+
+        setSettings(data);
+        setAccountForm({
+          name: data.account?.name || "",
+          availability: data.freelancer?.availability || "AVAILABLE",
+        });
+        setPreferences({
+          ...initialPreferences,
+          ...(data.preferences || {}),
+        });
+      } catch (error) {
+        if (controller.signal.aborted) return;
+        setMessage({
+          type: "error",
+          text: error.message || "Unable to load settings.",
+        });
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
+    }
     loadSettings();
+    return () => controller.abort();
   }, []);
 
   function updatePreference(field, value) {

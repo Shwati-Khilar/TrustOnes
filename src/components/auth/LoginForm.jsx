@@ -102,7 +102,10 @@ export default function LoginForm() {
       }
 
       if (result?.error) {
-        const message = "Invalid email or password.";
+        const message = ({
+          ACCOUNT_SUSPENDED: "Your account has been suspended.",
+          PROFILE_INCOMPLETE: "Your account is pending activation.",
+        })[result.error] || "Invalid email or password.";
         setError(message);
         toast.error(message);
         return;

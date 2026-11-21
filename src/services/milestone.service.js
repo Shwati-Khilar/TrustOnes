@@ -176,7 +176,7 @@ export async function getProjectMilestones(userId, projectId) {
     };
   }
 }
-export async function updateMilestone(userId, milestoneId, data) {
+export async function updateMilestone(userId, projectId, milestoneId, data) {
   const title = String(data.title || "").trim();
   const description = String(data.description || "").trim();
   const amount = Number(data.amount);
@@ -207,9 +207,11 @@ export async function updateMilestone(userId, milestoneId, data) {
   }
 
   try {
-    const milestone = await prisma.milestone.findUnique({
+    const milestone = await prisma.milestone.findFirst({
       where: {
         id: milestoneId,
+        projectId,
+        project: { clientId: userId },
       },
       include: {
         project: true,
@@ -224,13 +226,6 @@ export async function updateMilestone(userId, milestoneId, data) {
       };
     }
 
-    if (milestone.project.clientId !== userId) {
-      return {
-        success: false,
-        status: 403,
-        message: "You are not allowed to edit this milestone.",
-      };
-    }
 
     if (
       milestone.project.status === "COMPLETED" ||
@@ -303,11 +298,13 @@ export async function updateMilestone(userId, milestoneId, data) {
     };
   }
 }
-export async function deleteMilestone(userId, milestoneId) {
+export async function deleteMilestone(userId, projectId, milestoneId) {
   try {
-    const milestone = await prisma.milestone.findUnique({
+    const milestone = await prisma.milestone.findFirst({
       where: {
         id: milestoneId,
+        projectId,
+        project: { clientId: userId },
       },
       include: {
         project: true,
@@ -322,13 +319,6 @@ export async function deleteMilestone(userId, milestoneId) {
       };
     }
 
-    if (milestone.project.clientId !== userId) {
-      return {
-        success: false,
-        status: 403,
-        message: "You are not allowed to delete this milestone.",
-      };
-    }
 
     if (
       milestone.project.status === "COMPLETED" ||

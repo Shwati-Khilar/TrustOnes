@@ -1,17 +1,12 @@
 import "dotenv/config";
 import { prisma } from "../src/lib/prisma.js";
 
-async function main() {
-  const users = await prisma.user.findMany();
-
-  console.log("Database connected successfully!");
-  console.log("Users:", users);
+try {
+  await prisma.$queryRaw`SELECT 1`;
+  console.log("Database connection succeeded.");
+} catch {
+  console.error("Database connection failed.");
+  process.exitCode = 1;
+} finally {
+  await prisma.$disconnect();
 }
-
-main()
-  .catch((error) => {
-    console.error("Database connection failed:", error);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });

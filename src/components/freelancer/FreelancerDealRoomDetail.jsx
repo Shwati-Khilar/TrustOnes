@@ -119,12 +119,7 @@ export default function FreelancerDealRoomDetail({ projectId }) {
       }
     }
 
-    if (projectId) {
-      loadDealRoomDetail();
-    } else {
-      setErrorMessage("Project id is missing.");
-      setLoading(false);
-    }
+    loadDealRoomDetail();
 
     return () => {
       ignore = true;

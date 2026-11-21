@@ -30,20 +30,6 @@ async function getFreelancerSession() {
     };
   }
 
-  if (session.user.status !== "ACTIVE") {
-    return {
-      error: NextResponse.json(
-        {
-          success: false,
-          message: "Your account is not active.",
-        },
-        {
-          status: 403,
-        }
-      ),
-    };
-  }
-
   return {
     session,
   };

@@ -1,5 +1,6 @@
 "use client";
 
+import LogoutButton from "@/components/auth/LogoutButton";
 import Link from "next/link";
 import { motion } from "framer-motion";
 
@@ -66,12 +67,7 @@ export default function UnauthorizedPage() {
               </p>
 
               <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-                <Link
-                  href="/login"
-                  className="inline-flex h-12 items-center justify-center rounded-full bg-[#d6ad72] px-7 text-sm font-bold text-[#130d08] shadow-[0_20px_60px_rgba(214,173,114,0.22)] transition hover:bg-[#e2bd83]"
-                >
-                  Go to login
-                </Link>
+                <LogoutButton />
 
                 <Link
                   href="/"

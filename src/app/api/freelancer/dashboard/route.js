@@ -24,18 +24,6 @@ export async function GET() {
       );
     }
 
-    if (session.user.status !== "ACTIVE") {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Your account is not active.",
-        },
-        {
-          status: 403,
-        }
-      );
-    }
-
     const data = await getFreelancerDashboard(session.user.id);
 
     return NextResponse.json(

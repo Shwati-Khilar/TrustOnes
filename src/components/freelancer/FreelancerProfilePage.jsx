@@ -114,33 +114,34 @@ export default function FreelancerProfilePage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
-  async function loadProfile() {
-    try {
-      setLoading(true);
-      setErrorMessage("");
-
-      const response = await fetch("/api/freelancer/profile", {
-        method: "GET",
-        cache: "no-store",
-      });
-
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        throw new Error(result.message || "Unable to load freelancer profile.");
-      }
-
-      setProfileData(result.data);
-      setForm(buildForm(result.data));
-    } catch (error) {
-      setErrorMessage(error.message || "Unable to load freelancer profile.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
   useEffect(() => {
+    const controller = new AbortController();
+    async function loadProfile() {
+      try {
+
+        const response = await fetch("/api/freelancer/profile", {
+          method: "GET",
+          cache: "no-store",
+          signal: controller.signal,
+        });
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          throw new Error(result.message || "Unable to load freelancer profile.");
+        }
+
+        setProfileData(result.data);
+        setForm(buildForm(result.data));
+      } catch (error) {
+        if (controller.signal.aborted) return;
+        setErrorMessage(error.message || "Unable to load freelancer profile.");
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
+    }
     loadProfile();
+    return () => controller.abort();
   }, []);
 
   function updateField(field, value) {

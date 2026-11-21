@@ -1,8 +1,7 @@
-import { redirect } from "next/navigation";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
-import ClientDashboard from "../../../components/client/ClientDashboard";
+import ClientDashboard from "@/components/client/ClientDashboard";
+import { requirePortal } from "@/lib/portal-session";
 
-export default function DashboardPage() {
-  return <ClientDashboard />;
+export default async function DashboardPage() {
+  const user = await requirePortal("CLIENT");
+  return <ClientDashboard user={user} />;
 }

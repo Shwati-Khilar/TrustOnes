@@ -60,7 +60,7 @@ export default function SettingsContent() {
 
           <p className="mt-3 text-white/80 leading-7">
             Your client account is verified,
-            escrow is enabled and you're ready
+            escrow is enabled and you&apos;re ready
             to hire freelancers securely.
           </p>
 

@@ -3,8 +3,6 @@
 import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import ClientSidebar from "@/components/client/ClientSidebar";
-import ClientTopNav from "@/components/client/ClientTopNav";
 import CreateMilestoneModal from "@/components/client/project/CreateMilestoneModel";
 import EditMilestonesModel from "@/components/client/project/EditMilestonesModel";
 
@@ -275,14 +273,14 @@ export default function ProjectDetailsPage({ params }) {
   if (loading) {
     return (
       <>
-        <ClientSidebar />
-        <ClientTopNav />
 
-        <main className="ml-64 pt-20 min-h-screen bg-[#F8F4EF]">
+
+
+        <section>
           <div className="p-6">
             <p>Loading project...</p>
           </div>
-        </main>
+        </section>
       </>
     );
   }
@@ -291,14 +289,14 @@ export default function ProjectDetailsPage({ params }) {
   if (error) {
     return (
       <>
-        <ClientSidebar />
-        <ClientTopNav />
 
-        <main className="ml-64 pt-20 min-h-screen bg-[#F8F4EF]">
+
+
+        <section>
           <div className="p-6">
             <p className="text-red-500">{error}</p>
           </div>
-        </main>
+        </section>
       </>
     );
   }
@@ -326,11 +324,10 @@ export default function ProjectDetailsPage({ params }) {
 
   return (
     <>
-      <ClientSidebar />
 
-      <ClientTopNav />
 
-      <main className="ml-64 pt-20 min-h-screen bg-[#F8F4EF]">
+
+      <section>
         <div className="p-6 max-w-7xl mx-auto">
 
           {/* BACK BUTTON */}
@@ -422,7 +419,7 @@ export default function ProjectDetailsPage({ params }) {
             </h2>
 
             <p className="mt-2 text-[#B88746]">
-              Manage this project's lifecycle and upcoming actions.
+              Manage this project&apos;s lifecycle and upcoming actions.
             </p>
 
             {/* Cancel error */}
@@ -887,7 +884,7 @@ export default function ProjectDetailsPage({ params }) {
           </section>
 
         </div>
-      </main>
+      </section>
 
       {/* CREATE MILESTONE MODAL */}
 

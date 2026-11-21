@@ -4,6 +4,8 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
+import { hashToken } from "@/lib/tokens";
+import { signInWithGoogle } from "@/services/google-signin";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 
@@ -67,13 +69,11 @@ export const authOptions = {
           throw new Error("INVALID_CREDENTIALS");
         }
 
-        if (!user.emailVerified) {
-          throw new Error("EMAIL_NOT_VERIFIED");
-        }
-
         if (user.status === "SUSPENDED") {
           throw new Error("ACCOUNT_SUSPENDED");
         }
+
+        if (!user.emailVerified) throw new Error("EMAIL_NOT_VERIFIED");
 
         if (!user.role || user.status === "PENDING") {
           throw new Error("PROFILE_INCOMPLETE");
@@ -93,85 +93,35 @@ export const authOptions = {
   ],
 
   callbacks: {
-    async signIn({ user, account }) {
-      if (account?.provider === "google") {
-        const email = user.email?.toLowerCase().trim();
-
-        if (!email) {
-          return false;
-        }
-
-        const existingUser = await prisma.user.findUnique({
-          where: {
-            email,
-          },
-        });
-
-        if (!existingUser) {
-          await prisma.user.create({
-            data: {
-              name: user.name || "Google User",
-              email,
-              image: user.image || null,
-              provider: "google",
-              passwordHash: null,
-              role: null,
-              status: "PENDING",
-              emailVerified: true,
-              verificationToken: null,
-              verificationTokenExpiry: null,
-            },
-          });
-
-          return true;
-        }
-
-        if (existingUser.status === "SUSPENDED") {
-          return false;
-        }
-
-        await prisma.user.update({
-          where: {
-            id: existingUser.id,
-          },
-          data: {
-            image: user.image || existingUser.image,
-            emailVerified: true,
-            verificationToken: null,
-            verificationTokenExpiry: null,
-            status: existingUser.role ? "ACTIVE" : "PENDING",
-          },
-        });
-      }
-
-      return true;
+    async signIn({ user, account, profile }) {
+      if (account?.provider !== "google") return true;
+      return signInWithGoogle(prisma.user, user, profile);
     },
 
-    async jwt({ token }) {
-      if (!token.email) {
-        return token;
-      }
-
-      const dbUser = await prisma.user.findUnique({
-        where: {
-          email: token.email.toLowerCase().trim(),
+    async jwt({ token, account }) {
+      // Resolve provider identity by email once. Refresh only the same database user.
+      const where = account && token.email
+        ? { email: token.email.trim().toLowerCase() }
+        : { id: token.id };
+      if (!where.email && !where.id) return {};
+      const identity = await prisma.user.findUnique({
+        where,
+        select: {
+          id: true, email: true, role: true, status: true, name: true,
+          image: true, emailVerified: true, provider: true, passwordHash: true,
         },
       });
-
-      if (dbUser) {
-        token.id = dbUser.id;
-        token.role = dbUser.role;
-        token.status = dbUser.status;
-        token.name = dbUser.name;
-        token.image = dbUser.image;
-        token.emailVerified = dbUser.emailVerified;
-        token.provider = dbUser.provider;
+      if (!identity) return {};
+      const { passwordHash, ...claims } = identity;
+      const credentialStamp = passwordHash ? hashToken(passwordHash) : null;
+      if (!account && token.credentialStamp !== undefined && token.credentialStamp !== credentialStamp) {
+        return {};
       }
-
-      return token;
+      return { ...token, ...claims, credentialStamp };
     },
 
     async session({ session, token }) {
+      if (!token.id) return { ...session, user: null };
       if (session.user) {
         session.user.id = token.id;
         session.user.role = token.role;

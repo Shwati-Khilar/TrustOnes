@@ -487,22 +487,8 @@
 //         </>
 //     );
 // }
-import ClientSidebar from "@/components/client/ClientSidebar";
-import ClientTopNav from "@/components/client/ClientTopNav";
 import ProjectsForm from "@/components/client/project/ProjectsForm";
 
 export default function CreateProjectPage() {
-  return (
-    <div className="flex min-h-screen bg-[#FAF7F2]">
-      <ClientSidebar />
-
-      <main className="flex-1">
-        <ClientTopNav />
-
-        <div className="p-8">
-          <ProjectsForm />
-        </div>
-      </main>
-    </div>
-  );
+  return <ProjectsForm />;
 }

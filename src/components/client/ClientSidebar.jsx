@@ -13,6 +13,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 
+import LogoutButton from "@/components/auth/LogoutButton";
 import UserAvatar from "./UserAvatar";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
@@ -206,6 +207,7 @@ export default function ClientSidebar({ user }) {
           </div>
           <ChevronRight className="w-3.5 h-3.5 text-[#7A7068] flex-shrink-0" />
         </button>
+        <LogoutButton />
       </div>
     </aside>
   );

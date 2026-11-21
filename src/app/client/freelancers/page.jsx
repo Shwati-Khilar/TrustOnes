@@ -8,8 +8,6 @@ import FreelancerGrid from "../../../components/client/FreelancerContents/Freela
 
 import { freelancers } from "../../../components/client/FreelancerContents/FreelancerData";
 
-import ClientSidebar from "../../../components/client/ClientSidebar";
-import ClientTopNav from "../../../components/client/ClientTopNav";
 
 export default function FreelancersPage() {
 
@@ -50,10 +48,10 @@ export default function FreelancersPage() {
 
   return (
     <>
-      <ClientSidebar />
-      <ClientTopNav />
 
-      <main className="ml-64 pt-20 min-h-screen bg-[#F8F4EF]">
+
+
+      <section>
         <div className="p-8">
 
           <FreelancerHero />
@@ -71,7 +69,7 @@ export default function FreelancersPage() {
           />
 
         </div>
-      </main>
+      </section>
     </>
   );
 }
