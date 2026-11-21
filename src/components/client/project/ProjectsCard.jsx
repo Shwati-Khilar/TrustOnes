@@ -1,0 +1,293 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import {
+    ChevronDown,
+    ChevronUp,
+    CheckCircle,
+} from "lucide-react";
+
+const tagClass = "px-3 py-2 rounded-xl bg-[#f7efe4] text-[#806049] text-sm";
+
+export default function ProjectCard({ project }) {
+    const [showMilestones, setShowMilestones] = useState(false);
+    const progress = project.progress ?? 0;
+    const spent = project.spent ?? 0;
+    const completedMilestones = project.completedMilestones ?? 0;
+    const totalMilestones = project.totalMilestones ?? 0;
+    const milestones = project.milestones ?? [];
+    const freelancerName = project.freelancer?.name ?? "Not Assigned";
+
+    const freelancerInitial = project.freelancer?.name?.charAt(0).toUpperCase() ?? "N";
+
+    const formattedDeadline = new Date(project.deadline).toLocaleDateString(
+        "en-IN",
+        {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+        }
+    );
+
+    const formattedStatus =
+        project.status.charAt(0) +
+        project.status.slice(1).toLowerCase();
+
+    const formattedBudget = Number(project.budget).toLocaleString("en-IN");
+    const remainingBudget = Number(project.budget) - Number(spent);
+
+    const router = useRouter();
+    return (
+        <div className="rounded-2xl bg-white border border-[#eadfd2] p-5">
+
+            {/* Header */}
+            <div className="flex justify-between items-start gap-4">
+                <div>
+                    <h2 className="text-xl font-semibold text-[#24130c] py-2">
+                        {project.title}
+                    </h2>
+
+                    <p className="mt-3 text-[#806049] text-sm">
+                        {project.description}
+                    </p>
+                </div>
+
+                <span
+                    className="
+          px-3 py-2
+          rounded-full
+          text-sm
+          border
+          border-[#eadfd2]
+          bg-[#f7efe4]
+          text-[#6f2e1c]
+          whitespace-nowrap
+        "
+                >
+                    {formattedStatus}
+                </span>
+            </div>
+
+            {/* Tags */}
+            <div className="flex flex-wrap gap-2 mt-5 text-sm">
+                <span className={tagClass}>
+                    📁 {project.category}
+                </span>
+
+                <span className={tagClass}>
+                    📅 {formattedDeadline}
+                </span>
+
+                <span className={tagClass}>
+                    🛡️ Funding Not Started
+                </span>
+            </div>
+
+            {/* Progress */}
+            <div className="mt-4">
+                <div className="flex justify-between mb-2 text-sm">
+                    <span className="text-[#6f2e1c]">
+                        Progress
+                    </span>
+
+                    <span className="font-medium text-[#6f2e1c]">
+                        {progress}%
+                    </span>
+                </div>
+
+                <div className="h-2 bg-[#EFE5DB] rounded-full">
+                    <div
+                        className="h-2 rounded-full bg-[#C58A1D]"
+                        style={{
+                            width: `${progress}%`,
+                        }}
+                    />
+                </div>
+            </div>
+
+            {/* Budget Section */}
+            <div
+                className="
+        mt-4
+        grid
+        grid-cols-3
+        rounded-2xl
+        border
+        border-[#eadfd2]
+        p-4
+        text-center
+      "
+            >
+                <div>
+                    <p className="text-[#806049] text-sm">
+                        Budget
+                    </p>
+
+                    <h3 className="font-bold text-[#24130c] text-md">
+                        ₹{formattedBudget}
+                    </h3>
+                </div>
+
+                <div>
+                    <p className="text-[#806049] text-sm">
+                        Spent
+                    </p>
+
+                    <h3 className="font-bold text-[#24130c] text-md">
+                        ₹{spent}
+                    </h3>
+                </div>
+
+                <div>
+                    <p className="text-[#806049] text-sm">
+                        Remaining
+                    </p>
+
+                    <h3 className="font-bold text-green-600 text-md">
+                        ₹{remainingBudget.toLocaleString("en-IN")}
+                    </h3>
+                </div>
+            </div>
+
+            {/* Freelancer */}
+            <div
+                className="
+        mt-4
+        border
+        border-[#eadfd2]
+        rounded-2xl
+        p-4
+        flex
+        items-center
+        justify-between
+      "
+            >
+                <div className="flex items-center gap-3">
+
+                    <div
+                        className="
+            h-10
+            w-10
+            rounded-full
+            bg-[#6f2e1c]
+            text-white
+            flex
+            items-center
+            justify-center
+            font-semibold
+          "
+                    >
+                        {freelancerInitial}
+                    </div>
+
+                    <div>
+                        <h4 className="font-medium text-[#24130c] text-md">
+                            {freelancerName}
+                        </h4>
+
+                        <p className="text-[#806049] text-sm">
+                            {project.freelancer
+                                ? "Assigned Freelancer"
+                                : "Awaiting assignment"}
+                        </p>
+                    </div>
+
+                </div>
+
+                <button className="text-[#6f2e1c] font-medium hover:underline text-xs flex items-center gap-1">
+                    <span>Message</span>
+                    <span className="text-[10px]">→</span>
+                </button>
+            </div>
+
+            {/* Milestones */}
+            <div className="mt-4">
+
+                <button
+                    onClick={() =>
+                        setShowMilestones(!showMilestones)
+                    }
+                    className="
+      w-full
+      flex
+      items-center
+      justify-between
+      text-[#6f2e1c]
+      font-semibold
+    "
+                >
+                    <span>
+                        🎯 Milestones (
+                        {completedMilestones}/
+                        {totalMilestones} done)
+                    </span>
+
+                    {showMilestones ? (
+                        <ChevronUp size={15} />
+                    ) : (
+                        <ChevronDown size={15} />
+                    )}
+                </button>
+
+                {showMilestones && (
+                    <div className="mt-4 space-y-3">
+                        {milestones.length === 0 ? (
+                            <p className="text-sm text-[#806049]">
+                                No milestones created yet.
+                            </p>
+                        ) : (
+                            milestones.map((milestone, index) => (
+                                <div
+                                    key={index}
+                                    className="flex items-center gap-3"
+                                >
+                                    {milestone.status === "COMPLETED" ? (
+  <CheckCircle
+    size={15}
+    className="text-green-500"
+  />
+) : (
+  <div className="h-4 w-4 rounded-full border-2 border-[#D8C9B8]" />
+)}
+
+                                    <span
+                                        className={
+                                            milestone.status === "COMPLETED"
+                                                ? "line-through text-[#806049] text-sm"
+                                                : "text-[#24130c] text-sm"
+                                        }
+                                    >
+                                        {milestone.title}
+                                    </span>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                )}
+
+                {/* Actions */}
+                <div className="mt-4 flex gap-3">
+                    <button
+                        onClick={() => router.push(`/client/projects/${project.id}`)}
+                        className="
+      flex-1
+      rounded-2xl
+      bg-[#6f2e1c]
+      py-2
+      text-white
+      font-medium
+      hover:bg-[#6D4120]
+      transition-colors
+    "
+                    >
+                        View Details
+                    </button>
+                </div>
+
+
+            </div>
+
+        </div>
+    );
+}
