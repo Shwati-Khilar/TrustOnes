@@ -34,7 +34,7 @@ export default function ProjectsFilters({
               left-4
               top-1/2
               -translate-y-1/2
-              text-[#B88746]
+              text-[#806049]
             "
           />
 
@@ -49,12 +49,12 @@ export default function ProjectsFilters({
               w-full
               rounded-xl
               border
-              border-[#E7DDD2]
+              border-[#eadfd2]
               bg-white
               py-3
               pl-12
               pr-4
-              text-[#3D2414]
+              text-[#24130c]
               outline-none
             "
           />
@@ -70,7 +70,7 @@ export default function ProjectsFilters({
             gap-2
             rounded-2xl
             border
-            border-[#E7DDD2]
+            border-[#eadfd2]
             bg-white
             px-3
             py-2
@@ -92,8 +92,8 @@ export default function ProjectsFilters({
 
                 ${
                   activeStatus === status
-                    ? "bg-[#8B5A2B] text-white"
-                    : "text-[#B88746]"
+                    ? "bg-[#6f2e1c] text-white"
+                    : "text-[#806049]"
                 }
               `}
             >
@@ -116,7 +116,7 @@ export default function ProjectsFilters({
               px-4
               py-3
               pr-10
-              text-[#7A4A28]
+              text-[#6f5a4c]
               font-medium
               outline-none
               text-sm
@@ -135,7 +135,7 @@ export default function ProjectsFilters({
               right-4
               top-1/2
               -translate-y-1/2
-              text-[#B88746]
+              text-[#806049]
             "
           >
             ▼
@@ -145,7 +145,7 @@ export default function ProjectsFilters({
 
       </div>
 
-      <p className="mt-6 text-md text-[#B88746]">
+      <p className="mt-6 text-md text-[#806049]">
         Showing {totalProjects} projects
       </p>
 

@@ -141,20 +141,20 @@ export default function NotificationSidebar() {
         bg-white
         rounded-3xl
         border
-        border-[#E7DDD2]
+        border-[#eadfd2]
         p-6
       "
             >
 
                 <div className="flex justify-between items-center">
 
-    <h2 className="text-2xl font-bold text-[#3D2414]">
+    <h2 className="text-2xl font-bold text-[#24130c]">
         Alert Types
     </h2>
 
     <Filter
         size={18}
-        className="text-[#B88746]"
+        className="text-[#806049]"
     />
 
 </div>
@@ -180,7 +180,7 @@ export default function NotificationSidebar() {
             key={item.title}
             className="
             border
-            border-[#E7DDD2]
+            border-[#eadfd2]
             rounded-2xl
             p-4
             flex
@@ -205,11 +205,11 @@ export default function NotificationSidebar() {
 
             <div>
 
-                <h4 className="font-semibold text-[#3D2414]">
+                <h4 className="font-semibold text-[#24130c]">
                     {item.title}
                 </h4>
 
-                <p className="text-sm text-[#B88746] mt-1">
+                <p className="text-sm text-[#806049] mt-1">
                     {item.desc}
                 </p>
 
@@ -232,12 +232,12 @@ export default function NotificationSidebar() {
         bg-white
         rounded-3xl
         border
-        border-[#E7DDD2]
+        border-[#eadfd2]
         p-6
       "
             >
 
-                <h2 className="text-2xl font-bold text-[#3D2414]">
+                <h2 className="text-2xl font-bold text-[#24130c]">
                     Backend-ready Mapping
                 </h2>
 
@@ -269,17 +269,17 @@ export default function NotificationSidebar() {
             >
                 <Icon
                     size={17}
-                    className="text-[#8B5A2B]"
+                    className="text-[#6f2e1c]"
                 />
             </div>
 
             <div>
 
-                <h4 className="font-semibold text-[#3D2414]">
+                <h4 className="font-semibold text-[#24130c]">
                     {item.title}
                 </h4>
 
-                <p className="text-sm text-[#B88746]">
+                <p className="text-sm text-[#806049]">
                     {item.desc}
                 </p>
 

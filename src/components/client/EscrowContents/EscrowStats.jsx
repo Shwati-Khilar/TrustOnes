@@ -42,20 +42,20 @@ export default function EscrowStats() {
             bg-white
             rounded-3xl
             border
-            border-[#E7DDD2]
+            border-[#eadfd2]
             p-6
           "
           >
             <Icon
               size={24}
-              className="text-[#8B5A2B]"
+              className="text-[#6f2e1c]"
             />
 
             <h2 className="mt-4 text-2xl font-bold">
               {item.value}
             </h2>
 
-            <p className="text-[#B88746] mt-2 text-sm">
+            <p className="text-[#806049] mt-2 text-sm">
               {item.title}
             </p>
           </div>

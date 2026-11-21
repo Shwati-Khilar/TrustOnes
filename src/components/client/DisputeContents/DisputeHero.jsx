@@ -44,7 +44,7 @@ export default function DisputeHero() {
         py-3
         rounded-2xl
         bg-[#FFC62E]
-        text-[#3D2414]
+        text-[#24130c]
         font-semibold
       "
       >

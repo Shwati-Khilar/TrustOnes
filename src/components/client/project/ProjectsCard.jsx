@@ -8,7 +8,7 @@ import {
     CheckCircle,
 } from "lucide-react";
 
-const tagClass = "px-3 py-2 rounded-xl bg-[#F7F3EE] text-[#B88746] text-sm";
+const tagClass = "px-3 py-2 rounded-xl bg-[#f7efe4] text-[#806049] text-sm";
 
 export default function ProjectCard({ project }) {
     const [showMilestones, setShowMilestones] = useState(false);
@@ -39,16 +39,16 @@ export default function ProjectCard({ project }) {
 
     const router = useRouter();
     return (
-        <div className="rounded-2xl bg-white border border-[#E7DDD2] p-5">
+        <div className="rounded-2xl bg-white border border-[#eadfd2] p-5">
 
             {/* Header */}
             <div className="flex justify-between items-start gap-4">
                 <div>
-                    <h2 className="text-xl font-semibold text-[#3D2414] py-2">
+                    <h2 className="text-xl font-semibold text-[#24130c] py-2">
                         {project.title}
                     </h2>
 
-                    <p className="mt-3 text-[#B88746] text-sm">
+                    <p className="mt-3 text-[#806049] text-sm">
                         {project.description}
                     </p>
                 </div>
@@ -59,9 +59,9 @@ export default function ProjectCard({ project }) {
           rounded-full
           text-sm
           border
-          border-[#E7DDD2]
-          bg-[#F7F3EE]
-          text-[#8B5A2B]
+          border-[#eadfd2]
+          bg-[#f7efe4]
+          text-[#6f2e1c]
           whitespace-nowrap
         "
                 >
@@ -87,11 +87,11 @@ export default function ProjectCard({ project }) {
             {/* Progress */}
             <div className="mt-4">
                 <div className="flex justify-between mb-2 text-sm">
-                    <span className="text-[#8B5A2B]">
+                    <span className="text-[#6f2e1c]">
                         Progress
                     </span>
 
-                    <span className="font-medium text-[#8B5A2B]">
+                    <span className="font-medium text-[#6f2e1c]">
                         {progress}%
                     </span>
                 </div>
@@ -114,33 +114,33 @@ export default function ProjectCard({ project }) {
         grid-cols-3
         rounded-2xl
         border
-        border-[#E7DDD2]
+        border-[#eadfd2]
         p-4
         text-center
       "
             >
                 <div>
-                    <p className="text-[#B88746] text-sm">
+                    <p className="text-[#806049] text-sm">
                         Budget
                     </p>
 
-                    <h3 className="font-bold text-[#3D2414] text-md">
+                    <h3 className="font-bold text-[#24130c] text-md">
                         ₹{formattedBudget}
                     </h3>
                 </div>
 
                 <div>
-                    <p className="text-[#B88746] text-sm">
+                    <p className="text-[#806049] text-sm">
                         Spent
                     </p>
 
-                    <h3 className="font-bold text-[#3D2414] text-md">
+                    <h3 className="font-bold text-[#24130c] text-md">
                         ₹{spent}
                     </h3>
                 </div>
 
                 <div>
-                    <p className="text-[#B88746] text-sm">
+                    <p className="text-[#806049] text-sm">
                         Remaining
                     </p>
 
@@ -155,7 +155,7 @@ export default function ProjectCard({ project }) {
                 className="
         mt-4
         border
-        border-[#E7DDD2]
+        border-[#eadfd2]
         rounded-2xl
         p-4
         flex
@@ -170,7 +170,7 @@ export default function ProjectCard({ project }) {
             h-10
             w-10
             rounded-full
-            bg-[#8B5A2B]
+            bg-[#6f2e1c]
             text-white
             flex
             items-center
@@ -182,11 +182,11 @@ export default function ProjectCard({ project }) {
                     </div>
 
                     <div>
-                        <h4 className="font-medium text-[#3D2414] text-md">
+                        <h4 className="font-medium text-[#24130c] text-md">
                             {freelancerName}
                         </h4>
 
-                        <p className="text-[#B88746] text-sm">
+                        <p className="text-[#806049] text-sm">
                             {project.freelancer
                                 ? "Assigned Freelancer"
                                 : "Awaiting assignment"}
@@ -195,7 +195,7 @@ export default function ProjectCard({ project }) {
 
                 </div>
 
-                <button className="text-[#8B5A2B] font-medium hover:underline text-xs flex items-center gap-1">
+                <button className="text-[#6f2e1c] font-medium hover:underline text-xs flex items-center gap-1">
                     <span>Message</span>
                     <span className="text-[10px]">→</span>
                 </button>
@@ -213,7 +213,7 @@ export default function ProjectCard({ project }) {
       flex
       items-center
       justify-between
-      text-[#8B5A2B]
+      text-[#6f2e1c]
       font-semibold
     "
                 >
@@ -233,7 +233,7 @@ export default function ProjectCard({ project }) {
                 {showMilestones && (
                     <div className="mt-4 space-y-3">
                         {milestones.length === 0 ? (
-                            <p className="text-sm text-[#B88746]">
+                            <p className="text-sm text-[#806049]">
                                 No milestones created yet.
                             </p>
                         ) : (
@@ -254,8 +254,8 @@ export default function ProjectCard({ project }) {
                                     <span
                                         className={
                                             milestone.status === "COMPLETED"
-                                                ? "line-through text-[#B88746] text-sm"
-                                                : "text-[#3D2414] text-sm"
+                                                ? "line-through text-[#806049] text-sm"
+                                                : "text-[#24130c] text-sm"
                                         }
                                     >
                                         {milestone.title}
@@ -273,7 +273,7 @@ export default function ProjectCard({ project }) {
                         className="
       flex-1
       rounded-2xl
-      bg-[#8B5A2B]
+      bg-[#6f2e1c]
       py-2
       text-white
       font-medium

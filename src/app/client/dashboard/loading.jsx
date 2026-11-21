@@ -1,9 +1,11 @@
 export default function Loading() {
   return (
-    <main className="min-h-screen bg-slate-100 p-8">
-      <div className="mx-auto max-w-5xl rounded-2xl bg-white p-8 shadow-sm">
-        <p className="text-slate-500">Loading dashboard...</p>
+    <div className="mx-auto max-w-[1480px] space-y-6">
+      <div className="rounded-[2rem] border border-[#eadfd2] bg-[#fffaf3] p-8 shadow-sm">
+        <p className="text-sm font-bold text-[#7c6858]">
+          Loading dashboard...
+        </p>
       </div>
-    </main>
+    </div>
   );
 }

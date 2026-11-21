@@ -7,7 +7,7 @@ export default function DisputeTable({ disputes }) {
             bg-white
             rounded-3xl
             border
-            border-[#E7DDD2]
+            border-[#eadfd2]
             mt-6
             overflow-hidden
         "
@@ -15,11 +15,11 @@ export default function DisputeTable({ disputes }) {
 
             <div className="px-8 py-6 border-b border-[#EFE5DB]">
 
-                <h2 className="text-2xl font-bold text-[#3D2414]">
+                <h2 className="text-2xl font-bold text-[#24130c]">
                     All Disputes
                 </h2>
 
-                <p className="text-[#B88746] mt-1 text-sm">
+                <p className="text-[#806049] mt-1 text-sm">
                     {disputes.length} active disputes
                 </p>
 
@@ -70,7 +70,7 @@ export default function DisputeTable({ disputes }) {
                             className="border-t border-[#EFE5DB]"
                         >
 
-                            <td className="px-8 py-6 text-[#B88746] font-semibold text-md">
+                            <td className="px-8 py-6 text-[#806049] font-semibold text-md">
                                 {item.id}
                             </td>
 
@@ -79,7 +79,7 @@ export default function DisputeTable({ disputes }) {
                                     {item.project}
                                 </h3>
 
-                                <p className="text-[#B88746] text-sm">
+                                <p className="text-[#806049] text-sm">
                                     {item.milestone}
                                 </p>
                             </td>
@@ -101,7 +101,7 @@ export default function DisputeTable({ disputes }) {
                                     rounded-xl
                                     text-sm
                                     border
-                                    border-[#E7DDD2]
+                                    border-[#eadfd2]
                                 "
                                 >
                                     View
@@ -135,7 +135,7 @@ export default function DisputeTable({ disputes }) {
 
                             </td>
 
-                            <td className="px-4 py-6 text-[#B88746] text-sm">
+                            <td className="px-4 py-6 text-[#806049] text-sm">
                                 {item.date}
                             </td>
 

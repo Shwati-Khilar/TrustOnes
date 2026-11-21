@@ -3,10 +3,9 @@
 import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import ClientSidebar from "@/components/client/ClientSidebar";
-import ClientTopNav from "@/components/client/ClientTopNav";
 import CreateMilestoneModal from "@/components/client/project/CreateMilestoneModel";
 import EditMilestonesModel from "@/components/client/project/EditMilestonesModel";
+import AssignedFreelancerCard from "@/components/client/project/AssignedFreelancerCard";
 
 export default function ProjectDetailsPage({ params }) {
   const { projectId } = use(params);
@@ -269,37 +268,70 @@ export default function ProjectDetailsPage({ params }) {
       alert(error.message);
     }
   }
+  async function handleFundMilestone(milestoneId) {
+    const confirmed = window.confirm(
+      "Fund this milestone? The milestone amount will be locked in escrow."
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `/api/projects/${projectId}/milestones/${milestoneId}/fund`,
+        {
+          method: "POST",
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Unable to fund milestone."
+        );
+      }
+
+      setMilestones((current) =>
+        current.map((milestone) =>
+          milestone.id === milestoneId
+            ? data.milestone
+            : milestone
+        )
+      );
+    } catch (error) {
+      console.error("FUND_MILESTONE_ERROR", error);
+      alert(error.message);
+    }
+  }
 
 
 
   if (loading) {
     return (
-      <>
-        <ClientSidebar />
-        <ClientTopNav />
-
-        <main className="ml-64 pt-20 min-h-screen bg-[#F8F4EF]">
-          <div className="p-6">
-            <p>Loading project...</p>
-          </div>
-        </main>
-      </>
+      <div className="mx-auto max-w-[1480px] space-y-5">
+        <div className="h-56 animate-pulse rounded-[2rem] bg-[#eadfd2]" />
+        <div className="grid gap-5 md:grid-cols-3">
+          {[0, 1, 2].map((item) => (
+            <div
+              key={item}
+              className="h-32 animate-pulse rounded-[1.5rem] border border-[#eadfd2] bg-white/60"
+            />
+          ))}
+        </div>
+      </div>
     );
   }
 
 
   if (error) {
     return (
-      <>
-        <ClientSidebar />
-        <ClientTopNav />
-
-        <main className="ml-64 pt-20 min-h-screen bg-[#F8F4EF]">
-          <div className="p-6">
-            <p className="text-red-500">{error}</p>
-          </div>
-        </main>
-      </>
+      <div className="mx-auto max-w-[1480px]">
+        <div className="rounded-[2rem] border border-[#fecaca] bg-[#fef2f2] p-6 text-sm font-semibold text-[#b91c1c]">
+          {error}
+        </div>
+      </div>
     );
   }
 
@@ -324,20 +356,19 @@ export default function ProjectDetailsPage({ params }) {
     project.status.charAt(0) +
     project.status.slice(1).toLowerCase();
 
+  const acceptedProposal = proposals.find(
+    (proposal) => proposal.status === "ACCEPTED"
+  );
+
   return (
     <>
-      <ClientSidebar />
-
-      <ClientTopNav />
-
-      <main className="ml-64 pt-20 min-h-screen bg-[#F8F4EF]">
-        <div className="p-6 max-w-7xl mx-auto">
+      <div className="mx-auto max-w-[1480px]">
 
           {/* BACK BUTTON */}
           <button
             type="button"
             onClick={() => router.push("/client/projects")}
-            className="mb-5 text-[#8B5A2B] font-medium hover:underline"
+            className="mb-5 inline-flex items-center gap-2 text-sm font-bold text-[#7c6858] transition hover:text-[#6f2e1c]"
           >
             ← Back to Projects
           </button>
@@ -345,24 +376,24 @@ export default function ProjectDetailsPage({ params }) {
           {/* PROJECT HERO */}
 
 
-          <section className="rounded-[32px] bg-gradient-to-r from-[#8B5A2B] to-[#5E381C] p-8 text-white">
+          <section className="rounded-[2rem] bg-gradient-to-br from-[#35170f] to-[#7c341d] p-8 text-white shadow-xl shadow-[#7c341d]/20">
             <div className="flex items-start justify-between gap-6">
 
               <div>
-                <span className="inline-flex rounded-full bg-[#A06B36] px-4 py-2 text-sm text-[#FFD35A]">
+                <span className="inline-flex rounded-full bg-white/10 px-4 py-2 text-sm font-bold text-[#f4b454]">
                   PROJECT DETAILS
                 </span>
 
-                <h1 className="mt-5 text-4xl font-bold">
+                <h1 className="mt-5 text-4xl font-black tracking-[-0.04em]">
                   {project.title}
                 </h1>
 
-                <p className="mt-4 max-w-3xl text-[#EED8C7]">
+                <p className="mt-4 max-w-3xl leading-7 text-[#f6e3d1]">
                   {project.description}
                 </p>
               </div>
 
-              <span className="rounded-full bg-white/10 px-5 py-2">
+              <span className="rounded-full bg-white/10 px-5 py-2 text-sm font-bold text-white">
                 {formattedStatus}
               </span>
 
@@ -375,36 +406,36 @@ export default function ProjectDetailsPage({ params }) {
 
             {/* Budget */}
 
-            <div className="rounded-2xl border border-[#E7DDD2] bg-white p-6">
-              <p className="text-sm text-[#B88746]">
+            <div className="rounded-[1.5rem] border border-[#eadfd2] bg-white/80 p-5 shadow-sm">
+              <p className="text-sm font-semibold text-[#7c6858]">
                 Budget
               </p>
 
-              <h2 className="mt-2 text-2xl font-bold text-[#3D2414]">
+              <h2 className="mt-2 text-2xl font-bold text-[#24130c]">
                 ₹{formattedBudget}
               </h2>
             </div>
 
             {/* Category */}
 
-            <div className="rounded-2xl border border-[#E7DDD2] bg-white p-6">
-              <p className="text-sm text-[#B88746]">
+            <div className="rounded-[1.5rem] border border-[#eadfd2] bg-white/80 p-5 shadow-sm">
+              <p className="text-sm font-semibold text-[#7c6858]">
                 Category
               </p>
 
-              <h2 className="mt-2 text-xl font-semibold text-[#3D2414]">
+              <h2 className="mt-2 text-xl font-black text-[#24130c]">
                 {project.category}
               </h2>
             </div>
 
             {/* Deadline */}
 
-            <div className="rounded-2xl border border-[#E7DDD2] bg-white p-6">
-              <p className="text-sm text-[#B88746]">
+            <div className="rounded-[1.5rem] border border-[#eadfd2] bg-white/80 p-5 shadow-sm">
+              <p className="text-sm font-semibold text-[#7c6858]">
                 Deadline
               </p>
 
-              <h2 className="mt-2 text-xl font-semibold text-[#3D2414]">
+              <h2 className="mt-2 text-xl font-black text-[#24130c]">
                 {formattedDeadline}
               </h2>
             </div>
@@ -415,13 +446,13 @@ export default function ProjectDetailsPage({ params }) {
           {/* PROJECT MANAGEMENT */}
 
 
-          <section className="mt-6 rounded-2xl border border-[#E7DDD2] bg-white p-7">
+          <section className="mt-6 rounded-[2rem] border border-[#eadfd2] bg-white/80 p-7 shadow-sm">
 
-            <h2 className="text-2xl font-semibold text-[#3D2414]">
+            <h2 className="text-2xl font-black tracking-[-0.04em] text-[#24130c]">
               Project Management
             </h2>
 
-            <p className="mt-2 text-[#B88746]">
+            <p className="mt-2 text-[#806049]">
               Manage this project's lifecycle and upcoming actions.
             </p>
 
@@ -445,7 +476,7 @@ export default function ProjectDetailsPage({ params }) {
                       `/client/projects/${projectId}/edit`
                     )
                   }
-                  className="rounded-xl bg-[#8B5A2B] px-6 py-3 text-white hover:bg-[#6D4120] transition-colors"
+                  className="rounded-2xl bg-[#6f2e1c] px-6 py-3 text-sm font-black text-white shadow-lg shadow-[#6f2e1c]/20 transition hover:bg-[#5b2416]"
                 >
                   Edit Project
                 </button>
@@ -478,7 +509,7 @@ export default function ProjectDetailsPage({ params }) {
             {/* ACTIVE PROJECT MESSAGE */}
 
             {project.status === "ACTIVE" && (
-              <div className="mt-6 rounded-xl border border-[#E7DDD2] bg-[#FFFDF9] px-4 py-3 text-sm text-[#8B5A2B]">
+              <div className="mt-6 rounded-2xl border border-[#f0d7c3] bg-[#fff7ed] px-4 py-3 text-sm font-semibold text-[#7c341d]">
                 Freelancer assigned. Manage project work through milestones.
               </div>
             )}
@@ -486,7 +517,7 @@ export default function ProjectDetailsPage({ params }) {
             {/* CANCELLED PROJECT MESSAGE */}
 
             {project.status === "CANCELLED" && (
-              <p className="mt-6 text-sm text-[#B88746]">
+              <p className="mt-6 text-sm font-semibold text-[#7c6858]">
                 This project has been cancelled and can no longer be edited.
               </p>
             )}
@@ -497,25 +528,25 @@ export default function ProjectDetailsPage({ params }) {
           {/* MILESTONES */}
 
 
-          <section className="mt-6 rounded-2xl border border-[#E7DDD2] bg-white p-7">
+          <section className="mt-6 rounded-[2rem] border border-[#eadfd2] bg-white/80 p-7 shadow-sm">
 
             {/* Header */}
 
             <div className="flex flex-wrap items-center justify-between gap-4">
 
               <div>
-                <h2 className="text-2xl font-semibold text-[#3D2414]">
+                <h2 className="text-2xl font-black tracking-[-0.04em] text-[#24130c]">
                   Milestones
                 </h2>
 
-                <p className="mt-2 text-[#B88746]">
+                <p className="mt-2 text-[#806049]">
                   Track project deliverables, deadlines and payments.
                 </p>
               </div>
 
               <div className="flex items-center gap-3">
 
-                <span className="rounded-full bg-[#F7F3EE] px-4 py-2 text-sm font-medium text-[#8B5A2B]">
+                <span className="rounded-full bg-[#f7efe4] px-4 py-2 text-sm font-bold text-[#6f2e1c]">
                   {milestones.length}{" "}
                   {milestones.length === 1
                     ? "Milestone"
@@ -528,7 +559,7 @@ export default function ProjectDetailsPage({ params }) {
                     onClick={() =>
                       setShowCreateMilestone(true)
                     }
-                    className="rounded-xl bg-[#8B5A2B] px-5 py-2.5 text-sm font-medium text-white hover:bg-[#6D4120]"
+                    className="rounded-2xl bg-[#6f2e1c] px-5 py-2.5 text-sm font-black text-white transition hover:bg-[#5b2416]"
                   >
                     + Create Milestone
                   </button>
@@ -540,7 +571,7 @@ export default function ProjectDetailsPage({ params }) {
             {/* Loading */}
 
             {milestonesLoading && (
-              <p className="mt-6 text-sm text-[#B88746]">
+              <p className="mt-6 text-sm font-semibold text-[#7c6858]">
                 Loading milestones...
               </p>
             )}
@@ -558,13 +589,13 @@ export default function ProjectDetailsPage({ params }) {
             {!milestonesLoading &&
               !milestonesError &&
               milestones.length === 0 && (
-                <div className="mt-6 rounded-2xl border border-dashed border-[#E7DDD2] bg-[#FFFDF9] p-8 text-center">
+                <div className="mt-6 rounded-2xl border border-dashed border-[#eadfd2] bg-[#fffaf3] p-8 text-center">
 
-                  <h3 className="font-semibold text-[#3D2414]">
+                  <h3 className="font-black text-[#24130c]">
                     No milestones yet
                   </h3>
 
-                  <p className="mt-2 text-sm text-[#B88746]">
+                  <p className="mt-2 text-sm font-semibold text-[#7c6858]">
                     Create milestones to divide the project into
                     deliverables, deadlines and payments.
                   </p>
@@ -601,22 +632,22 @@ export default function ProjectDetailsPage({ params }) {
                     return (
                       <article
                         key={milestone.id}
-                        className="rounded-2xl border border-[#E7DDD2] bg-[#FFFDF9] p-6"
+                        className="rounded-[1.5rem] border border-[#eadfd2] bg-[#fffaf3] p-6"
                       >
 
                         <div className="flex items-start justify-between gap-5">
 
                           <div>
-                            <h3 className="text-lg font-semibold text-[#3D2414]">
+                            <h3 className="text-lg font-black tracking-[-0.03em] text-[#24130c]">
                               {milestone.title}
                             </h3>
 
-                            <p className="mt-2 text-sm leading-6 text-[#6F5544]">
+                            <p className="mt-2 text-sm leading-6 text-[#6f5a4c]">
                               {milestone.description}
                             </p>
                           </div>
 
-                          <span className="rounded-full border border-[#E7DDD2] bg-white px-3 py-2 text-sm text-[#8B5A2B]">
+                          <span className="rounded-full border border-[#eadfd2] bg-white px-3 py-2 text-sm font-bold text-[#6f2e1c]">
                             {formattedMilestoneStatus}
                           </span>
 
@@ -624,49 +655,65 @@ export default function ProjectDetailsPage({ params }) {
 
                         <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
 
-                          <div className="rounded-xl border border-[#E7DDD2] bg-white p-4">
+                          <div className="rounded-2xl bg-white p-4">
 
-                            <p className="text-xs text-[#B88746]">
+                            <p className="text-xs font-bold text-[#806049]">
                               Milestone Amount
                             </p>
 
-                            <p className="mt-2 font-semibold text-[#3D2414]">
+                            <p className="mt-2 font-black text-[#24130c]">
                               ₹{formattedAmount}
                             </p>
 
                           </div>
 
-                          <div className="rounded-xl border border-[#E7DDD2] bg-white p-4">
+                          <div className="rounded-2xl bg-white p-4">
 
-                            <p className="text-xs text-[#B88746]">
+                            <p className="text-xs font-bold text-[#806049]">
                               Due Date
                             </p>
 
-                            <p className="mt-2 font-semibold text-[#3D2414]">
+                            <p className="mt-2 font-black text-[#24130c]">
                               {formattedDueDate}
                             </p>
-                            
+
 
                           </div>
 
                         </div>
                         <div className="mt-6 flex justify-end gap-3">
 
+                          {milestone.status === "PENDING" && (
+                            <button
+                              type="button"
+                              onClick={() => handleFundMilestone(milestone.id)}
+                              className="rounded-2xl bg-[#6f2e1c] px-5 py-2.5 text-sm font-black text-white transition hover:bg-[#5b2416]"
+                            >
+                              Fund Milestone
+                            </button>
+                          )}
+
+                          {milestone.status === "PENDING" && (
+                            <>
                               <button
+                                type="button"
                                 onClick={() => setEditingMilestone(milestone)}
-                                className="rounded-xl border border-[#E7DDD2] px-5 py-2.5 text-[#8B5A2B] hover:bg-[#F7F3EE]"
+                                className="rounded-2xl border border-[#eadfd2] bg-white px-5 py-2.5 text-sm font-bold text-[#6f2e1c] transition hover:bg-[#fff7ed]"
                               >
                                 Edit
                               </button>
 
                               <button
+                                type="button"
                                 onClick={() => handleDeleteMilestone(milestone.id)}
-                                className="rounded-xl border border-red-200 px-5 py-2.5 text-red-600 hover:bg-red-50"
+                                className="rounded-2xl border border-red-200 bg-white px-5 py-2.5 text-sm font-bold text-red-600 transition hover:bg-red-50"
                               >
                                 Delete
                               </button>
+                            </>
+                          )}
 
-                            </div>
+                        </div>
 
                       </article>
                     );
@@ -681,21 +728,21 @@ export default function ProjectDetailsPage({ params }) {
           {/* PROPOSALS */}
 
 
-          <section className="mt-6 rounded-2xl border border-[#E7DDD2] bg-white p-7">
+          <section className="mt-6 rounded-[2rem] border border-[#eadfd2] bg-white/80 p-7 shadow-sm">
 
             <div className="flex flex-wrap items-center justify-between gap-4">
 
               <div>
-                <h2 className="text-2xl font-semibold text-[#3D2414]">
+                <h2 className="text-2xl font-black tracking-[-0.04em] text-[#24130c]">
                   Proposals
                 </h2>
 
-                <p className="mt-2 text-[#B88746]">
+                <p className="mt-2 text-[#806049]">
                   Review proposals submitted by freelancers for this project.
                 </p>
               </div>
 
-              <span className="rounded-full bg-[#F7F3EE] px-4 py-2 text-sm font-medium text-[#8B5A2B]">
+              <span className="rounded-full bg-[#f7efe4] px-4 py-2 text-sm font-bold text-[#6f2e1c]">
                 {proposals.length}{" "}
                 {proposals.length === 1
                   ? "Proposal"
@@ -707,7 +754,7 @@ export default function ProjectDetailsPage({ params }) {
             {/* Proposal loading */}
 
             {proposalsLoading && (
-              <p className="mt-6 text-sm text-[#B88746]">
+              <p className="mt-6 text-sm font-semibold text-[#7c6858]">
                 Loading proposals...
               </p>
             )}
@@ -733,13 +780,13 @@ export default function ProjectDetailsPage({ params }) {
             {!proposalsLoading &&
               !proposalsError &&
               proposals.length === 0 && (
-                <div className="mt-6 rounded-2xl border border-dashed border-[#E7DDD2] bg-[#FFFDF9] p-8 text-center">
+                <div className="mt-6 rounded-2xl border border-dashed border-[#eadfd2] bg-[#fffaf3] p-8 text-center">
 
-                  <h3 className="font-semibold text-[#3D2414]">
+                  <h3 className="font-black text-[#24130c]">
                     No proposals yet
                   </h3>
 
-                  <p className="mt-2 text-sm text-[#B88746]">
+                  <p className="mt-2 text-sm font-semibold text-[#7c6858]">
                     Freelancer proposals will appear here when
                     they are submitted.
                   </p>
@@ -768,14 +815,14 @@ export default function ProjectDetailsPage({ params }) {
                     return (
                       <article
                         key={proposal.id}
-                        className="rounded-2xl border border-[#E7DDD2] bg-[#FFFDF9] p-6"
+                        className="rounded-[1.5rem] border border-[#eadfd2] bg-[#fffaf3] p-6"
                       >
 
                         <div className="flex items-start justify-between gap-6">
 
                           <div className="flex items-center gap-4">
 
-                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#8B5A2B] font-semibold text-white">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#6f2e1c] font-semibold text-white">
                               {proposal.freelancer.name
                                 ?.charAt(0)
                                 .toUpperCase() || "F"}
@@ -783,11 +830,11 @@ export default function ProjectDetailsPage({ params }) {
 
                             <div>
 
-                              <h3 className="text-lg font-semibold text-[#3D2414]">
+                              <h3 className="text-lg font-black tracking-[-0.03em] text-[#24130c]">
                                 {proposal.freelancer.name}
                               </h3>
 
-                              <p className="mt-1 text-sm text-[#B88746]">
+                              <p className="mt-1 text-sm font-semibold text-[#7c6858]">
                                 Submitted a proposal
                               </p>
 
@@ -795,37 +842,37 @@ export default function ProjectDetailsPage({ params }) {
 
                           </div>
 
-                          <span className="rounded-full border border-[#E7DDD2] bg-white px-3 py-2 text-sm text-[#8B5A2B]">
+                          <span className="rounded-full border border-[#eadfd2] bg-white px-3 py-2 text-sm font-bold text-[#6f2e1c]">
                             {formattedProposalStatus}
                           </span>
 
                         </div>
 
-                        <p className="mt-5 text-sm leading-6 text-[#6F5544]">
+                        <p className="mt-5 text-sm leading-6 text-[#6f5a4c]">
                           {proposal.coverLetter}
                         </p>
 
                         <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
 
-                          <div className="rounded-xl border border-[#E7DDD2] bg-white p-4">
+                          <div className="rounded-2xl bg-white p-4">
 
-                            <p className="text-xs text-[#B88746]">
+                            <p className="text-xs font-bold text-[#806049]">
                               Proposed Budget
                             </p>
 
-                            <p className="mt-2 font-semibold text-[#3D2414]">
+                            <p className="mt-2 font-black text-[#24130c]">
                               ₹{formattedBid}
                             </p>
 
                           </div>
 
-                          <div className="rounded-xl border border-[#E7DDD2] bg-white p-4">
+                          <div className="rounded-2xl bg-white p-4">
 
-                            <p className="text-xs text-[#B88746]">
+                            <p className="text-xs font-bold text-[#806049]">
                               Estimated Delivery
                             </p>
 
-                            <p className="mt-2 font-semibold text-[#3D2414]">
+                            <p className="mt-2 font-black text-[#24130c]">
                               {proposal.estimatedDays} days
                             </p>
 
@@ -839,7 +886,7 @@ export default function ProjectDetailsPage({ params }) {
 
                               <button
                                 type="button"
-                                className="rounded-xl border border-[#8B5A2B] px-5 py-2.5 text-sm font-medium text-[#8B5A2B] hover:bg-[#F7F3EE]"
+                                className="rounded-xl border border-[#eadfd2] px-5 py-2.5 text-sm font-medium text-[#6f2e1c] hover:bg-[#f7efe4]"
                               >
                                 View Freelancer
                               </button>
@@ -854,19 +901,7 @@ export default function ProjectDetailsPage({ params }) {
                                 disabled={
                                   acceptingProposalId !== null
                                 }
-                                className="
-                                  rounded-xl
-                                  bg-[#8B5A2B]
-                                  px-5
-                                  py-2.5
-                                  text-sm
-                                  font-medium
-                                  text-white
-                                  transition-colors
-                                  hover:bg-[#6D4120]
-                                  disabled:cursor-not-allowed
-                                  disabled:opacity-60
-                                "
+                                className="rounded-2xl bg-[#6f2e1c] px-5 py-2.5 text-sm font-black text-white transition hover:bg-[#5b2416] disabled:cursor-not-allowed disabled:opacity-60"
                               >
                                 {acceptingProposalId ===
                                   proposal.id
@@ -886,8 +921,7 @@ export default function ProjectDetailsPage({ params }) {
 
           </section>
 
-        </div>
-      </main>
+      </div>
 
       {/* CREATE MILESTONE MODAL */}
 

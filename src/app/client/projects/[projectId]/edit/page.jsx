@@ -9,8 +9,6 @@ import {
   Loader2,
 } from "lucide-react";
 
-import ClientSidebar from "@/components/client/ClientSidebar";
-import ClientTopNav from "@/components/client/ClientTopNav";
 
 const categories = [
   "Development",
@@ -145,11 +143,8 @@ export default function EditProjectPage({ params }) {
   if (loading) {
     return (
       <>
-        <ClientSidebar />
-        <ClientTopNav />
-
-        <main className="ml-64 min-h-screen bg-[#F8F4EF] pt-20">
-          <div className="p-6 text-[#8B5A2B]">
+        <main>
+          <div className="p-6 text-[#6f2e1c]">
             Loading project...
           </div>
         </main>
@@ -159,33 +154,30 @@ export default function EditProjectPage({ params }) {
 
   return (
     <>
-      <ClientSidebar />
-      <ClientTopNav />
-
-      <main className="ml-64 min-h-screen bg-[#F8F4EF] pt-20">
+      <main>
         <div className="mx-auto max-w-5xl p-6">
           <button
             type="button"
             onClick={() =>
               router.push(`/client/projects/${projectId}`)
             }
-            className="mb-6 flex items-center gap-2 text-sm font-medium text-[#8B5A2B] hover:text-[#3D2414]"
+            className="mb-6 flex items-center gap-2 text-sm font-medium text-[#6f2e1c] hover:text-[#24130c]"
           >
             <ArrowLeft size={18} />
 
             Back to Project
           </button>
 
-          <section className="rounded-[32px] bg-gradient-to-r from-[#8B5A2B] to-[#5E381C] p-8 text-white">
-            <span className="inline-flex rounded-full bg-[#A06B36] px-4 py-2 text-sm font-medium text-[#FFD35A]">
+          <section className="rounded-[2rem] bg-gradient-to-br from-[#35170f] to-[#7c341d] p-8 text-white shadow-xl shadow-[#7c341d]/20">
+            <span className="inline-flex rounded-full bg-white/10 px-4 py-2 text-sm font-bold text-[#f4b454]">
               PROJECT MANAGEMENT
             </span>
 
-            <h1 className="mt-5 text-3xl font-bold">
+            <h1 className="mt-5 text-3xl font-black tracking-[-0.04em]">
               Edit Project
             </h1>
 
-            <p className="mt-3 max-w-2xl text-[#EED8C7]">
+            <p className="mt-3 max-w-2xl leading-7 text-[#f6e3d1]">
               Update the project's basic information, budget,
               category and deadline.
             </p>
@@ -193,7 +185,7 @@ export default function EditProjectPage({ params }) {
 
           <form
             onSubmit={handleSubmit}
-            className="mt-8 rounded-3xl border border-[#E7DDD2] bg-white p-8"
+            className="mt-8 rounded-3xl border border-[#eadfd2] bg-white p-8"
           >
             {error && (
               <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
@@ -205,7 +197,7 @@ export default function EditProjectPage({ params }) {
               <div>
                 <label
                   htmlFor="title"
-                  className="mb-2 block font-medium text-[#3D2414]"
+                  className="mb-2 block font-medium text-[#24130c]"
                 >
                   Project Title
                 </label>
@@ -217,14 +209,14 @@ export default function EditProjectPage({ params }) {
                   onChange={handleChange}
                   required
                   maxLength={120}
-                  className="w-full rounded-2xl border border-[#E7DDD2] px-4 py-3 outline-none focus:border-[#8B5A2B]"
+                  className="w-full rounded-2xl border border-[#eadfd2] px-4 py-3 outline-none focus:border-[#8B5A2B]"
                 />
               </div>
 
               <div>
                 <label
                   htmlFor="description"
-                  className="mb-2 block font-medium text-[#3D2414]"
+                  className="mb-2 block font-medium text-[#24130c]"
                 >
                   Project Description
                 </label>
@@ -237,10 +229,10 @@ export default function EditProjectPage({ params }) {
                   required
                   maxLength={2000}
                   rows={7}
-                  className="w-full resize-none rounded-2xl border border-[#E7DDD2] px-4 py-3 outline-none focus:border-[#8B5A2B]"
+                  className="w-full resize-none rounded-2xl border border-[#eadfd2] px-4 py-3 outline-none focus:border-[#8B5A2B]"
                 />
 
-                <p className="mt-2 text-right text-xs text-[#B88746]">
+                <p className="mt-2 text-right text-xs text-[#806049]">
                   {formData.description.length}/2000
                 </p>
               </div>
@@ -249,7 +241,7 @@ export default function EditProjectPage({ params }) {
                 <div>
                   <label
                     htmlFor="category"
-                    className="mb-2 block font-medium text-[#3D2414]"
+                    className="mb-2 block font-medium text-[#24130c]"
                   >
                     Category
                   </label>
@@ -260,7 +252,7 @@ export default function EditProjectPage({ params }) {
                     value={formData.category}
                     onChange={handleChange}
                     required
-                    className="w-full rounded-2xl border border-[#E7DDD2] bg-white px-4 py-3 outline-none focus:border-[#8B5A2B]"
+                    className="w-full rounded-2xl border border-[#eadfd2] bg-white px-4 py-3 outline-none focus:border-[#8B5A2B]"
                   >
                     {categories.map((category) => (
                       <option
@@ -276,7 +268,7 @@ export default function EditProjectPage({ params }) {
                 <div>
                   <label
                     htmlFor="budget"
-                    className="mb-2 block font-medium text-[#3D2414]"
+                    className="mb-2 block font-medium text-[#24130c]"
                   >
                     Budget
                   </label>
@@ -284,7 +276,7 @@ export default function EditProjectPage({ params }) {
                   <div className="relative">
                     <IndianRupee
                       size={18}
-                      className="absolute left-4 top-1/2 -translate-y-1/2 text-[#B88746]"
+                      className="absolute left-4 top-1/2 -translate-y-1/2 text-[#806049]"
                     />
 
                     <input
@@ -296,7 +288,7 @@ export default function EditProjectPage({ params }) {
                       required
                       min="1"
                       step="1"
-                      className="w-full rounded-2xl border border-[#E7DDD2] py-3 pl-11 pr-4 outline-none focus:border-[#8B5A2B]"
+                      className="w-full rounded-2xl border border-[#eadfd2] py-3 pl-11 pr-4 outline-none focus:border-[#8B5A2B]"
                     />
                   </div>
                 </div>
@@ -304,7 +296,7 @@ export default function EditProjectPage({ params }) {
                 <div>
                   <label
                     htmlFor="deadline"
-                    className="mb-2 block font-medium text-[#3D2414]"
+                    className="mb-2 block font-medium text-[#24130c]"
                   >
                     Deadline
                   </label>
@@ -312,7 +304,7 @@ export default function EditProjectPage({ params }) {
                   <div className="relative">
                     <CalendarDays
                       size={18}
-                      className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#B88746]"
+                      className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#806049]"
                     />
 
                     <input
@@ -323,21 +315,21 @@ export default function EditProjectPage({ params }) {
                       value={formData.deadline}
                       onChange={handleChange}
                       required
-                      className="w-full rounded-2xl border border-[#E7DDD2] py-3 pl-11 pr-4 outline-none focus:border-[#8B5A2B]"
+                      className="w-full rounded-2xl border border-[#eadfd2] py-3 pl-11 pr-4 outline-none focus:border-[#8B5A2B]"
                     />
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="mt-10 flex justify-end gap-3 border-t border-[#E7DDD2] pt-6">
+            <div className="mt-10 flex justify-end gap-3 border-t border-[#eadfd2] pt-6">
               <button
                 type="button"
                 disabled={submitting}
                 onClick={() =>
                   router.push(`/client/projects/${projectId}`)
                 }
-                className="rounded-2xl border border-[#E7DDD2] px-6 py-3 font-medium text-[#8B5A2B] hover:bg-[#F8F4EF]"
+                className="rounded-2xl border border-[#eadfd2] px-6 py-3 font-medium text-[#6f2e1c] hover:bg-[#F8F4EF]"
               >
                 Cancel
               </button>
@@ -345,7 +337,7 @@ export default function EditProjectPage({ params }) {
               <button
                 type="submit"
                 disabled={submitting}
-                className="flex min-w-40 items-center justify-center gap-2 rounded-2xl bg-[#8B5A2B] px-6 py-3 font-medium text-white hover:bg-[#6D4120] disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex min-w-40 items-center justify-center gap-2 rounded-2xl bg-[#6f2e1c] px-6 py-3 font-medium text-white hover:bg-[#6D4120] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {submitting ? (
                   <>

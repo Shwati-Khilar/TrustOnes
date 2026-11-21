@@ -2,28 +2,28 @@ export default function StatsCards() {
   const stats = [
     {
       title: "Active Projects",
-      value: "0",
+      value: "3",
       subtitle: "Currently in progress",
     },
     {
       title: "Open Projects",
-      value: "0",
+      value: "1",
       subtitle: "Awaiting proposals",
     },
     {
       title: "Hired Freelancers",
-      value: "0",
+      value: "4",
       subtitle: "Trusted professionals",
     },
     {
       title: "Pending Actions",
-      value: "0",
+      value: "4",
       subtitle: "Require attention",
     },
   ];
 
   return (
-    <div className="grid gap-6 md:grid-cols-4">
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
       {stats.map((item) => (
         <div
           key={item.title}
@@ -31,8 +31,8 @@ export default function StatsCards() {
             rounded-3xl
             bg-white
             border
-            border-[#E7DDD2]
-            p-6
+            border-[#eadfd2]
+            p-5
             transition-all
             hover:border-[#C89B3C]
             hover:-translate-y-1
@@ -42,11 +42,11 @@ export default function StatsCards() {
             {item.title}
           </p>
 
-          <h2 className="mt-3 text-4xl font-bold text-[#3D2414]">
+          <h2 className="mt-3 text-3xl font-bold text-[#24130c]">
             {item.value}
           </h2>
 
-          <p className="mt-2 text-xs text-[#A09286]">
+          <p className="mt-2 text-xs text-[#806049]">
             {item.subtitle}
           </p>
         </div>

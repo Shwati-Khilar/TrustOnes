@@ -87,16 +87,16 @@ export default function EditMilestonesModel({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-2xl rounded-[28px] border border-[#E7DDD2] bg-white p-7 shadow-xl">
+      <div className="w-full max-w-2xl rounded-[28px] border border-[#eadfd2] bg-white p-7 shadow-xl">
 
         <div className="flex items-start justify-between gap-5">
           <div>
-            <h2 className="text-2xl font-semibold text-[#3D2414]">
+            <h2 className="text-2xl font-semibold text-[#24130c]">
               
               Edit Milestone
             </h2>
 
-            <p className="mt-2 text-sm text-[#B88746]">
+            <p className="mt-2 text-sm text-[#806049]">
               Update the milestone details.
             </p>
           </div>
@@ -105,35 +105,35 @@ export default function EditMilestonesModel({
             type="button"
             onClick={onClose}
             disabled={submitting}
-            className="rounded-xl p-2 text-[#8B5A2B] hover:bg-[#F7F3EE]"
+            className="rounded-xl p-2 text-[#6f2e1c] hover:bg-[#f7efe4]"
           >
             <X size={20} />
           </button>
         </div>
 
         <div className="mt-6 grid grid-cols-3 gap-4">
-          <div className="rounded-xl bg-[#F7F3EE] p-4">
-            <p className="text-xs text-[#B88746]">
+          <div className="rounded-xl bg-[#f7efe4] p-4">
+            <p className="text-xs text-[#806049]">
               Project Budget
             </p>
 
-            <p className="mt-2 font-semibold text-[#3D2414]">
+            <p className="mt-2 font-semibold text-[#24130c]">
               ₹{Number(projectBudget).toLocaleString("en-IN")}
             </p>
           </div>
 
-          <div className="rounded-xl bg-[#F7F3EE] p-4">
-            <p className="text-xs text-[#B88746]">
+          <div className="rounded-xl bg-[#f7efe4] p-4">
+            <p className="text-xs text-[#806049]">
               Allocated
             </p>
 
-            <p className="mt-2 font-semibold text-[#3D2414]">
+            <p className="mt-2 font-semibold text-[#24130c]">
               ₹{allocatedAmount.toLocaleString("en-IN")}
             </p>
           </div>
 
-          <div className="rounded-xl bg-[#F7F3EE] p-4">
-            <p className="text-xs text-[#B88746]">
+          <div className="rounded-xl bg-[#f7efe4] p-4">
+            <p className="text-xs text-[#806049]">
               Remaining
             </p>
 
@@ -154,7 +154,7 @@ export default function EditMilestonesModel({
           className="mt-6 space-y-5"
         >
           <div>
-            <label className="text-sm font-medium text-[#3D2414]">
+            <label className="text-sm font-medium text-[#24130c]">
               Milestone Title
             </label>
 
@@ -165,12 +165,12 @@ export default function EditMilestonesModel({
               onChange={handleChange}
               required
               placeholder="Example: Complete frontend development"
-              className="mt-2 w-full rounded-xl border border-[#E7DDD2] px-4 py-3 outline-none focus:border-[#8B5A2B]"
+              className="mt-2 w-full rounded-xl border border-[#eadfd2] px-4 py-3 outline-none focus:border-[#8B5A2B]"
             />
           </div>
 
           <div>
-            <label className="text-sm font-medium text-[#3D2414]">
+            <label className="text-sm font-medium text-[#24130c]">
               Description
             </label>
 
@@ -181,13 +181,13 @@ export default function EditMilestonesModel({
               required
               rows={4}
               placeholder="Describe the expected deliverable."
-              className="mt-2 w-full resize-none rounded-xl border border-[#E7DDD2] px-4 py-3 outline-none focus:border-[#8B5A2B]"
+              className="mt-2 w-full resize-none rounded-xl border border-[#eadfd2] px-4 py-3 outline-none focus:border-[#8B5A2B]"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium text-[#3D2414]">
+              <label className="text-sm font-medium text-[#24130c]">
                 Amount
               </label>
 
@@ -200,12 +200,12 @@ export default function EditMilestonesModel({
                 min="1"
                 max={remainingAmount + Number(milestone.amount)}
                 placeholder="2000"
-                className="mt-2 w-full rounded-xl border border-[#E7DDD2] px-4 py-3 outline-none focus:border-[#8B5A2B]"
+                className="mt-2 w-full rounded-xl border border-[#eadfd2] px-4 py-3 outline-none focus:border-[#8B5A2B]"
               />
             </div>
 
             <div>
-              <label className="text-sm font-medium text-[#3D2414]">
+              <label className="text-sm font-medium text-[#24130c]">
                 Due Date
               </label>
 
@@ -215,17 +215,17 @@ export default function EditMilestonesModel({
                 value={formData.dueDate}
                 onChange={handleChange}
                 required
-                className="mt-2 w-full rounded-xl border border-[#E7DDD2] px-4 py-3 outline-none focus:border-[#8B5A2B]"
+                className="mt-2 w-full rounded-xl border border-[#eadfd2] px-4 py-3 outline-none focus:border-[#8B5A2B]"
               />
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 border-t border-[#E7DDD2] pt-5">
+          <div className="flex justify-end gap-3 border-t border-[#eadfd2] pt-5">
             <button
               type="button"
               onClick={onClose}
               disabled={submitting}
-              className="rounded-xl border border-[#E7DDD2] px-5 py-3 text-[#8B5A2B]"
+              className="rounded-xl border border-[#eadfd2] px-5 py-3 text-[#6f2e1c]"
             >
               Cancel
             </button>
@@ -236,7 +236,7 @@ export default function EditMilestonesModel({
                 submitting ||
                 remainingAmount <= 0
               }
-              className="rounded-xl bg-[#8B5A2B] px-6 py-3 text-white hover:bg-[#6D4120] disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-xl bg-[#6f2e1c] px-6 py-3 text-white hover:bg-[#6D4120] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {submitting
                 ? "Updating..."

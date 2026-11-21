@@ -4,16 +4,16 @@ export default function NotificationHero() {
 
       <div>
 
-        <p className="uppercase tracking-[4px] text-xs text-[#B88746] font-semibold">
+        <p className="uppercase tracking-[4px] text-xs text-[#806049] font-semibold">
           Notifications
         </p>
 
-        <h1 className="text-3xl font-bold text-[#3D2414] mt-2">
+        <h1 className="text-3xl font-bold text-[#24130c] mt-2">
           Stay updated on invites, deadlines,
           payments, and disputes.
         </h1>
 
-        <p className="mt-3 text-[#8F6C53] max-w-3xl">
+        <p className="mt-3 text-[#7c6858] max-w-3xl">
           Track all important client activity from one
           notification center.
         </p>
@@ -25,7 +25,7 @@ export default function NotificationHero() {
         px-3
         py-2
         rounded-xl
-        bg-[#8B5A2B]
+        bg-[#6f2e1c]
         text-white
         font-medium
       "
