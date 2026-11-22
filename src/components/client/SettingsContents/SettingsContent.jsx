@@ -109,13 +109,13 @@ export default function SettingsContent() {
           className="
           rounded-2xl
           border
-          border-[#E7DDD2]
+          border-[#eadfd2]
           bg-white
           p-6
         "
         >
 
-          <h2 className="text-2xl font-bold text-[#3D2414]">
+          <h2 className="text-2xl font-bold text-[#24130c]">
             Quick Settings
           </h2>
 
@@ -167,11 +167,11 @@ export default function SettingsContent() {
         "
         >
 
-          <h2 className="text-2xl font-bold text-[#3D2414]">
+          <h2 className="text-2xl font-bold text-[#24130c]">
             Danger Zone
           </h2>
 
-          <p className="mt-3 text-[#B88746] leading-7">
+          <p className="mt-3 text-[#806049] leading-7">
             These actions are permanent.
             Proceed carefully.
           </p>
@@ -182,14 +182,14 @@ export default function SettingsContent() {
             w-full
             rounded-2xl
             border
-            border-[#E7DDD2]
+            border-[#eadfd2]
             py-4
             font-medium
             flex
             items-center
             justify-center
             gap-2
-            hover:bg-[#F7F3EE]
+            hover:bg-[#f7efe4]
           "
           >
             <LogOut size={18} />
@@ -233,16 +233,16 @@ export default function SettingsContent() {
     className="
     rounded-2xl
     border
-    border-[#E7DDD2]
+    border-[#eadfd2]
     bg-white
     p-6
   "
   >
-    <h2 className="text-2xl font-bold text-[#3D2414]">
+    <h2 className="text-2xl font-bold text-[#24130c]">
       Account Preferences
     </h2>
 
-    <p className="text-[#B88746] mt-1">
+    <p className="text-[#806049] mt-1">
       Configure your client workspace.
     </p>
 
@@ -293,17 +293,17 @@ export default function SettingsContent() {
     className="
     rounded-2xl
     border
-    border-[#E7DDD2]
+    border-[#eadfd2]
     bg-white
     p-6
   "
   >
 
-    <h2 className="text-2xl font-bold text-[#3D2414]">
+    <h2 className="text-2xl font-bold text-[#24130c]">
       Notification Preferences
     </h2>
 
-    <p className="text-[#B88746] mt-1">
+    <p className="text-[#806049] mt-1">
       Choose which alerts you receive.
     </p>
 
@@ -351,17 +351,17 @@ export default function SettingsContent() {
     className="
     rounded-2xl
     border
-    border-[#E7DDD2]
+    border-[#eadfd2]
     bg-white
     p-6
   "
   >
 
-    <h2 className="text-2xl font-bold text-[#3D2414]">
+    <h2 className="text-2xl font-bold text-[#24130c]">
       Security Settings
     </h2>
 
-    <p className="text-[#B88746] mt-1">
+    <p className="text-[#806049] mt-1">
       Manage your password and account security.
     </p>
 
@@ -383,7 +383,7 @@ export default function SettingsContent() {
       className="
       mt-5
       border
-      border-[#E7DDD2]
+      border-[#eadfd2]
       rounded-2xl
       p-5
       flex
@@ -394,11 +394,11 @@ export default function SettingsContent() {
 
       <div>
 
-        <h3 className="font-semibold text-[#3D2414]">
+        <h3 className="font-semibold text-[#24130c]">
           Two-Factor Authentication
         </h3>
 
-        <p className="text-sm text-[#B88746] mt-1">
+        <p className="text-sm text-[#806049] mt-1">
           Secure your account using OTP verification.
         </p>
 
@@ -432,7 +432,7 @@ export default function SettingsContent() {
       className="
       mt-6
       rounded-2xl
-      bg-[#8B5A2B]
+      bg-[#6f2e1c]
       px-6
       py-3
       text-white
@@ -454,17 +454,17 @@ export default function SettingsContent() {
     className="
     rounded-3xl
     border
-    border-[#E7DDD2]
+    border-[#eadfd2]
     bg-white
     p-6
   "
   >
 
-    <h2 className="text-2xl font-bold text-[#3D2414]">
+    <h2 className="text-2xl font-bold text-[#24130c]">
       Privacy
     </h2>
 
-    <p className="text-[#B88746] mt-1">
+    <p className="text-[#806049] mt-1">
       Control your visibility.
     </p>
 
@@ -496,31 +496,31 @@ export default function SettingsContent() {
     className="
     rounded-3xl
     border
-    border-[#E7DDD2]
+    border-[#eadfd2]
     bg-white
     p-6
   "
   >
 
-    <h2 className="text-2xl font-bold text-[#3D2414]">
+    <h2 className="text-2xl font-bold text-[#24130c]">
       Appearance
     </h2>
 
-    <p className="text-[#B88746] mt-1">
+    <p className="text-[#806049] mt-1">
       Personalize your workspace.
     </p>
 
     <div className="mt-6 space-y-3">
 
-      <button className="w-full rounded-2xl bg-[#8B5A2B] text-white py-3 font-medium">
+      <button className="w-full rounded-2xl bg-[#6f2e1c] text-white py-3 font-medium">
         Warm Premium
       </button>
 
-      <button className="w-full rounded-2xl border border-[#E7DDD2] py-3 text-[#8B5A2B]">
+      <button className="w-full rounded-2xl border border-[#eadfd2] py-3 text-[#6f2e1c]">
         Light
       </button>
 
-      <button className="w-full rounded-2xl border border-[#E7DDD2] py-3 text-[#8B5A2B]">
+      <button className="w-full rounded-2xl border border-[#eadfd2] py-3 text-[#6f2e1c]">
         Dark
       </button>
 
@@ -536,7 +536,7 @@ export default function SettingsContent() {
   className="
   rounded-2xl
   border
-  border-[#E7DDD2]
+  border-[#eadfd2]
   bg-white
   p-6
 "
@@ -546,11 +546,11 @@ export default function SettingsContent() {
 
     <div>
 
-      <h2 className="text-2xl font-bold text-[#3D2414]">
+      <h2 className="text-2xl font-bold text-[#24130c]">
         Support Center
       </h2>
 
-      <p className="text-[#B88746] mt-1">
+      <p className="text-[#806049] mt-1">
         Need help? Contact our support team.
       </p>
 
@@ -561,7 +561,7 @@ export default function SettingsContent() {
       px-4
       py-2
       rounded-full
-      bg-[#FFF7E7]
+      bg-[#fff7ed]
       text-[#C58A1D]
       text-sm
       font-medium
@@ -590,7 +590,7 @@ export default function SettingsContent() {
 
       <div className="mt-5">
 
-        <label className="text-sm font-medium text-[#3D2414]">
+        <label className="text-sm font-medium text-[#24130c]">
           Message
         </label>
 
@@ -602,7 +602,7 @@ export default function SettingsContent() {
           w-full
           rounded-2xl
           border
-          border-[#E7DDD2]
+          border-[#eadfd2]
           p-4
           outline-none
           resize-none
@@ -616,7 +616,7 @@ export default function SettingsContent() {
         className="
         mt-5
         rounded-2xl
-        bg-[#8B5A2B]
+        bg-[#6f2e1c]
         px-6
         py-3
         text-white
@@ -636,7 +636,7 @@ export default function SettingsContent() {
         className="
         rounded-2xl
         border
-        border-[#E7DDD2]
+        border-[#eadfd2]
         p-4
       "
       >
@@ -645,11 +645,11 @@ export default function SettingsContent() {
 
           <div>
 
-            <h3 className="font-semibold text-[#3D2414]">
+            <h3 className="font-semibold text-[#24130c]">
               Escrow Payment Issue
             </h3>
 
-            <p className="text-sm text-[#B88746]">
+            <p className="text-sm text-[#806049]">
               Opened yesterday
             </p>
 
@@ -660,7 +660,7 @@ export default function SettingsContent() {
             px-3
             py-1
             rounded-full
-            bg-[#FFF7E7]
+            bg-[#fff7ed]
             text-[#C58A1D]
             text-sm
           "
@@ -676,7 +676,7 @@ export default function SettingsContent() {
         className="
         rounded-2xl
         border
-        border-[#E7DDD2]
+        border-[#eadfd2]
         p-4
         mt-4
       "
@@ -686,11 +686,11 @@ export default function SettingsContent() {
 
           <div>
 
-            <h3 className="font-semibold text-[#3D2414]">
+            <h3 className="font-semibold text-[#24130c]">
               Unable to Upload Contract
             </h3>
 
-            <p className="text-sm text-[#B88746]">
+            <p className="text-sm text-[#806049]">
               Resolved
             </p>
 
@@ -740,7 +740,7 @@ function SettingRow({
     <div
       className="
       border
-      border-[#E7DDD2]
+      border-[#eadfd2]
       rounded-2xl
       p-4
       flex
@@ -755,11 +755,11 @@ function SettingRow({
           h-10
           w-10
           rounded-xl
-          bg-[#F7F3EE]
+          bg-[#f7efe4]
           flex
           items-center
           justify-center
-          text-[#8B5A2B]
+          text-[#6f2e1c]
         "
         >
           {icon}
@@ -767,11 +767,11 @@ function SettingRow({
 
         <div>
 
-          <h3 className="font-semibold text-[#3D2414]">
+          <h3 className="font-semibold text-[#24130c]">
             {title}
           </h3>
 
-          <p className="text-sm text-[#B88746]">
+          <p className="text-sm text-[#806049]">
             {subtitle}
           </p>
 
@@ -790,7 +790,7 @@ function SettingRow({
 
           ${
             enabled
-              ? "bg-[#8B5A2B]"
+              ? "bg-[#6f2e1c]"
               : "bg-gray-300"
           }
         `}
@@ -822,7 +822,7 @@ function InputField({
 }) {
   return (
     <div>
-      <label className="text-sm font-medium text-[#3D2414]">
+      <label className="text-sm font-medium text-[#24130c]">
         {title}
       </label>
 
@@ -834,7 +834,7 @@ function InputField({
           w-full
           rounded-2xl
           border
-          border-[#E7DDD2]
+          border-[#eadfd2]
           px-4
           py-3
           outline-none
@@ -851,7 +851,7 @@ function InputSelect({
   return (
     <div>
 
-      <label className="text-sm font-medium text-[#3D2414]">
+      <label className="text-sm font-medium text-[#24130c]">
         {title}
       </label>
 
@@ -861,7 +861,7 @@ function InputSelect({
           w-full
           rounded-2xl
           border
-          border-[#E7DDD2]
+          border-[#eadfd2]
           px-4
           py-3
           outline-none

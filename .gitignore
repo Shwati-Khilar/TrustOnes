@@ -44,3 +44,7 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
+
+# local postgres data (dev)
+.pgdata/
+.env.backup-dburl

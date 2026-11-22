@@ -36,25 +36,25 @@ export default function RecommendedFreelancers() {
   ];
 
   return (
-    <div className="mt-8 rounded-3xl border border-[#E7DDD2] bg-white p-6">
+    <div className="mt-8 rounded-3xl border border-[#eadfd2] bg-white p-6">
 
       {/* Header */}
 
       <div className="flex items-center justify-between">
 
         <div>
-          <h2 className="text-xl font-semibold text-[#3D2414]">
+          <h2 className="text-xl font-semibold text-[#24130c]">
             Recommended Freelancers
           </h2>
 
-          <p className="mt-1 text-sm text-[#B88746]">
+          <p className="mt-1 text-sm text-[#806049]">
             Based on your project needs
           </p>
         </div>
 
         <Link
           href="/client/freelancers"
-          className="text-[#8B5A2B] hover:text-[#6D4325] text-sm font-medium"
+          className="text-[#6f2e1c] hover:text-[#6D4325] text-sm font-medium"
         >
           Browse Talent →
         </Link>
@@ -63,7 +63,7 @@ export default function RecommendedFreelancers() {
 
       {/* Cards */}
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-3">
+      <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
 
         {freelancers.map((freelancer) => (
           <div
@@ -71,7 +71,7 @@ export default function RecommendedFreelancers() {
             className="
               rounded-3xl
               border
-              border-[#E7DDD2]
+              border-[#eadfd2]
               p-6
               transition-all
               hover:border-[#D7B98D]
@@ -92,12 +92,12 @@ export default function RecommendedFreelancers() {
                   rounded-2xl
                   object-cover
                   border
-                  border-[#E7DDD2]
+                  border-[#eadfd2]
                 "
               />
 
-              <div>
-                <h3 className="text-md font-medium text-[#3D2414]">
+              <div className="min-w-0">
+                <h3 className="truncate text-base font-medium text-[#24130c]">
                   {freelancer.name}
                 </h3>
 
@@ -132,7 +132,7 @@ export default function RecommendedFreelancers() {
 
             <div className="mt-6">
 
-              <div className="flex justify-between text-[#8B5A2B] text-sm font-medium">
+              <div className="flex justify-between text-[#6f2e1c] text-sm font-medium">
 
                 <span>Trust Score</span>
 
@@ -162,12 +162,12 @@ export default function RecommendedFreelancers() {
 
             {/* Footer */}
 
-            <div className="mt-6 flex items-center justify-between">
+            <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
 
               <div className="text-[#C58A42] text-sm font-medium">
 
                 ⭐ {freelancer.rating}
-                <span className="ml-1 text-[#B88746]">
+                <span className="ml-1 text-[#806049]">
                   ({freelancer.reviews})
                 </span>
 
@@ -176,7 +176,7 @@ export default function RecommendedFreelancers() {
               <button
                 className="
                   rounded-xl
-                  bg-[#8B5A2B]
+                  bg-[#6f2e1c]
                   px-5
                   py-2
                   text-sm

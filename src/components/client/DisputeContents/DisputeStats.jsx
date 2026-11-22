@@ -47,7 +47,7 @@ export default function DisputeStats() {
                         bg-white
                         rounded-3xl
                         border
-                        border-[#E7DDD2]
+                        border-[#eadfd2]
                         p-6
                     "
                     >
@@ -60,7 +60,7 @@ export default function DisputeStats() {
                             {item.value}
                         </h2>
 
-                        <p className="text-[#B88746] mt-1 text-sm">
+                        <p className="text-[#806049] mt-1 text-sm">
                             {item.title}
                         </p>
                     </div>

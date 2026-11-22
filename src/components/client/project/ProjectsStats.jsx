@@ -47,15 +47,15 @@ export default function ProjectsStats({
               ${
                 activeStatus === card.label
                   ? "border-[#D8B16D] bg-[#FFFDF7] shadow-sm"
-                  : "border-[#E7DDD2] bg-white"
+                  : "border-[#eadfd2] bg-white"
               }
             `}
           >
-            <h2 className="text-2xl font-bold text-[#8B5A2B]">
+            <h2 className="text-2xl font-bold text-[#6f2e1c]">
               {count}
             </h2>
 
-            <p className="mt-2 text-[#8B5A2B]">
+            <p className="mt-2 text-[#6f2e1c]">
               {card.label}
             </p>
           </button>

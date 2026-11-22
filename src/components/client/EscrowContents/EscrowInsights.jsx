@@ -8,16 +8,16 @@ export default function EscrowInsights() {
         col-span-1
         bg-white
         border
-        border-[#E7DDD2]
+        border-[#eadfd2]
         rounded-3xl
         p-6
       "
             >
-                <h2 className="text-xl font-bold text-[#3D2414]">
+                <h2 className="text-xl font-bold text-[#24130c]">
                     Escrow Breakdown
                 </h2>
 
-                <p className="text-sm text-[#B88746] mt-1">
+                <p className="text-sm text-[#806049] mt-1">
                     Across all projects
                 </p>
 
@@ -47,7 +47,7 @@ export default function EscrowInsights() {
         justify-center
       "
                         >
-                            <span className="text-[#B88746] text-sm font-bold">
+                            <span className="text-[#806049] text-sm font-bold">
                                 Total
                             </span>
 
@@ -109,7 +109,7 @@ export default function EscrowInsights() {
         col-span-1
         bg-white
         border
-        border-[#E7DDD2]
+        border-[#eadfd2]
         rounded-3xl
         p-6
       "
@@ -117,11 +117,11 @@ export default function EscrowInsights() {
                 <div className="flex justify-between">
 
                     <div>
-                        <h2 className="text-xl font-bold text-[#3D2414]">
+                        <h2 className="text-xl font-bold text-[#24130c]">
                             Pending Actions
                         </h2>
 
-                        <p className="text-sm text-[#B88746]">
+                        <p className="text-sm text-[#806049]">
                             Requires your review
                         </p>
                     </div>
@@ -165,7 +165,7 @@ export default function EscrowInsights() {
                             className="
               h-12 w-12
               rounded-xl
-              bg-[#8B5A2B]
+              bg-[#6f2e1c]
               text-white
               flex
               items-center
@@ -181,7 +181,7 @@ export default function EscrowInsights() {
                                 Brand Identity & Logo Design
                             </h3>
 
-                            <p className="text-[#B88746]">
+                            <p className="text-[#806049]">
                                 Milestone 4 — Final Delivery
                             </p>
 
@@ -242,7 +242,7 @@ export default function EscrowInsights() {
                             className="
               h-12 w-12
               rounded-xl
-              bg-[#8B5A2B]
+              bg-[#6f2e1c]
               text-white
               flex
               items-center
@@ -258,7 +258,7 @@ export default function EscrowInsights() {
                                 Data Dashboard & Analytics
                             </h3>
 
-                            <p className="text-[#B88746]">
+                            <p className="text-[#806049]">
                                 Milestone 2 — Data Pipeline
                             </p>
 

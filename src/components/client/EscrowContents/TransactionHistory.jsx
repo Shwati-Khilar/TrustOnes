@@ -70,7 +70,7 @@ const transactions = [
 
 const iconColor = {
   funded: "bg-green-100 text-green-600",
-  released: "bg-[#F7F3EE] text-[#B88746]",
+  released: "bg-[#f7efe4] text-[#806049]",
   milestone: "bg-yellow-100 text-yellow-600",
   dispute: "bg-red-100 text-red-500",
 };
@@ -89,18 +89,18 @@ export default function TransactionHistory() {
       mt-6
       bg-white
       border
-      border-[#E7DDD2]
+      border-[#eadfd2]
       rounded-3xl
       p-5
     "
     >
       <div className="flex items-start justify-between">
         <div>
-          <h2 className="text-xl font-bold text-[#3D2414]">
+          <h2 className="text-xl font-bold text-[#24130c]">
             Transaction History
           </h2>
 
-          <p className="text-xs text-[#B88746] mt-1">
+          <p className="text-xs text-[#806049] mt-1">
             7 transactions
           </p>
         </div>
@@ -113,7 +113,7 @@ export default function TransactionHistory() {
             left-4
             top-1/2
             -translate-y-1/2
-            text-[#B88746]
+            text-[#806049]
           "
           />
 
@@ -123,7 +123,7 @@ export default function TransactionHistory() {
 w-64
 rounded-xl
 border
-border-[#E7DDD2]
+border-[#eadfd2]
 py-2.5
 pl-10
 pr-4
@@ -171,20 +171,20 @@ text-sm
 
               <div>
                 <div className="flex items-center gap-3">
-                  <h3 className="font-semibold text-lg text-[#3D2414]">
+                  <h3 className="font-semibold text-lg text-[#24130c]">
                     {tx.title}
                   </h3>
 
-                  <span className="text-[#B88746] text-sm">
+                  <span className="text-[#806049] text-sm">
                     {tx.id}
                   </span>
                 </div>
 
-                <p className="text-sm text-[#B88746]">
+                <p className="text-sm text-[#806049]">
                   {tx.project}
                 </p>
 
-                <p className="text-sm text-[#B88746]">
+                <p className="text-sm text-[#806049]">
                   {tx.description}
                 </p>
               </div>
@@ -195,13 +195,13 @@ text-sm
                 className={`font-bold text-lg ${
                   tx.amount.includes("+")
                     ? "text-green-600"
-                    : "text-[#3D2414]"
+                    : "text-[#24130c]"
                 }`}
               >
                 {tx.amount}
               </h3>
 
-              <p className="text-xs text-[#B88746] mt-1">
+              <p className="text-xs text-[#806049] mt-1">
                 ◷ {tx.date}
               </p>
             </div>
@@ -215,11 +215,11 @@ text-sm
         w-full
         rounded-2xl
         border
-        border-[#E7DDD2]
+        border-[#eadfd2]
         py-3
         text-sm
         font-medium
-        text-[#8B5A2B]
+        text-[#6f2e1c]
         hover:bg-[#FAF6F1]
       "
       >

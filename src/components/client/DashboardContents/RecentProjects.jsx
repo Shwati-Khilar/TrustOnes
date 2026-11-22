@@ -49,27 +49,27 @@ export default function RecentProjects() {
       "bg-blue-50 text-blue-700 border border-blue-200",
 
     Completed:
-      "bg-[#F7F3EE] text-[#7A4A28] border border-[#E7DDD2]",
+      "bg-[#f7efe4] text-[#6f5a4c] border border-[#eadfd2]",
   };
 
   return (
-    <div className="rounded-2xl bg-white border border-[#E7DDD2] overflow-hidden">
+    <div className="rounded-2xl bg-white border border-[#eadfd2] overflow-hidden">
 
       {/* Header */}
 
       <div className="flex items-center justify-between p-6">
 
         <div>
-          <h2 className="text-xl font-semibold text-[#3D2414]">
+          <h2 className="text-xl font-semibold text-[#24130c]">
             Recent Projects
           </h2>
 
-          <p className="mt-1 text-sm text-[#A09286]">
+          <p className="mt-1 text-sm text-[#806049]">
             {projects.length} total projects
           </p>
         </div>
 
-        <button className="font-medium text-[#7A4A28] hover:text-[#5F381D]">
+        <button className="font-medium text-[#6f5a4c] hover:text-[#5F381D]">
           View All →
         </button>
 
@@ -77,11 +77,11 @@ export default function RecentProjects() {
 
       <div className="overflow-x-auto">
 
-        <div className="min-w-[900px]">
+        <div className="min-w-[660px]">
 
           {/* Table Header */}
 
-          <div className="grid grid-cols-[2fr_1.5fr_1fr_1.5fr_1.5fr] border-t border-b border-[#EFE5DB] bg-[#FAF6F1] px-6 py-3 text-sm font-semibold uppercase tracking-wide text-[#B88746]">
+          <div className="grid grid-cols-[1.7fr_1fr_0.9fr_1.2fr_1.3fr] gap-3 border-t border-b border-[#EFE5DB] bg-[#FAF6F1] px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-[#806049]">
 
             <div>Project</div>
             <div>Status</div>
@@ -96,20 +96,20 @@ export default function RecentProjects() {
           {projects.map((project) => (
             <div
               key={project.title}
-              className="grid grid-cols-[2fr_1.5fr_1fr_1.5fr_1.5fr] items-center px-6 py-5 border-b border-[#F4ECE4] hover:bg-[#FCFAF7] transition"
+              className="grid grid-cols-[1.7fr_1fr_0.9fr_1.2fr_1.3fr] items-center gap-3 px-5 py-4 border-b border-[#F4ECE4] hover:bg-[#FCFAF7] transition"
             >
 
               {/* Project */}
 
-              <div className="font-medium text-[#3D2414] truncate pr-4 text-sm">
+              <div className="font-medium text-[#24130c] truncate text-sm">
                 {project.title}
               </div>
 
               {/* Status */}
 
-              <div className="pr-6">
+              <div>
                 <span
-                  className={`rounded-full px-4 py-1 text-sm ${statusStyles[project.status]}`}
+                  className={`inline-block whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium ${statusStyles[project.status]}`}
                 >
                   {project.status}
                 </span>
@@ -117,21 +117,21 @@ export default function RecentProjects() {
 
               {/* Budget */}
 
-              <div className="font-medium text-[#3D2414] text-sm">
+              <div className="font-medium text-[#24130c] text-sm">
                 {project.budget}
               </div>
 
               {/* Freelancer */}
 
-              <div className="text-[#7A4A28] text-sm">
+              <div className="truncate text-sm text-[#6f5a4c]">
                 {project.freelancer}
               </div>
 
               {/* Progress */}
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
 
-                <div className="h-2 flex-1 rounded-full bg-[#ECE3D9]">
+                <div className="h-2 min-w-0 flex-1 rounded-full bg-[#ECE3D9]">
 
                   <div
                     className="h-2 rounded-full bg-gradient-to-r from-[#C89B3C] to-[#8B5A2B]"
@@ -142,7 +142,7 @@ export default function RecentProjects() {
 
                 </div>
 
-                <span className="min-w-[40px] text-sm text-[#7A4A28]">
+                <span className="w-9 shrink-0 text-right text-xs font-medium text-[#6f5a4c]">
                   {project.progress}%
                 </span>
 

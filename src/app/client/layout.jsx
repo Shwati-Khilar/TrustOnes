@@ -6,15 +6,16 @@ export default async function ClientLayout({ children }) {
   const user = await requirePortal("CLIENT");
 
   return (
-    <>
-      <ClientSidebar user={user} />
-      <ClientTopNav user={user} />
+    <main className="min-h-screen bg-[#f8f4ed] text-[#1f130d]">
+      <div className="flex min-h-screen">
+        <ClientSidebar user={user} />
 
-      <main className="ml-64 pt-20 min-h-screen bg-[#F8F4EF]">
-        <div className="p-8 max-w-[1600px] mx-auto">
-          {children}
-        </div>
-      </main>
-    </>
+        <section className="flex min-h-screen flex-1 flex-col overflow-x-hidden">
+          <ClientTopNav user={user} />
+
+          <div className="flex-1 px-5 py-5 sm:px-7 lg:px-8">{children}</div>
+        </section>
+      </div>
+    </main>
   );
 }

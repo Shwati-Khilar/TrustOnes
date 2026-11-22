@@ -37,21 +37,21 @@ const actions = [
 
 export default function ActionRequired() {
   return (
-    <div className="rounded-3xl border border-[#E7DDD2] bg-white p-6">
+    <div className="rounded-3xl border border-[#eadfd2] bg-white p-6">
 
       <div className="flex items-center justify-between">
 
         <div>
-          <h2 className="text-xl font-semibold text-[#3D2414]">
+          <h2 className="text-xl font-semibold text-[#24130c]">
             Action Required
           </h2>
 
-          <p className="mt-1 text-sm text-[#B88746]">
-            3 items need your attention
+          <p className="mt-1 text-sm text-[#806049]">
+            {actions.length} items need your attention
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex shrink-0 items-center gap-3">
 
           <span
             className="
@@ -63,7 +63,7 @@ export default function ActionRequired() {
         py-1
         text-sm
         font-medium
-        text-[#B88746]
+        text-[#806049]
       "
           >
             Urgent
@@ -72,7 +72,7 @@ export default function ActionRequired() {
           <Link
             href="/client/notifications"
             className="
-        text-[#8B5A2B]
+        text-[#6f2e1c]
         font-medium
         hover:text-[#6D4325] text-sm
       "
@@ -103,26 +103,26 @@ export default function ActionRequired() {
                 }
               `}
             >
-              <div className="flex items-center gap-4">
+              <div className="flex min-w-0 items-center gap-4">
 
                 <div className="
                   flex h-11 w-11 items-center justify-center
                   rounded-2xl
-                  bg-[#F7F3EE]
+                  bg-[#f7efe4]
                 ">
                   <Icon
                     size={18}
-                    className="text-[#8B5A2B]"
+                    className="text-[#6f2e1c]"
                   />
                 </div>
 
                 <div>
 
-                  <h3 className="font-medium text-[#3D2414] text-md">
+                  <h3 className="font-medium text-[#24130c] text-base">
                     {item.title}
                   </h3>
 
-                  <p className="text-xs text-[#B88746]">
+                  <p className="text-xs text-[#806049]">
                     {item.subtitle}
                   </p>
 
@@ -132,13 +132,14 @@ export default function ActionRequired() {
 
               <button
                 className={`
+                  shrink-0
                   rounded-xl
                   px-3 py-2
                   text-sm
                   font-medium
                   ${item.highlight
-                    ? "bg-[#8B5A2B] text-white"
-                    : "bg-[#F7F3EE] text-[#8B5A2B]"
+                    ? "bg-[#6f2e1c] text-white"
+                    : "bg-[#f7efe4] text-[#6f2e1c]"
                   }
                 `}
               >

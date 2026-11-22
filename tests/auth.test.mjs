@@ -229,3 +229,113 @@ test("client records are owner-scoped and freelancer reads use session identity"
   const profile = await (await worker.request("/api/freelancer/profile?freelancerId=other")).json();
   assert.equal(profile.data.profile.id, "worker");
 });
+
+function patch(browser, pathname, data) {
+  return browser.request(pathname, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+async function jsonAt(response, status) {
+  assert.equal(response.status, status);
+  return response.json();
+}
+
+test("client preferences persist sparse changes only for the current active client", async () => {
+  await account("prefclient", "CLIENT");
+  await account("prefother", "CLIENT");
+  await account("prefworker", "FREELANCER");
+  const owner = await login("prefclient");
+  const update = (browser, data) => patch(browser, "/api/user/me", data);
+  await jsonAt(await update(owner, { language: "HI", emailNotifications: false }), 200);
+  const result = await jsonAt(await update(owner, { timezone: "UTC", userId: "prefother" }), 200);
+  assert.deepEqual(result.updatedFields, ["timezone"]);
+  const current = await jsonAt(await owner.request("/api/user/me"), 200);
+  assert.equal(current.preferences.language, "HI");
+  assert.equal(current.preferences.emailNotifications, false);
+  assert.equal(current.preferences.timezone, "UTC");
+  assert.equal(await prisma.userPreference.count({ where: { userId: "prefother" } }), 0);
+  assert.equal((await update(owner, { timezone: "not-a-zone" })).status, 400);
+  assert.equal((await update(client(), { language: "EN" })).status, 401);
+  assert.equal((await update(await login("prefworker"), { language: "EN" })).status, 403);
+  await prisma.user.update({ where: { id: "prefclient" }, data: { emailVerified: false } });
+  assert.equal((await update(owner, { language: "EN" })).status, 403);
+  assert.equal((await (await owner.request("/api/user/me")).json()).preferences, null);
+});
+
+test("project assignment, nested milestone operations, simulated funding and freelancer submission", async () => {
+  await account("flowclient", "CLIENT");
+  await account("flowworker", "FREELANCER");
+  await account("flowother", "CLIENT");
+  const owner = await login("flowclient"), worker = await login("flowworker"), other = await login("flowother");
+  const draft = { title: "Web project", description: "A project for the integration suite",
+    deadline: new Date(Date.now() + 86400000 * 8).toISOString(), budget: 500, category: "Development" };
+  const { project } = await jsonAt(await owner.post("/api/projects", draft), 201);
+  const path = "/api/projects/" + project.id;
+  await jsonAt(await patch(owner, path, { ...draft, title: "Revised project" }), 200);
+  assert.equal((await jsonAt(await owner.request(path), 200)).project.title, "Revised project");
+  const { proposal } = await jsonAt(await worker.post(path + "/proposals", {
+    bidAmount: 450, estimatedDays: 4, coverLetter: "I can deliver this project.",
+  }), 201);
+  assert.equal((await jsonAt(await owner.request(path + "/proposals"), 200)).proposals[0].id, proposal.id);
+  await jsonAt(await patch(owner, "/api/proposals/" + proposal.id + "/accept", {}), 200);
+  assert.equal((await jsonAt(await owner.request(path), 200)).project.freelancerId, "flowworker");
+  const room = await jsonAt(await worker.request("/api/freelancer/deal-rooms/" + project.id), 200);
+  assert.equal(room.data.dealRoom.id, project.id);
+  const terms = { title: "Preview", amount: 100, dueDate: new Date(Date.now() + 86400000 * 2).toISOString() };
+  const milestones = path + "/milestones";
+  const removable = (await jsonAt(await owner.post(milestones, terms), 201)).milestone;
+  await jsonAt(await patch(owner, milestones + "/" + removable.id, { ...terms, amount: 80 }), 200);
+  await jsonAt(await owner.request(milestones + "/" + removable.id, { method: "DELETE" }), 200);
+  const { milestone } = await jsonAt(await owner.post(milestones, terms), 201);
+  const fund = milestones + "/" + milestone.id + "/fund";
+  for (const [visitor, status] of [[client(), 401], [worker, 403], [other, 403]]) {
+    assert.equal((await visitor.post(fund, {})).status, status);
+  }
+  assert.equal((await owner.post(fund.replace(project.id, "wrong-parent"), {})).status, 404);
+  await prisma.user.update({ where: { id: "flowclient" }, data: { status: "SUSPENDED" } });
+  assert.equal((await owner.post(fund, {})).status, 403);
+  await prisma.user.update({ where: { id: "flowclient" }, data: { status: "ACTIVE", emailVerified: false } });
+  assert.equal((await owner.post(fund, {})).status, 403);
+  assert.equal(await prisma.milestoneFunding.count({ where: { milestoneId: milestone.id } }), 0);
+  await prisma.user.update({ where: { id: "flowclient" }, data: { emailVerified: true } });
+  const funded = await jsonAt(await owner.post(fund, {}), 200);
+  assert.equal(funded.funding.status, "FUNDED_LOCKED");
+  assert.equal(funded.payment.provider, "SIMULATED");
+  assert.equal(funded.payment.status, "CREATED");
+  assert.equal(funded.milestone.status, "IN_PROGRESS");
+  assert.equal((await owner.post(fund, {})).status, 400);
+  assert.equal(await prisma.paymentTransaction.count({ where: { milestoneFundingId: funded.funding.id } }), 1);
+  const history = "/api/freelancer/milestones/" + milestone.id + "/submissions";
+  await jsonAt(await worker.post(history, { title: "First preview", previewUrl: "https://example.invalid/preview",
+    finalDeliveryUrl: "https://example.invalid/private" }), 201);
+  const submitted = await jsonAt(await worker.request(history), 200);
+  assert.equal(submitted.data.latestSubmission.versionNumber, 1);
+  assert.equal(submitted.data.latestSubmission.isFinalDeliveryLocked, true);
+  assert.equal((await owner.request(history)).status, 403);
+  const next = (await jsonAt(await owner.post("/api/projects", draft), 201)).project;
+  assert.equal((await jsonAt(await patch(owner, "/api/projects/" + next.id + "/cancel", {}), 200)).project.status, "CANCELLED");
+});
+
+test("freelancer read contracts and self-service remain available", async () => {
+  await account("selfservice", "FREELANCER");
+  const worker = await login("selfservice");
+  for (const endpoint of ["dashboard", "projects", "invites", "deal-rooms", "milestones", "wallet", "notifications", "profile", "settings"]) {
+    const result = await jsonAt(await worker.request("/api/freelancer/" + endpoint), 200);
+    assert.equal(result.success, true, endpoint);
+    assert.ok(result.data, endpoint);
+  }
+  await jsonAt(await patch(worker, "/api/freelancer/profile", { professionalTitle: "Test designer" }), 200);
+  const saved = await jsonAt(await patch(worker, "/api/freelancer/settings", {
+    name: "Fixture Designer", availability: "AVAILABLE", preferences: { preferredCurrency: "EUR" },
+  }), 200);
+  assert.equal(saved.data.preferences.preferredCurrency, "EUR");
+  const ticket = await worker.post("/api/freelancer/settings", {
+    type: "PROJECT", title: "Regression check", message: "Please check this fixture project.",
+  });
+  assert.ok([200, 201].includes(ticket.status));
+  const settings = await jsonAt(await worker.request("/api/freelancer/settings"), 200);
+  assert.equal(settings.data.supportTickets[0].title, "Regression check");
+});

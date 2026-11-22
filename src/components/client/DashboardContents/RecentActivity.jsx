@@ -27,7 +27,7 @@ const activities = [
   },
   {
     icon: CheckCircle,
-    color: "bg-stone-100 text-[#8B5A2B]",
+    color: "bg-stone-100 text-[#6f2e1c]",
     title: 'Milestone approved for "Backend API"',
     time: "Yesterday",
   },
@@ -41,21 +41,21 @@ const activities = [
 
 export default function RecentActivity() {
   return (
-    <div className="rounded-3xl border border-[#E7DDD2] bg-white p-6">
+    <div className="rounded-3xl border border-[#eadfd2] bg-white p-6">
 
       <div className="flex items-center justify-between">
 
         <div>
-          <h2 className="text-xl font-semibold text-[#3D2414]">
+          <h2 className="text-xl font-semibold text-[#24130c]">
             Recent Activity
           </h2>
 
-          <p className="mt-1 text-sm text-[#B88746]">
+          <p className="mt-1 text-sm text-[#806049]">
             Latest platform events
           </p>
         </div>
 
-        <span className="text-[#B88746] text-xl">
+        <span className="text-[#806049] text-xl">
           📈
         </span>
 
@@ -83,11 +83,11 @@ export default function RecentActivity() {
 
               <div>
 
-                <p className="text-[#3D2414] text-sm">
+                <p className="text-[#24130c] text-sm">
                   {activity.title}
                 </p>
 
-                <p className="mt-1 text-sm text-[#B88746]">
+                <p className="mt-1 text-sm text-[#806049]">
                   {activity.time}
                 </p>
 

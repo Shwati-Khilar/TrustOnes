@@ -1,214 +1,166 @@
 "use client";
+
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { logoutUser } from "@/services/auth.client.service";
+import { useState } from "react";
 import {
-  LayoutDashboard,
-  FolderKanban,
   Bell,
-  ShieldAlert,
+  FolderKanban,
+  LayoutDashboard,
+  LogOut,
   MessageSquare,
-  Shield,
-  Star,
-  User,
   Settings,
-  ChevronRight,
-  TrendingUp,
+  Shield,
+  ShieldAlert,
+  Star,
+  UserRound,
 } from "lucide-react";
 
-import LogoutButton from "@/components/auth/LogoutButton";
-import UserAvatar from "./UserAvatar";
-import { usePathname } from "next/navigation";
-import Link from "next/link";
-
 const navItems = [
-  {
-    icon: LayoutDashboard,
-    label: "Dashboard",
-    href: "/client/dashboard",
-  },
-  {
-    icon: FolderKanban,
-    label: "Projects",
-    href: "/client/projects",
-    badge: "4",
-  },
-  {
-    icon: Bell,
-    label: "Notifications",
-    href: "/client/notifications",
-    badge: "5",
-  },
-  {
-    icon: ShieldAlert,
-    label: "Disputes",
-    href: "/client/disputes",
-    badge: "1",
-  },
-  {
-    icon: MessageSquare,
-    label: "Messages",
-    href: "/client/messages",
-    badge: "3",
-  },
-  {
-    icon: Shield,
-    label: "Escrow",
-    href: "/client/escrow",
-  },
-  {
-    icon: Star,
-    label: "Reviews",
-    href: "/client/reviews",
-  },
-  {
-    icon: User,
-    label: "Profile",
-    href: "/client/profile",
-  },
-  {
-    icon: Settings,
-    label: "Settings",
-    href: "/client/settings",
-  },
+  { label: "Dashboard", href: "/client/dashboard", icon: LayoutDashboard },
+  { label: "Projects", href: "/client/projects", icon: FolderKanban },
+  { label: "Notifications", href: "/client/notifications", icon: Bell },
+  { label: "Messages", href: "/client/messages", icon: MessageSquare },
+  { label: "Disputes", href: "/client/disputes", icon: ShieldAlert },
+  { label: "Escrow", href: "/client/escrow", icon: Shield },
+  { label: "Reviews", href: "/client/reviews", icon: Star },
+  { label: "Profile", href: "/client/profile", icon: UserRound },
+  { label: "Settings", href: "/client/settings", icon: Settings },
 ];
 
+function isActivePath(pathname, href) {
+  if (!pathname) return false;
+  if (pathname === href) return true;
+  return pathname.startsWith(`${href}/`);
+}
+
+function getInitial(name, email) {
+  const value = name || email || "C";
+  return value.charAt(0).toUpperCase();
+}
 
 export default function ClientSidebar({ user }) {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  async function handleLogout() {
+    try {
+      setLoggingOut(true);
+
+      await logoutUser();
+
+      router.replace("/login");
+      router.refresh();
+    } catch (error) {
+      console.error("CLIENT_LOGOUT_ERROR", error);
+      setLoggingOut(false);
+    }
+  }
+
   return (
-    <aside className="fixed top-0 left-0 h-screen w-64 bg-[#FAF6F1] border-r border-[#E7DDD2] flex flex-col z-30 shadow-card">
-      {/* Logo */}
-      <div className="px-6 py-5 border-b border-beige-200">
+    <aside className="hidden min-h-screen w-[270px] shrink-0 border-r border-[#eadfd2] bg-[#fffaf3] px-4 py-5 lg:block">
+      <div className="mb-8 flex items-center gap-3 px-2">
         <Link
-          href="/"
-          className="flex items-center gap-3 group"
+          href="/client/dashboard"
+          className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#35170f] text-lg font-bold text-[#f8d6a3] shadow-lg shadow-[#35170f]/20"
         >
-          <div className="w-9 h-9 rounded-xl bg-[#7A4A28] flex items-center justify-center shadow-sm">
-            <Shield className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <span className="text-[17px] font-bold text-[#3D2414] tracking-tight">TrustOnes</span>
-            <div className="flex items-center gap-1 mt-0.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#0bbe35]" />
-              <span className="text-[10px]  text-[#0bbe35] font-bold uppercase tracking-wide">Client Portal</span>
-            </div>
-          </div>
+          T
         </Link>
-      </div>
 
-      {/* Nav */}
-      <nav className="flex-1 px-3 py-4 overflow-y-auto scrollbar-thin space-y-0.5">
+        <div>
+          <Link
+            href="/client/dashboard"
+            className="text-base font-extrabold tracking-tight text-[#24130c]"
+          >
+            TrustOnes
+          </Link>
 
-        {navItems.map(({ icon: Icon, label, href, badge }) => {
-
-          const active = pathname === href;
-
-          return (
-            <Link
-              href={href}
-              key={label}
-              className={`
-          w-full
-          flex
-          items-center
-          gap-3
-          px-3
-          py-2.5
-          rounded-xl
-          text-sm
-          font-medium
-          transition-all
-          duration-150
-          group
-
-          ${active
-                  ? "bg-[#7A4A28] text-white shadow-sm"
-                  : "text-[#3D2414] hover:bg-[#F2E8DE]"
-                }
-        `}
-            >
-              <Icon
-                size={20}
-                strokeWidth={1.8}
-                className={`flex-shrink-0 ${active
-                  ? "text-white"
-                  : "text-[#7A7068] group-hover:text-[#7A4A28]"
-                  }`}
-              />
-
-              <span className="flex-1 text-left">
-                {label}
-              </span>
-
-              {badge && (
-                <span
-  className={`
-      ml-auto
-      min-w-[22px]
-      h-5
-      flex
-      items-center
-      justify-center
-      rounded-full
-      text-[10px]
-      font-semibold
-
-      ${
-        active
-          ? "bg-white/20 text-white"
-          : "bg-[#F3E6D8] text-[#B88746]"
-      }
-`}
->
-                  {badge}
-                </span>
-              )}
-
-              {!active && !badge && (
-                <ChevronRight
-                  className="
-              w-3.5
-              h-3.5
-              text-[#B88746]
-              opacity-0
-              group-hover:opacity-100
-              transition-opacity
-            "
-                />
-              )}
-            </Link>
-          );
-        })}
-
-      </nav>
-
-      {/* Trust score card */}
-      <div className="px-3 pb-4">
-        <div className="bg-gradient-to-br from-[#7A4A28] to-[#3D2414] rounded-2xl p-4 text-white">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-white/70 uppercase tracking-wide">Trust Score</span>
-            <TrendingUp className="w-4 h-4 text-[#C89B3C]" />
-          </div>
-          <div className="text-3xl font-700 text-white mb-1">96</div>
-          <div className="text-xs text-white/60 mb-3">Excellent standing</div>
-          <div className="w-full bg-white/20 rounded-full h-1.5">
-            <div className="bg-[#C89B3C] h-1.5 rounded-full" style={{ width: '96%' }} />
-          </div>
+          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#7c6858]">
+            Client Portal
+          </p>
         </div>
       </div>
 
-      {/* User */}
-      <div className="px-3 pb-4 pt-1 border-t border-[#E7DDD2]">
-        <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-[#F2E8DE] transition-colors group">
-          <UserAvatar user={user} />
-          <div className="flex-1 text-left min-w-0">
-            <div className="text-sm font-600 text-[#3D2414] truncate">{user?.name || "User"}</div>
-            <div className="text-xs text-[#7A7068]">{user?.role === "CLIENT"
-              ? "Client Account"
-              : "Freelancer Account"}</div>
-          </div>
-          <ChevronRight className="w-3.5 h-3.5 text-[#7A7068] flex-shrink-0" />
-        </button>
-        <LogoutButton />
+      <nav className="space-y-1.5">
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          const active = isActivePath(pathname, item.href);
+
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              aria-current={active ? "page" : undefined}
+              className={`group flex items-center justify-between rounded-2xl px-3 py-3 text-sm font-semibold transition ${
+                active
+                  ? "bg-[#6f2e1c] text-white shadow-lg shadow-[#6f2e1c]/20"
+                  : "text-[#6f5a4c] hover:bg-[#f3eadf] hover:text-[#2b1810]"
+              }`}
+            >
+              <span className="flex items-center gap-3">
+                <Icon
+                  size={18}
+                  strokeWidth={2.1}
+                  className={active ? "text-white" : "text-[#7c6858]"}
+                />
+
+                <span>{item.label}</span>
+              </span>
+            </Link>
+          );
+        })}
+      </nav>
+
+      <div className="mt-8 rounded-3xl bg-gradient-to-br from-[#3a170e] to-[#7c341d] p-5 text-white shadow-xl shadow-[#7c341d]/20">
+        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#f4b454]">
+          Trust Score
+        </p>
+
+        <div className="mt-3 flex items-end justify-between">
+          <h3 className="text-4xl font-black tracking-tight">96</h3>
+
+          <span className="rounded-full bg-[#f4b454]/15 px-2 py-1 text-xs font-bold text-[#ffd28c]">
+            Verified
+          </span>
+        </div>
+
+        <p className="mt-2 text-xs font-semibold text-white/90">
+          Excellent client standing
+        </p>
+
+        <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/15">
+          <div className="h-full w-[96%] rounded-full bg-[#f4b454]" />
+        </div>
       </div>
+
+      <div className="mt-5 flex items-center gap-3 rounded-2xl border border-[#eadfd2] bg-white/70 px-3 py-3">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#35170f] text-sm font-black text-[#f8d6a3]">
+          {getInitial(user?.name, user?.email)}
+        </div>
+
+        <div className="min-w-0">
+          <p className="truncate text-sm font-extrabold text-[#24130c]">
+            {user?.name || "Client"}
+          </p>
+
+          <p className="truncate text-[11px] font-bold uppercase tracking-[0.12em] text-[#7c6858]">
+            Client account
+          </p>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        onClick={handleLogout}
+        disabled={loggingOut}
+        className="mt-4 flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-sm font-semibold text-[#7a4a34] transition hover:bg-[#f3eadf] disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        <LogOut size={18} />
+        {loggingOut ? "Logging out..." : "Logout"}
+      </button>
     </aside>
   );
 }

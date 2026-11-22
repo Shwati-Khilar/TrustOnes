@@ -32,7 +32,7 @@ export default function FreelancerFilters({
       left-4
       top-1/2
       -translate-y-1/2
-      text-[#B88746]
+      text-[#806049]
     "
                     />
 
@@ -45,12 +45,12 @@ export default function FreelancerFilters({
       w-full
       rounded-2xl
       border
-      border-[#E7DDD2]
+      border-[#eadfd2]
       bg-white
       py-4
       pl-12
       pr-4
-      text-[#3D2414]
+      text-[#24130c]
       outline-none
       focus:border-[#8B5A2B]
     "
@@ -67,12 +67,12 @@ export default function FreelancerFilters({
       min-w-[220px]
       rounded-2xl
       border
-      border-[#E7DDD2]
+      border-[#eadfd2]
       bg-white
       px-5
       py-4
       pr-12
-      text-[#8B5A2B]
+      text-[#6f2e1c]
       font-medium
       outline-none
       appearance-none
@@ -95,7 +95,7 @@ export default function FreelancerFilters({
       right-5
       top-1/2
       -translate-y-1/2
-      text-[#B88746]
+      text-[#806049]
       pointer-events-none
       text-xs
     "
@@ -115,8 +115,8 @@ export default function FreelancerFilters({
                         className={`rounded-2xl border px-5 py-3 text-sm transition-all
 
       ${selectedCategory === item
-                                ? "bg-[#8B5A2B] text-white border-[#8B5A2B]"
-                                : "bg-white border-[#E7DDD2] text-[#8B5A2B]"
+                                ? "bg-[#6f2e1c] text-white border-[#8B5A2B]"
+                                : "bg-white border-[#eadfd2] text-[#6f2e1c]"
                             }
     `}
                     >
@@ -125,7 +125,7 @@ export default function FreelancerFilters({
                 ))}
             </div>
 
-            <p className="mt-6 text-lg text-[#B88746]">
+            <p className="mt-6 text-lg text-[#806049]">
                 Showing {totalFreelancers} result{totalFreelancers !== 1 ? "s" : ""}
             </p>
         </div>

@@ -97,18 +97,18 @@ export default function NotificationCenter() {
     };
     
     return (
-        <div className="bg-white rounded-3xl border border-[#E7DDD2] p-6">
+        <div className="bg-white rounded-3xl border border-[#eadfd2] p-6">
 
             {/* Header */}
 
             <div className="flex items-start justify-between">
 
                 <div>
-                    <h2 className="text-2xl font-bold text-[#3D2414]">
+                    <h2 className="text-2xl font-bold text-[#24130c]">
                         Notification Center
                     </h2>
 
-                    <p className="text-[#B88746] mt-1 text-sm">
+                    <p className="text-[#806049] mt-1 text-sm">
                         Filter alerts by type
                     </p>
                 </div>
@@ -132,8 +132,8 @@ export default function NotificationCenter() {
               transition
 
               ${activeTab === tab
-                                ? "bg-[#8B5A2B] text-white"
-                                : "bg-white border border-[#E7DDD2] text-[#B88746]"
+                                ? "bg-[#6f2e1c] text-white"
+                                : "bg-white border border-[#eadfd2] text-[#806049]"
                             }
             `}
                     >
@@ -158,7 +158,7 @@ export default function NotificationCenter() {
                             key={item.id}
                             className="
                 border
-                border-[#E7DDD2]
+                border-[#eadfd2]
                 rounded-xl
                 p-4
                 flex
@@ -221,25 +221,25 @@ export default function NotificationCenter() {
                                             {item.priority.toUpperCase()}
                                         </span>
 
-                                        <span className="text-[11px] tracking-wide uppercase text-[#8F6C53] font-semibold py-1">
+                                        <span className="text-[11px] tracking-wide uppercase text-[#7c6858] font-semibold py-1">
                                             {item.type}
                                         </span>
 
                                     </div>
 
-                                    <h3 className="text-lg font-semibold text-[#3D2414]">
+                                    <h3 className="text-lg font-semibold text-[#24130c]">
                                         {item.title}
                                     </h3>
 
-                                    <p className="text-[#B88746] mt-1">
+                                    <p className="text-[#806049] mt-1">
                                         {item.project}
                                     </p>
 
-                                    <p className="text-sm text-[#8F6C53] mt-2 leading-6 max-w-3xl">
+                                    <p className="text-sm text-[#7c6858] mt-2 leading-6 max-w-3xl">
                                         {item.description}
                                     </p>
 
-                                    <div className="flex items-center gap-2 mt-4 text-sm text-[#B88746]">
+                                    <div className="flex items-center gap-2 mt-4 text-sm text-[#806049]">
 
                                         <Clock size={14} />
 
@@ -256,7 +256,7 @@ export default function NotificationCenter() {
                   px-3
                   py-2
                   rounded-xl
-                  bg-[#8B5A2B]
+                  bg-[#6f2e1c]
                   text-white
                   font-medium
                   whitespace-nowrap

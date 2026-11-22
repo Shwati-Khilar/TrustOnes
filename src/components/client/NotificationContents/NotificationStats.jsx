@@ -11,7 +11,7 @@ export default function NotificationStats() {
           className="
           bg-white
           border
-          border-[#E7DDD2]
+          border-[#eadfd2]
           rounded-xl
           p-5
         "
@@ -21,7 +21,7 @@ export default function NotificationStats() {
 
             <div>
 
-              <h4 className="text-sm text-[#8F6C53]">
+              <h4 className="text-sm text-[#7c6858]">
                 {item.title}
               </h4>
 
@@ -29,7 +29,7 @@ export default function NotificationStats() {
                 {item.value}
               </h2>
 
-              <p className="text-[#B88746] mt-2 text-sm">
+              <p className="text-[#806049] mt-2 text-sm">
                 {item.subtitle}
               </p>
 

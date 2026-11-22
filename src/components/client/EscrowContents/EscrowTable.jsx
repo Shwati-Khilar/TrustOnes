@@ -10,7 +10,7 @@ export default function EscrowTable({
       bg-white
       rounded-3xl
       border
-      border-[#E7DDD2]
+      border-[#eadfd2]
       overflow-hidden
       mt-6
     "
@@ -18,11 +18,11 @@ export default function EscrowTable({
             {/* TOP HEADER */}
             <div className="flex items-center justify-between px-8 py-6">
                 <div>
-                    <h2 className="text-2xl font-bold text-[#3D2414]">
+                    <h2 className="text-2xl font-bold text-[#24130c]">
                         All Escrows
                     </h2>
 
-                    <p className="text-[#B88746] mt-1">
+                    <p className="text-[#806049] mt-1">
                         {escrows.length} escrow accounts
                     </p>
                 </div>
@@ -47,8 +47,8 @@ export default function EscrowTable({
           transition-all
 
           ${activeStatus === status
-                                    ? "bg-[#8B5A2B] text-white"
-                                    : "text-[#B88746]"
+                                    ? "bg-[#6f2e1c] text-white"
+                                    : "text-[#806049]"
                                 }
         `}
                         >
@@ -76,18 +76,18 @@ export default function EscrowTable({
                     {escrows.map((item) => (
                         <tr
                             key={item.id}
-                            className="border-t border-[#E7DDD2]"
+                            className="border-t border-[#eadfd2]"
                         >
                             <td className="px-8 py-6 text-[#C58A1D] font-semibold text-sm">
                                 {item.id}
                             </td>
 
                             <td className="px-4 py-6">
-                                <h3 className="font-semibold text-md text-[#3D2414]">
+                                <h3 className="font-semibold text-md text-[#24130c]">
                                     {item.project}
                                 </h3>
 
-                                <p className="text-[#B88746] mt-1 text-sm">
+                                <p className="text-[#806049] mt-1 text-sm">
                                     {item.milestone}
                                 </p>
                             </td>
@@ -99,7 +99,7 @@ export default function EscrowTable({
         h-10
         w-10
         rounded-full
-        bg-[#8B5A2B]
+        bg-[#6f2e1c]
         text-white
         flex
         items-center
@@ -109,7 +109,7 @@ export default function EscrowTable({
                                         {item.freelancer[0]}
                                     </div>
 
-                                    <span className="text-md text-[#3D2414]">
+                                    <span className="text-md text-[#24130c]">
                                         {item.freelancer}
                                     </span>
                                 </div>
@@ -124,7 +124,7 @@ export default function EscrowTable({
                                     ${item.released}
                                 </div>
 
-                                <div className="text-[#B88746] text-sm">
+                                <div className="text-[#806049] text-sm">
                                     {item.progress}%
                                 </div>
                             </td>
@@ -168,7 +168,7 @@ export default function EscrowTable({
                                 </span>
                             </td>
 
-                            <td className="px-4 py-6 text-[#B88746] text-sm">
+                            <td className="px-4 py-6 text-[#806049] text-sm">
                                 {item.dueDate}
                             </td>
                         </tr>
