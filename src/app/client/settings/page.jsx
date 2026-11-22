@@ -1,5 +1,6 @@
 "use client";
 
+import { ClientSupport, PasswordSettings } from "@/components/client/AccountSettingsForms";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { signOut } from "next-auth/react";
@@ -15,7 +16,7 @@ import {
   UserRound,
 } from "lucide-react";
 
-function SettingRow({ icon: Icon, title, subtitle, enabled, onChange }) {
+function SettingRow({ icon: Icon, title, subtitle, enabled, onChange, disabled }) {
   return (
     <div className="flex items-center justify-between gap-4 rounded-2xl border border-[#eadfd2] p-4">
       <div className="flex min-w-0 items-center gap-3">
@@ -36,6 +37,7 @@ function SettingRow({ icon: Icon, title, subtitle, enabled, onChange }) {
 
       <button
         type="button"
+        disabled={disabled}
         role="switch"
         aria-checked={enabled}
         aria-label={title}
@@ -54,7 +56,7 @@ function SettingRow({ icon: Icon, title, subtitle, enabled, onChange }) {
   );
 }
 
-function SelectField({ title, value, onChange, options }) {
+function SelectField({ title, value, onChange, options, disabled }) {
   return (
     <div>
       <label className="text-xs font-bold uppercase tracking-[0.14em] text-[#806049]">
@@ -62,6 +64,8 @@ function SelectField({ title, value, onChange, options }) {
       </label>
 
       <select
+        disabled={disabled}
+        aria-label={title}
         value={value}
         onChange={(event) => onChange(event.target.value)}
         className="mt-2 w-full rounded-2xl border border-[#eadfd2] bg-white px-4 py-3 text-sm font-semibold text-[#24130c] outline-none focus:border-[#6f2e1c]"
@@ -120,11 +124,12 @@ export default function SettingsPage() {
           setUser(result.user);
         }
 
-        if (!ignore && response.ok && result?.preferences) {
+        if (!response.ok || !result?.preferences) throw new Error("Unable to load preferences. Reload to try again.");
+        if (!ignore) {
           applyPreferences(result.preferences);
         }
       } catch (error) {
-        console.error("CLIENT_SETTINGS_USER_ERROR", error);
+        if (!ignore) setSaveFeedback({ type: "error", message: error.message });
       }
     }
 
@@ -247,7 +252,7 @@ export default function SettingsPage() {
         </p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[0.9fr_1.3fr]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[0.9fr_1.3fr]">
         <div className="space-y-6">
           <div className="rounded-[2rem] border border-[#eadfd2] bg-[#fffaf3] p-6 shadow-sm">
             <div className="flex items-center gap-4">
@@ -285,8 +290,7 @@ export default function SettingsPage() {
             </h2>
 
             <p className="mt-2 text-sm leading-6 text-white/65">
-              Your client account is verified and escrow is enabled, so you can
-              hire freelancers securely.
+              Your email is verified and your client account is active.
             </p>
 
             <div className="mt-5 space-y-2">
@@ -350,6 +354,7 @@ export default function SettingsPage() {
 
             <div className="mt-5 space-y-3">
               <SettingRow
+                disabled={!savedPreferences || saving}
                 icon={Bell}
                 title="Email notifications"
                 subtitle="Receive important alerts"
@@ -358,6 +363,7 @@ export default function SettingsPage() {
               />
 
               <SettingRow
+                disabled={!savedPreferences || saving}
                 icon={Clock}
                 title="Deadline alerts"
                 subtitle="Reminders before milestones are due"
@@ -366,6 +372,7 @@ export default function SettingsPage() {
               />
 
               <SettingRow
+                disabled={!savedPreferences || saving}
                 icon={Eye}
                 title="Public profile"
                 subtitle="Visible to freelancers"
@@ -386,6 +393,7 @@ export default function SettingsPage() {
 
             <div className="mt-5 grid gap-4 sm:grid-cols-2">
               <SelectField
+                disabled={!savedPreferences || saving}
                 title="Default dashboard"
                 value={defaultDashboard}
                 onChange={setDefaultDashboard}
@@ -397,6 +405,7 @@ export default function SettingsPage() {
               />
 
               <SelectField
+                disabled={!savedPreferences || saving}
                 title="Language"
                 value={language}
                 onChange={setLanguage}
@@ -407,6 +416,7 @@ export default function SettingsPage() {
               />
 
               <SelectField
+                disabled={!savedPreferences || saving}
                 title="Currency"
                 value={currency}
                 onChange={setCurrency}
@@ -414,6 +424,7 @@ export default function SettingsPage() {
               />
 
               <SelectField
+                disabled={!savedPreferences || saving}
                 title="Timezone"
                 value={timezone}
                 onChange={setTimezone}
@@ -435,6 +446,7 @@ export default function SettingsPage() {
 
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
               <SettingRow
+                disabled={!savedPreferences || saving}
                 icon={Bell}
                 title="Push notifications"
                 subtitle="Browser alerts"
@@ -443,6 +455,7 @@ export default function SettingsPage() {
               />
 
               <SettingRow
+                disabled={!savedPreferences || saving}
                 icon={Shield}
                 title="Escrow alerts"
                 subtitle="Funding and releases"
@@ -451,6 +464,7 @@ export default function SettingsPage() {
               />
 
               <SettingRow
+                disabled={!savedPreferences || saving}
                 icon={Mail}
                 title="Messages"
                 subtitle="Freelancer replies"
@@ -474,7 +488,7 @@ export default function SettingsPage() {
               {saveFeedback.message ||
                 (isDirty
                   ? "You have unsaved changes."
-                  : "Preferences are saved to your account.")}
+                  : savedPreferences ? "Preferences are saved to your account." : "Loading preferences...")}
             </p>
 
             <button
@@ -486,6 +500,8 @@ export default function SettingsPage() {
               {saving ? "Saving..." : "Save changes"}
             </button>
           </div>
+          {user && <PasswordSettings hasPassword={user.hasPassword} />}
+          <ClientSupport />
         </div>
       </div>
     </div>

@@ -10,7 +10,7 @@ import { SessionClient, startFixture } from "./auth-fixture.mjs";
 
 let fixture, prisma, passwordHash;
 const password = randomBytes(24).toString("hex");
-const emailFor = (id) => id + "@example.invalid";
+const emailFor = (id) => id.toLowerCase() + "@example.invalid";
 const client = () => new SessionClient(fixture.origin);
 
 before(async () => {
@@ -338,4 +338,148 @@ test("freelancer read contracts and self-service remain available", async () => 
   assert.ok([200, 201].includes(ticket.status));
   const settings = await jsonAt(await worker.request("/api/freelancer/settings"), 200);
   assert.equal(settings.data.supportTickets[0].title, "Regression check");
+});
+
+test("profile PATCH validates all fields before updating either table and preserves omitted fields", async () => {
+  const id = "s10-profile";
+  await account(id, "FREELANCER");
+  const worker = await login(id);
+  const url = "/api/freelancer/profile";
+  const edit = data => patch(worker, url, data);
+  const stored = () => prisma.freelancerProfile.findUniqueOrThrow({ where: { userId: id } });
+  const link = { label: "Work", url: "https://example.invalid/portfolio" };
+  await jsonAt(await edit({ name: "New name", professionalTitle: "Designer", bio: "Original", location: "Delhi",
+    availability: "BUSY_OPEN", experienceLevel: "EXPERT", skills: ["UX"], portfolioLinks: [link], startingPrice: 0 }), 200);
+  await jsonAt(await edit({ bio: "Edited" }), 200);
+  assert.equal((await stored()).location, "Delhi");
+  assert.deepEqual((await stored()).skills, ["UX"]);
+  await jsonAt(await edit({ skills: ["UI"] }), 200);
+  assert.equal((await stored()).bio, "Edited");
+  assert.deepEqual((await stored()).portfolioLinks, [link]);
+  for (const data of [{ experienceLevel: "OTHER" }, { availability: null }, { skills: null },
+    { startingPrice: -1 }, { portfolioLinks: [{ ...link, url: "file:///example" }] },
+    { portfolioLinks: [{ ...link, url: "invalid" }] }, { userId: "other" }, { role: "ADMIN" }, { emailVerified: false }]) {
+    assert.equal((await edit({ name: "Must not persist", ...data })).status, 400);
+  }
+  const current = (await jsonAt(await worker.request(url), 200)).data;
+  assert.equal(current.profile.name, "New name");
+  assert.equal(current.freelancerProfile.startingPrice, 0);
+  assert.equal(current.freelancerProfile.availability, "BUSY_OPEN");
+  assert.equal(current.preferences, undefined);
+  await jsonAt(await edit({ bio: null, location: null, startingPrice: null, skills: [], portfolioLinks: [] }), 200);
+  const cleared = await stored();
+  assert.equal(cleared.bio, null);
+  assert.equal(cleared.location, null);
+  assert.equal(cleared.startingPrice, null);
+  assert.deepEqual(cleared.skills, []);
+  assert.deepEqual(cleared.portfolioLinks, []);
+});
+
+test("client name and both preference contracts preserve ownership and independent concurrent writes", async () => {
+  for (const role of ["CLIENT", "FREELANCER"]) {
+    const id = "s10-prefs-" + role;
+    await account(id, role);
+    const session = await login(id);
+    const isClient = role === "CLIENT";
+    const url = isClient ? "/api/user/me" : "/api/freelancer/settings";
+    const save = data => patch(session, url, isClient ? data : { preferences: data });
+    assert.equal(await prisma.userPreference.count({ where: { userId: id } }), 0);
+    const results = await Promise.all([save({ emailNotifications: false }), save({ language: "HI" })]);
+    assert.deepEqual(results.map(r => r.status), [200, 200]);
+    await jsonAt(await save({ paymentAlerts: false }), 200);
+    const invalid = await save({ preferredCurrency: "UNKNOWN", language: "EN" });
+    assert.equal(invalid.status, 400);
+    if (isClient) {
+      await jsonAt(await patch(session, "/api/client/profile", { name: "Client Updated" }), 200);
+      for (const field of ["status", "role", "userId", "emailVerified"]) {
+        assert.equal((await patch(session, "/api/client/profile", { name: "Incorrect", [field]: "other" })).status, 400);
+      }
+    } else {
+      await jsonAt(await patch(session, url, { availability: "NOT_AVAILABLE" }), 200);
+      await jsonAt(await patch(session, url, { name: "Worker Updated" }), 200);
+      assert.equal((await prisma.freelancerProfile.findUnique({ where: { userId: id } })).availability, "NOT_AVAILABLE");
+      assert.equal((await patch(session, url, { role: "ADMIN" })).status, 400);
+    }
+    const result = await jsonAt(await (await login(id)).request(url), 200);
+    const prefs = isClient ? result.preferences : result.data.preferences;
+    assert.equal(isClient ? result.user.name : result.data.account.name, isClient ? "Client Updated" : "Worker Updated");
+    assert.equal(prefs.emailNotifications, false);
+    assert.equal(prefs.paymentAlerts, false);
+    assert.equal(prefs.language, "HI");
+    assert.equal(prefs.pushNotifications, true);
+  }
+});
+
+test("support history is requester-scoped and only admins can triage existing tickets", async () => {
+  for (const role of ["CLIENT", "FREELANCER", "ADMIN"]) await account("s10-help-" + role, role);
+  const [owner, worker, admin] = await Promise.all(["CLIENT", "FREELANCER", "ADMIN"].map(role => login("s10-help-" + role)));
+  const fields = { title: "Review request", type: "ACCOUNT_DELETION", message: "Please review this request." };
+  const submit = async session => (await jsonAt(await session.post("/api/support", fields), 201)).data;
+  const ticket = await submit(owner);
+  const other = await submit(worker);
+  for (const bad of [{ type: "ANY" }, { title: " " }, { message: " short " }, { userId: other.userId }, { status: "CLOSED" }]) {
+    assert.equal((await owner.post("/api/support", { ...fields, ...bad })).status, 400);
+  }
+  const uri = "/api/admin/support/" + ticket.id;
+  for (const session of [owner, worker]) {
+    assert.equal((await session.request("/api/admin/support")).status, 403);
+    assert.equal((await patch(session, uri, { status: "CLOSED" })).status, 403);
+  }
+  const queue = (await jsonAt(await admin.request("/api/admin/support"), 200)).data;
+  assert.ok(queue.some(row => row.id === other.id && row.message === fields.message));
+  assert.equal((await patch(admin, uri, { status: "UNKNOWN" })).status, 400);
+  assert.equal((await patch(admin, uri, { status: "CLOSED", userId: other.userId })).status, 400);
+  await jsonAt(await patch(admin, uri, { status: "IN_REVIEW" }), 200);
+  const mine = (await jsonAt(await owner.request("/api/support"), 200)).data;
+  assert.deepEqual(mine.map(row => [row.id, row.status]), [[ticket.id, "IN_REVIEW"]]);
+  assert.deepEqual((await jsonAt(await worker.request("/api/support"), 200)).data.map(row => row.id), [other.id]);
+  assert.equal((await prisma.user.findUnique({ where: { id: ticket.userId } })).status, "ACTIVE");
+});
+
+function putPassword(session, body, url = "/api/user/password") {
+  return session.request(url, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+}
+
+test("password changes enforce S1 limits, clear reset tokens and invalidate existing sessions for both roles", async () => {
+  for (const role of ["CLIENT", "FREELANCER"]) {
+    const id = "s10-password-" + role;
+    await account(id, role, { resetPasswordToken: randomBytes(32).toString("hex") });
+    const a = await login(id), b = await login(id);
+    const url = role === "CLIENT" ? "/api/user/password" : "/api/freelancer/settings";
+    const next = randomBytes(20).toString("hex");
+    for (const bad of [{ currentPassword: "incorrect" }, { newPassword: "short" }, { newPassword: "\u00e9".repeat(37) }, { confirmPassword: "mismatch" }]) {
+      assert.equal((await putPassword(a, { currentPassword: password, newPassword: next, ...bad }, url)).status, 400);
+    }
+    await jsonAt(await putPassword(a, { currentPassword: password, newPassword: next, confirmPassword: next }, url), 200);
+    for (const old of [a, b, await login(id)]) assert.equal((await old.request("/api/user/me")).status, 401);
+    const fresh = (await jsonAt(await (await login(id, next)).request("/api/user/me"), 200)).user;
+    assert.equal(fresh.hasPassword, true);
+    assert.equal(fresh.passwordHash, undefined);
+    const stored = await prisma.user.findUnique({ where: { id } });
+    assert.equal(stored.resetPasswordToken, null);
+    assert.ok(await bcrypt.compare(next, stored.passwordHash));
+  }
+  const social = await account("s10-social", "CLIENT", { provider: "google", passwordHash: null });
+  const session = client();
+  session.cookies.set("next-auth.session-token", await encode({ secret: fixture.secret, token: { id: social.id, credentialStamp: null } }));
+  assert.equal((await jsonAt(await session.request("/api/user/me"), 200)).user.hasPassword, false);
+  assert.equal((await putPassword(session, { currentPassword: "irrelevant", newPassword: password })).status, 400);
+});
+
+test("profile, preference, password and support routes enforce live portal access", async () => {
+  const id = "s10-access";
+  await account(id, "CLIENT");
+  const session = await login(id);
+  assert.equal((await patch(session, "/api/freelancer/profile", { name: "Denied" })).status, 403);
+  assert.equal((await patch(session, "/api/freelancer/settings", { name: "Denied" })).status, 403);
+  for (const [state, expected] of [["anonymous", 401], ["PENDING", 403], ["SUSPENDED", 403]]) {
+    if (state !== "anonymous") await prisma.user.update({ where: { id }, data: { status: state } });
+    const subject = state === "anonymous" ? client() : session;
+    for (const response of await Promise.all([
+      patch(subject, "/api/client/profile", { name: "Denied" }), patch(subject, "/api/user/me", { language: "EN" }),
+      putPassword(subject, { currentPassword: password, newPassword: password }),
+      subject.request("/api/support"), subject.post("/api/support", {}),
+      subject.request("/api/admin/support"), patch(subject, "/api/admin/support/nonexistent", {}),
+    ])) assert.equal(response.status, expected);
+  }
 });

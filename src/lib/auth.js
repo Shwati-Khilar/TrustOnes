@@ -130,6 +130,7 @@ export const authOptions = {
         session.user.image = token.image;
         session.user.emailVerified = token.emailVerified;
         session.user.provider = token.provider;
+        session.user.hasPassword = Boolean(token.credentialStamp);
       }
 
       return session;

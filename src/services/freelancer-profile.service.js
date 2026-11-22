@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 
-const AVAILABILITY_VALUES = ["AVAILABLE", "BUSY_OPEN", "NOT_AVAILABLE"];
+import { Prisma } from "@prisma/client";
+import { z } from "zod";
+import { accountName, availability, nonemptyPatch } from "@/lib/account-fields";
 
 const EXPERIENCE_VALUES = ["BEGINNER", "INTERMEDIATE", "ADVANCED", "EXPERT"];
 
@@ -24,98 +26,13 @@ function formatDate(value) {
   }).format(new Date(value));
 }
 
-function cleanText(value, maxLength = 500) {
-  if (typeof value !== "string") return null;
-
-  const cleaned = value.trim();
-
-  if (!cleaned) return null;
-
-  return cleaned.slice(0, maxLength);
-}
-
-function cleanEnum(value, allowedValues, fallback) {
-  if (allowedValues.includes(value)) return value;
-  return fallback;
-}
-
-function cleanStartingPrice(value) {
-  if (value === null || value === undefined || value === "") return null;
-
-  const amount = Number(value);
-
-  if (!Number.isFinite(amount)) return null;
-  if (amount < 0) return null;
-  if (amount > 99999999) return 99999999;
-
-  return amount;
-}
-
-function cleanSkills(value) {
-  if (!Array.isArray(value)) return [];
-
-  const unique = new Set();
-
-  for (const item of value) {
-    if (typeof item !== "string") continue;
-
-    const skill = item.trim().slice(0, 40);
-
-    if (skill) {
-      unique.add(skill);
-    }
-  }
-
-  return Array.from(unique).slice(0, 20);
-}
-
-function cleanPortfolioLinks(value) {
-  if (!Array.isArray(value)) return [];
-
-  return value
-    .map((item) => {
-      if (!item || typeof item !== "object") return null;
-
-      const label = cleanText(item.label, 40);
-      const url = cleanText(item.url, 200);
-
-      if (!label || !url) return null;
-
-      return {
-        label,
-        url,
-      };
-    })
-    .filter(Boolean)
-    .slice(0, 8);
-}
-
-function calculateTrustScore({
-  activeProjects,
-  completedProjects,
-  approvedMilestones,
-  revisionMilestones,
-}) {
-  let score = 70;
-
-  score += Math.min(activeProjects * 3, 9);
-  score += Math.min(completedProjects * 5, 15);
-  score += Math.min(approvedMilestones * 2, 12);
-  score -= Math.min(revisionMilestones * 4, 16);
-
-  if (score > 100) return 100;
-  if (score < 40) return 40;
-
-  return score;
-}
-
-function getDefaultFreelancerProfile(user) {
+function getDefaultFreelancerProfile() {
   return {
     phone: "",
     location: "",
     availability: "AVAILABLE",
-    professionalTitle: "Freelance Developer",
-    bio: `${user.name || "This freelancer"} is building their TrustOnes freelancer profile.`,
+    professionalTitle: "",
+    bio: "",
     experienceLevel: "INTERMEDIATE",
     startingPrice: "",
     startingPriceDisplay: "₹0",
@@ -129,7 +46,7 @@ function mapFreelancerProfile(user) {
   const profile = user.freelancerProfile;
 
   if (!profile) {
-    return getDefaultFreelancerProfile(user);
+    return getDefaultFreelancerProfile();
   }
 
   const startingPrice = profile.startingPrice
@@ -140,10 +57,10 @@ function mapFreelancerProfile(user) {
     phone: profile.phone || "",
     location: profile.location || "",
     availability: profile.availability || "AVAILABLE",
-    professionalTitle: profile.professionalTitle || "Freelance Developer",
+    professionalTitle: profile.professionalTitle || "",
     bio:
       profile.bio ||
-      `${user.name || "This freelancer"} is building their TrustOnes freelancer profile.`,
+      "",
     experienceLevel: profile.experienceLevel || "INTERMEDIATE",
     startingPrice,
     startingPriceDisplay: formatCurrency(startingPrice || 0),
@@ -247,15 +164,8 @@ async function getFreelancerWorkStats(freelancerId) {
     }),
   ]);
 
-  const trustScore = calculateTrustScore({
-    activeProjects,
-    completedProjects,
-    approvedMilestones,
-    revisionMilestones,
-  });
-
   return {
-    trustScore,
+    trustScore: null,
     totalProjects,
     activeProjects,
     completedProjects,
@@ -355,38 +265,29 @@ export async function getFreelancerProfile(freelancerId) {
   return mapProfileResponse(user, stats);
 }
 
-export async function updateFreelancerProfile(freelancerId, payload) {
-  const updateData = {
-    phone: cleanText(payload.phone, 30),
-    location: cleanText(payload.location, 120),
-    availability: cleanEnum(
-      payload.availability,
-      AVAILABILITY_VALUES,
-      "AVAILABLE"
-    ),
-    professionalTitle: cleanText(payload.professionalTitle, 100),
-    bio: cleanText(payload.bio, 1000),
-    experienceLevel: cleanEnum(
-      payload.experienceLevel,
-      EXPERIENCE_VALUES,
-      "INTERMEDIATE"
-    ),
-    startingPrice: cleanStartingPrice(payload.startingPrice),
-    skills: cleanSkills(payload.skills),
-    portfolioLinks: cleanPortfolioLinks(payload.portfolioLinks),
-    educationHighlight: cleanText(payload.educationHighlight, 200),
-  };
+const textField = length => z.string().trim().max(length).transform(value => value || null).nullable();
+const link = z.strictObject({
+  label: z.string().trim().min(1).max(40),
+  url: z.url({ protocol: /^https?$/ }).max(200),
+});
+const profilePatch = nonemptyPatch({
+  name: accountName, availability, phone: textField(30), location: textField(120),
+  professionalTitle: textField(100), bio: textField(1000), educationHighlight: textField(200),
+  experienceLevel: z.enum(EXPERIENCE_VALUES),
+  startingPrice: z.union([z.number(), z.string().regex(/^\d+(?:\.\d{1,2})?$/).transform(Number)])
+    .pipe(z.number().min(0).max(99999999).multipleOf(0.01)).nullable(),
+  skills: z.array(z.string().trim().min(1).max(40)).max(20).transform(items => [...new Set(items)]),
+  portfolioLinks: z.array(link).max(8).nullable(),
+});
 
-  await prisma.freelancerProfile.upsert({
-    where: {
-      userId: freelancerId,
-    },
-    update: updateData,
-    create: {
-      userId: freelancerId,
-      ...updateData,
-    },
+export async function updateFreelancerProfile(userId, payload) {
+  const { name, ...data } = profilePatch.parse(payload);
+  if (data.portfolioLinks === null) data.portfolioLinks = Prisma.DbNull;
+  await prisma.$transaction(async tx => {
+    if (name !== undefined) await tx.user.update({ where: { id: userId }, data: { name } });
+    if (Object.keys(data).length) {
+      await tx.freelancerProfile.upsert({ where: { userId }, create: { userId, ...data }, update: data });
+    }
   });
-
-  return getFreelancerProfile(freelancerId);
+  return getFreelancerProfile(userId);
 }

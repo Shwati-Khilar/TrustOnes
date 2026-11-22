@@ -1,3 +1,4 @@
+import { passwordPolicy } from "@/lib/password-policy";
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
@@ -9,7 +10,7 @@ export async function POST(request) {
     const { token, password } = body || {};
     const invalid = () => NextResponse.json({ message: "Invalid or expired reset link." }, { status: 400 });
     if (typeof token !== "string" || !/^[a-f0-9]{64}$/.test(token)) return invalid();
-    if (typeof password !== "string" || password.length < 8 || Buffer.byteLength(password) > 72) {
+    if (!passwordPolicy.safeParse(password).success) {
       return NextResponse.json({ message: "Use at least 8 characters and at most 72 UTF-8 bytes." }, { status: 400 });
     }
 

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requirePortal } from "@/lib/portal-session";
 import { prisma } from "@/lib/prisma";
 import LogoutButton from "@/components/auth/LogoutButton";
@@ -38,6 +39,7 @@ export default async function AdminDashboardPage() {
               <p className="mt-2 text-3xl font-bold">0</p>
             </div>
           </div>
+          <Link href="/admin/support" className="my-5 block font-semibold text-purple-700 underline">Support requests</Link>
           <LogoutButton/>
         </div>
       </section>

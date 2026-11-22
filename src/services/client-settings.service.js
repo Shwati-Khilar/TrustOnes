@@ -56,7 +56,7 @@ function getPreferenceDefaults() {
   };
 }
 
-function mapPreferences(preference) {
+export function mapPreferences(preference) {
   const defaults = getPreferenceDefaults();
 
   if (!preference) {
@@ -94,7 +94,7 @@ function isValidTimezone(value) {
 // touching one toggle never resets the rest of the record.
 export class InvalidPreferenceError extends Error {}
 
-function buildPreferenceUpdate(payload) {
+export function buildPreferenceUpdate(payload) {
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
     throw new InvalidPreferenceError("Request body must be a settings object.");
   }

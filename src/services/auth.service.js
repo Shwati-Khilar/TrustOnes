@@ -1,3 +1,4 @@
+import { passwordPolicy } from "@/lib/password-policy";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
@@ -7,8 +8,7 @@ import { createRawToken, hashToken } from "@/lib/tokens";
 const registerSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters")
-    .refine((value) => Buffer.byteLength(value) <= 72, "Password must fit within 72 UTF-8 bytes"),
+  password: passwordPolicy,
   role: z.enum(["CLIENT", "FREELANCER"], {
     message: "Role must be CLIENT or FREELANCER",
   }),
