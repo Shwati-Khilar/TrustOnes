@@ -1,5 +1,6 @@
 "use client";
 
+import { formatCurrency } from "@/lib/project-presentation";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
@@ -26,14 +27,6 @@ const filters = [
   { label: "Revision", value: "REVISION_REQUESTED" },
   { label: "Approved", value: "APPROVED" },
 ];
-
-function formatCurrency(amount) {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 0,
-  }).format(Number(amount || 0));
-}
 
 function StatusBadge({ status }) {
   const normalizedStatus = String(status || "PENDING");

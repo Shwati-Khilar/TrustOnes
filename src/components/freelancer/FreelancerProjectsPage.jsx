@@ -1,5 +1,6 @@
 "use client";
 
+import { projectPreview, formatCurrency } from "@/lib/project-presentation";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
@@ -25,14 +26,6 @@ const filters = [
   { label: "Completed", value: "COMPLETED" },
   { label: "Cancelled", value: "CANCELLED" },
 ];
-
-function formatCurrency(amount) {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 0,
-  }).format(Number(amount || 0));
-}
 
 function StatusBadge({ status }) {
   const normalizedStatus = String(status || "ACTIVE");
@@ -100,8 +93,8 @@ function getPriority(project) {
   const today = new Date();
   const deadline = new Date(project.deadline);
 
-  today.setHours(0, 0, 0, 0);
-  deadline.setHours(0, 0, 0, 0);
+  today.setUTCHours(0, 0, 0, 0);
+  deadline.setUTCHours(0, 0, 0, 0);
 
   const diffDays = Math.ceil((deadline - today) / (1000 * 60 * 60 * 24));
 
@@ -404,7 +397,7 @@ export default function FreelancerProjectsPage() {
                     </p>
 
                     <p className="mt-4 max-w-3xl text-sm leading-6 text-[#7c6858]">
-                      {project.description}
+                      {projectPreview(project.description)}
                     </p>
                   </div>
 

@@ -1,3 +1,4 @@
+import { projectDate, formatCurrency } from "@/lib/project-presentation";
 import { prisma } from "@/lib/prisma";
 
 const ALLOWED_PROPOSAL_STATUSES = [
@@ -5,17 +6,8 @@ const ALLOWED_PROPOSAL_STATUSES = [
   "ACCEPTED",
   "REJECTED",
   "WITHDRAWN",
+  "CLOSED",
 ];
-
-function formatCurrency(value) {
-  const amount = Number(value || 0);
-
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
 
 function formatDate(value) {
   if (!value) return "No date";
@@ -28,7 +20,7 @@ function formatDate(value) {
 }
 
 function getNextAction(status, projectStatus) {
-  if (status === "PENDING") return "Waiting for client response";
+  if (status === "PENDING") return "View current offer";
   if (status === "ACCEPTED" && projectStatus === "ACTIVE") return "Open deal room";
   if (status === "ACCEPTED") return "Proposal accepted";
   if (status === "REJECTED") return "Proposal rejected";
@@ -39,7 +31,7 @@ function getNextAction(status, projectStatus) {
 
 function getStatusLabel(status) {
   const labels = {
-    PENDING: "Awaiting Client",
+    PENDING: "Open negotiation",
     ACCEPTED: "Accepted",
     REJECTED: "Rejected",
     WITHDRAWN: "Withdrawn",
@@ -71,12 +63,12 @@ function mapProposal(proposal) {
           title: proposal.project.title,
           description: proposal.project.description,
           category: proposal.project.category,
-          budget: Number(proposal.project.budget || 0),
-          budgetDisplay: formatCurrency(proposal.project.budget),
-          deadline: proposal.project.deadline
-            ? proposal.project.deadline.toISOString()
+          budget: Number(proposal.project.advertisedBudget ?? proposal.project.budget),
+          budgetDisplay: formatCurrency(proposal.project.advertisedBudget ?? proposal.project.budget),
+          deadline: (proposal.project.advertisedDeadline ?? proposal.project.deadline)
+            ? (proposal.project.advertisedDeadline ?? proposal.project.deadline).toISOString()
             : null,
-          deadlineDisplay: formatDate(proposal.project.deadline),
+          deadlineDisplay: projectDate(proposal.project.advertisedDeadline ?? proposal.project.deadline),
           status: proposal.project.status,
         }
       : null,
@@ -91,12 +83,12 @@ function mapProposal(proposal) {
   };
 }
 
-export async function getFreelancerInvites(freelancerId, filters = {}) {
+export async function getFreelancerProposalSummary(freelancerId, filters = {}) {
   const status = String(filters.status || "ALL").toUpperCase();
   const search = String(filters.search || "").trim();
 
   const where = {
-    freelancerId,
+    kind: "PROPOSAL", freelancerId,
   };
 
   if (status !== "ALL" && ALLOWED_PROPOSAL_STATUSES.includes(status)) {
@@ -160,6 +152,8 @@ export async function getFreelancerInvites(freelancerId, filters = {}) {
   ] = await Promise.all([
     prisma.proposal.findMany({
       where,
+      skip: (filters.page - 1) * 24,
+      take: 24,
       orderBy: {
         createdAt: "desc",
       },
@@ -177,6 +171,8 @@ export async function getFreelancerInvites(freelancerId, filters = {}) {
             title: true,
             description: true,
             category: true,
+            advertisedBudget: true,
+            advertisedDeadline: true,
             budget: true,
             deadline: true,
             status: true,
@@ -194,56 +190,44 @@ export async function getFreelancerInvites(freelancerId, filters = {}) {
 
     prisma.proposal.count({
       where: {
-        freelancerId,
+        kind: "PROPOSAL", freelancerId,
       },
     }),
 
     prisma.proposal.count({
       where: {
-        freelancerId,
+        kind: "PROPOSAL", freelancerId,
         status: "PENDING",
       },
     }),
 
     prisma.proposal.count({
       where: {
-        freelancerId,
+        kind: "PROPOSAL", freelancerId,
         status: "ACCEPTED",
       },
     }),
 
     prisma.proposal.count({
       where: {
-        freelancerId,
+        kind: "PROPOSAL", freelancerId,
         status: "REJECTED",
       },
     }),
 
     prisma.proposal.count({
       where: {
-        freelancerId,
+        kind: "PROPOSAL", freelancerId,
         status: "WITHDRAWN",
       },
     }),
 
-    prisma.proposal.aggregate({
-      where: {
-        freelancerId,
-        status: "PENDING",
-      },
-      _sum: {
-        bidAmount: true,
-      },
-    }),
-
-    prisma.proposal.aggregate({
-      where: {
-        freelancerId,
-        status: "ACCEPTED",
-      },
-      _sum: {
-        bidAmount: true,
-      },
+    prisma.$queryRaw`SELECT COALESCE(SUM(o.amount),0) AS total
+      FROM proposals p JOIN offer_revisions o ON o."negotiationId"=p.id AND o.version=p.version
+      WHERE p."freelancerId"=${freelancerId} AND p.kind='PROPOSAL' AND p.status='PENDING'`,
+    prisma.offerRevision.aggregate({
+      where: { negotiation: { kind: "PROPOSAL", freelancerId, status: "ACCEPTED" }, assignedProject: { isNot: null } },
+      _sum: { amount: true },
     }),
   ]);
 
@@ -254,10 +238,10 @@ export async function getFreelancerInvites(freelancerId, filters = {}) {
       acceptedProposals: acceptedCount,
       rejectedProposals: rejectedCount,
       withdrawnProposals: withdrawnCount,
-      pendingValue: Number(pendingValue._sum.bidAmount || 0),
-      pendingValueDisplay: formatCurrency(pendingValue._sum.bidAmount),
-      acceptedValue: Number(acceptedValue._sum.bidAmount || 0),
-      acceptedValueDisplay: formatCurrency(acceptedValue._sum.bidAmount),
+      pendingValue: Number(pendingValue[0].total || 0),
+      pendingValueDisplay: formatCurrency(pendingValue[0].total),
+      acceptedValue: Number(acceptedValue._sum.amount || 0),
+      acceptedValueDisplay: formatCurrency(acceptedValue._sum.amount),
     },
     proposals: proposals.map(mapProposal),
   };

@@ -1,10 +1,4 @@
-import FreelancerPortalShell from "@/components/freelancer/FreelancerPortalShell";
-import FreelancerInvitesPage from "@/components/freelancer/FreelancerInvitesPage";
-
-export default function InvitesPage() {
-  return (
-    <FreelancerPortalShell>
-      <FreelancerInvitesPage />
-    </FreelancerPortalShell>
-  );
+import { Threads } from "@/components/marketplace/MarketViews";
+export default async function Page({ searchParams }) {
+  return <Threads portal="freelancer" query={await searchParams} />;
 }

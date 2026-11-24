@@ -27,6 +27,7 @@ const navItems = [
     icon: LayoutDashboard,
     badgeKey: null,
   },
+  { label: "Discover projects", href: "/freelancer/discover", icon: FolderKanban },
   {
     label: "Projects",
     href: "/freelancer/projects",
@@ -34,7 +35,7 @@ const navItems = [
     badgeKey: null,
   },
   {
-    label: "Invites",
+    label: "Invitations and proposals",
     href: "/freelancer/invites",
     icon: Inbox,
     badgeKey: "invites",
@@ -141,7 +142,6 @@ export default function FreelancerSidebar() {
           }),
         ]);
 
-        let pendingProposals = 0;
         let activeMilestones = 0;
         let actionRequiredNotifications = 0;
 
@@ -151,7 +151,6 @@ export default function FreelancerSidebar() {
 
           if (dashboardResponse.ok && dashboardJson?.success) {
             const stats = dashboardJson.data?.stats || {};
-            pendingProposals = Number(stats.pendingProposals || 0);
             activeMilestones = Number(stats.activeMilestones || 0);
           }
         }
@@ -170,7 +169,7 @@ export default function FreelancerSidebar() {
 
         if (!ignore) {
           setBadgeCounts({
-            invites: pendingProposals,
+            invites: 0,
             milestones: activeMilestones,
             notifications: actionRequiredNotifications,
             messages: 0,

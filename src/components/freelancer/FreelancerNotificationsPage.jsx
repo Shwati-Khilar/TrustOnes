@@ -515,7 +515,7 @@ export default function FreelancerNotificationsPage() {
                 "Accepted proposals open deal rooms",
                 "In-progress milestones need submission",
                 "Rejected milestones need revision",
-                "Approved milestones update wallet",
+                "Approved milestones update work progress",
               ].map((item) => (
                 <div key={item} className="flex items-center gap-3">
                   <CheckCircle2 size={17} className="text-[#f4b454]" />
@@ -560,7 +560,7 @@ export default function FreelancerNotificationsPage() {
                 {
                   type: "WALLET",
                   title: "Wallet impact",
-                  text: "Approved milestones are reflected in wallet earnings.",
+                  text: "Milestone approval records the value of completed work. Settlement is unavailable.",
                   icon: Wallet,
                 },
               ].map((item) => {

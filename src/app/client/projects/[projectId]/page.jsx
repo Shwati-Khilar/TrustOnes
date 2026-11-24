@@ -1,15 +1,16 @@
 "use client";
 
 import { use, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import ProjectOverview from "@/components/client/project/ProjectOverview";
+import { projectDate } from "@/lib/project-presentation";
 
 import CreateMilestoneModal from "@/components/client/project/CreateMilestoneModel";
 import EditMilestonesModel from "@/components/client/project/EditMilestonesModel";
-import AssignedFreelancerCard from "@/components/client/project/AssignedFreelancerCard";
+
 
 export default function ProjectDetailsPage({ params }) {
   const { projectId } = use(params);
-  const router = useRouter();
+
 
   // Project state
   const [project, setProject] = useState(null);
@@ -19,17 +20,6 @@ export default function ProjectDetailsPage({ params }) {
   // Cancel project state
   const [cancelling, setCancelling] = useState(false);
   const [cancelError, setCancelError] = useState("");
-
-  // Proposal state
-  const [proposals, setProposals] = useState([]);
-  const [proposalsLoading, setProposalsLoading] = useState(true);
-  const [proposalsError, setProposalsError] = useState("");
-
-  const [acceptingProposalId, setAcceptingProposalId] =
-    useState(null);
-
-  const [acceptProposalError, setAcceptProposalError] =
-    useState("");
 
   // Milestone state
   const [milestones, setMilestones] = useState([]);
@@ -73,38 +63,6 @@ export default function ProjectDetailsPage({ params }) {
     }
 
     fetchProject();
-  }, [projectId]);
-
-
-
-  useEffect(() => {
-    async function fetchProposals() {
-      try {
-        setProposalsLoading(true);
-        setProposalsError("");
-
-        const response = await fetch(
-          `/api/projects/${projectId}/proposals`
-        );
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(
-            data.message || "Unable to fetch proposals."
-          );
-        }
-
-        setProposals(data.proposals);
-      } catch (error) {
-        console.error("FETCH_PROPOSALS_ERROR", error);
-        setProposalsError(error.message);
-      } finally {
-        setProposalsLoading(false);
-      }
-    }
-
-    fetchProposals();
   }, [projectId]);
 
 
@@ -169,7 +127,7 @@ export default function ProjectDetailsPage({ params }) {
         );
       }
 
-      setProject(data.project);
+      setProject(current => ({...current, ...data.project, offerActivity: {...current.offerActivity, pending: 0}}));
     } catch (error) {
       console.error("CANCEL_PROJECT_ERROR", error);
       setCancelError(error.message);
@@ -180,64 +138,6 @@ export default function ProjectDetailsPage({ params }) {
 
 
 
-  async function handleAcceptProposal(proposalId) {
-    const confirmed = window.confirm(
-      "Accept this proposal and assign the freelancer to this project?"
-    );
-
-    if (!confirmed || acceptingProposalId) {
-      return;
-    }
-
-    try {
-      setAcceptingProposalId(proposalId);
-      setAcceptProposalError("");
-
-      const response = await fetch(
-        `/api/proposals/${proposalId}/accept`,
-        {
-          method: "PATCH",
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.message || "Unable to accept proposal."
-        );
-      }
-
-      // Project becomes ACTIVE and receives freelancer
-      setProject(data.project);
-
-      // Update proposal statuses locally
-      setProposals((currentProposals) =>
-        currentProposals.map((proposal) => {
-          if (proposal.id === proposalId) {
-            return {
-              ...proposal,
-              status: "ACCEPTED",
-            };
-          }
-
-          if (proposal.status === "PENDING") {
-            return {
-              ...proposal,
-              status: "REJECTED",
-            };
-          }
-
-          return proposal;
-        })
-      );
-    } catch (error) {
-      console.error("ACCEPT_PROPOSAL_ERROR", error);
-      setAcceptProposalError(error.message);
-    } finally {
-      setAcceptingProposalId(null);
-    }
-  }
   async function handleDeleteMilestone(milestoneId) {
     const confirmed = window.confirm(
       "Delete this milestone? This action cannot be undone."
@@ -340,195 +240,14 @@ export default function ProjectDetailsPage({ params }) {
   }
 
 
-  const formattedDeadline = new Date(
-    project.deadline
-  ).toLocaleDateString("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-
-  const formattedBudget = Number(
-    project.budget
-  ).toLocaleString("en-IN");
-
-  const formattedStatus =
-    project.status.charAt(0) +
-    project.status.slice(1).toLowerCase();
-
-  const acceptedProposal = proposals.find(
-    (proposal) => proposal.status === "ACCEPTED"
-  );
-
   return (
     <>
       <div className="mx-auto max-w-[1480px]">
-
-          {/* BACK BUTTON */}
-          <button
-            type="button"
-            onClick={() => router.push("/client/projects")}
-            className="mb-5 inline-flex items-center gap-2 text-sm font-bold text-[#7c6858] transition hover:text-[#6f2e1c]"
-          >
-            ← Back to Projects
-          </button>
-
-          {/* PROJECT HERO */}
-
-
-          <section className="rounded-[2rem] bg-gradient-to-br from-[#35170f] to-[#7c341d] p-8 text-white shadow-xl shadow-[#7c341d]/20">
-            <div className="flex items-start justify-between gap-6">
-
-              <div>
-                <span className="inline-flex rounded-full bg-white/10 px-4 py-2 text-sm font-bold text-[#f4b454]">
-                  PROJECT DETAILS
-                </span>
-
-                <h1 className="mt-5 text-4xl font-black tracking-[-0.04em]">
-                  {project.title}
-                </h1>
-
-                <p className="mt-4 max-w-3xl leading-7 text-[#f6e3d1]">
-                  {project.description}
-                </p>
-              </div>
-
-              <span className="rounded-full bg-white/10 px-5 py-2 text-sm font-bold text-white">
-                {formattedStatus}
-              </span>
-
-            </div>
-          </section>
-
-          {/* PROJECT INFORMATION */}
-
-          <section className="mt-6 grid grid-cols-1 gap-5 md:grid-cols-3">
-
-            {/* Budget */}
-
-            <div className="rounded-[1.5rem] border border-[#eadfd2] bg-white/80 p-5 shadow-sm">
-              <p className="text-sm font-semibold text-[#7c6858]">
-                Budget
-              </p>
-
-              <h2 className="mt-2 text-2xl font-bold text-[#24130c]">
-                ₹{formattedBudget}
-              </h2>
-            </div>
-
-            {/* Category */}
-
-            <div className="rounded-[1.5rem] border border-[#eadfd2] bg-white/80 p-5 shadow-sm">
-              <p className="text-sm font-semibold text-[#7c6858]">
-                Category
-              </p>
-
-              <h2 className="mt-2 text-xl font-black text-[#24130c]">
-                {project.category}
-              </h2>
-            </div>
-
-            {/* Deadline */}
-
-            <div className="rounded-[1.5rem] border border-[#eadfd2] bg-white/80 p-5 shadow-sm">
-              <p className="text-sm font-semibold text-[#7c6858]">
-                Deadline
-              </p>
-
-              <h2 className="mt-2 text-xl font-black text-[#24130c]">
-                {formattedDeadline}
-              </h2>
-            </div>
-
-          </section>
-
-
-          {/* PROJECT MANAGEMENT */}
-
-
-          <section className="mt-6 rounded-[2rem] border border-[#eadfd2] bg-white/80 p-7 shadow-sm">
-
-            <h2 className="text-2xl font-black tracking-[-0.04em] text-[#24130c]">
-              Project Management
-            </h2>
-
-            <p className="mt-2 text-[#806049]">
-              Manage this project&apos;s lifecycle and upcoming actions.
-            </p>
-
-            {/* Cancel error */}
-
-            {cancelError && (
-              <div className="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
-                {cancelError}
-              </div>
-            )}
-
-            {/* OPEN PROJECT ACTIONS */}
-
-            {project.status === "OPEN" && (
-              <div className="mt-6 flex flex-wrap gap-3">
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    router.push(
-                      `/client/projects/${projectId}/edit`
-                    )
-                  }
-                  className="rounded-2xl bg-[#6f2e1c] px-6 py-3 text-sm font-black text-white shadow-lg shadow-[#6f2e1c]/20 transition hover:bg-[#5b2416]"
-                >
-                  Edit Project
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleCancelProject}
-                  disabled={cancelling}
-                  className="
-                    rounded-xl
-                    border
-                    border-red-300
-                    px-6
-                    py-3
-                    text-red-500
-                    transition-colors
-                    hover:bg-red-50
-                    disabled:cursor-not-allowed
-                    disabled:opacity-60
-                  "
-                >
-                  {cancelling
-                    ? "Cancelling..."
-                    : "Cancel Project"}
-                </button>
-
-              </div>
-            )}
-
-            {/* ACTIVE PROJECT MESSAGE */}
-
-            {project.status === "ACTIVE" && (
-              <div className="mt-6 rounded-2xl border border-[#f0d7c3] bg-[#fff7ed] px-4 py-3 text-sm font-semibold text-[#7c341d]">
-                Freelancer assigned. Manage project work through milestones.
-              </div>
-            )}
-
-            {/* CANCELLED PROJECT MESSAGE */}
-
-            {project.status === "CANCELLED" && (
-              <p className="mt-6 text-sm font-semibold text-[#7c6858]">
-                This project has been cancelled and can no longer be edited.
-              </p>
-            )}
-
-          </section>
-
-
+        <ProjectOverview project={project} milestones={milestonesLoading ? project.milestones || [] : milestones} onPublish={setProject} cancelling={cancelling} cancelError={cancelError} onCancel={handleCancelProject}/>
           {/* MILESTONES */}
 
 
-          <section className="mt-6 rounded-[2rem] border border-[#eadfd2] bg-white/80 p-7 shadow-sm">
+          {(project.status === "ACTIVE" || milestones.length > 0 || milestonesError) && <section id="milestones" className="mt-5 scroll-mt-24 rounded-3xl border border-[#e4d7c9] bg-[#fffdf9] p-5 shadow-sm sm:p-7">
 
             {/* Header */}
 
@@ -540,7 +259,7 @@ export default function ProjectDetailsPage({ params }) {
                 </h2>
 
                 <p className="mt-2 text-[#806049]">
-                  Track project deliverables, deadlines and payments.
+                  Plan deliverables against the project budget and track their status.
                 </p>
               </div>
 
@@ -615,13 +334,7 @@ export default function ProjectDetailsPage({ params }) {
                       milestone.amount
                     ).toLocaleString("en-IN");
 
-                    const formattedDueDate = new Date(
-                      milestone.dueDate
-                    ).toLocaleDateString("en-IN", {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                    });
+                    const formattedDueDate = projectDate(milestone.dueDate);
 
                     const formattedMilestoneStatus =
                       milestone.status.charAt(0) +
@@ -681,7 +394,7 @@ export default function ProjectDetailsPage({ params }) {
                           </div>
 
                         </div>
-                        <div className="mt-6 flex justify-end gap-3">
+                        <div className="mt-6 flex flex-wrap justify-end gap-3">
 
                           {milestone.status === "PENDING" && (
                             <button
@@ -722,205 +435,7 @@ export default function ProjectDetailsPage({ params }) {
                 </div>
               )}
 
-          </section>
-
-
-          {/* PROPOSALS */}
-
-
-          <section className="mt-6 rounded-[2rem] border border-[#eadfd2] bg-white/80 p-7 shadow-sm">
-
-            <div className="flex flex-wrap items-center justify-between gap-4">
-
-              <div>
-                <h2 className="text-2xl font-black tracking-[-0.04em] text-[#24130c]">
-                  Proposals
-                </h2>
-
-                <p className="mt-2 text-[#806049]">
-                  Review proposals submitted by freelancers for this project.
-                </p>
-              </div>
-
-              <span className="rounded-full bg-[#f7efe4] px-4 py-2 text-sm font-bold text-[#6f2e1c]">
-                {proposals.length}{" "}
-                {proposals.length === 1
-                  ? "Proposal"
-                  : "Proposals"}
-              </span>
-
-            </div>
-
-            {/* Proposal loading */}
-
-            {proposalsLoading && (
-              <p className="mt-6 text-sm font-semibold text-[#7c6858]">
-                Loading proposals...
-              </p>
-            )}
-
-            {/* Proposal fetch error */}
-
-            {proposalsError && (
-              <div className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
-                {proposalsError}
-              </div>
-            )}
-
-            {/* Proposal acceptance error */}
-
-            {acceptProposalError && (
-              <div className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
-                {acceptProposalError}
-              </div>
-            )}
-
-            {/* No proposals */}
-
-            {!proposalsLoading &&
-              !proposalsError &&
-              proposals.length === 0 && (
-                <div className="mt-6 rounded-2xl border border-dashed border-[#eadfd2] bg-[#fffaf3] p-8 text-center">
-
-                  <h3 className="font-black text-[#24130c]">
-                    No proposals yet
-                  </h3>
-
-                  <p className="mt-2 text-sm font-semibold text-[#7c6858]">
-                    Freelancer proposals will appear here when
-                    they are submitted.
-                  </p>
-
-                </div>
-              )}
-
-            {/* Proposal cards */}
-
-            {!proposalsLoading &&
-              !proposalsError &&
-              proposals.length > 0 && (
-                <div className="mt-6 space-y-4">
-
-                  {proposals.map((proposal) => {
-                    const formattedBid = Number(
-                      proposal.bidAmount
-                    ).toLocaleString("en-IN");
-
-                    const formattedProposalStatus =
-                      proposal.status.charAt(0) +
-                      proposal.status
-                        .slice(1)
-                        .toLowerCase();
-
-                    return (
-                      <article
-                        key={proposal.id}
-                        className="rounded-[1.5rem] border border-[#eadfd2] bg-[#fffaf3] p-6"
-                      >
-
-                        <div className="flex items-start justify-between gap-6">
-
-                          <div className="flex items-center gap-4">
-
-                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#6f2e1c] font-semibold text-white">
-                              {proposal.freelancer.name
-                                ?.charAt(0)
-                                .toUpperCase() || "F"}
-                            </div>
-
-                            <div>
-
-                              <h3 className="text-lg font-black tracking-[-0.03em] text-[#24130c]">
-                                {proposal.freelancer.name}
-                              </h3>
-
-                              <p className="mt-1 text-sm font-semibold text-[#7c6858]">
-                                Submitted a proposal
-                              </p>
-
-                            </div>
-
-                          </div>
-
-                          <span className="rounded-full border border-[#eadfd2] bg-white px-3 py-2 text-sm font-bold text-[#6f2e1c]">
-                            {formattedProposalStatus}
-                          </span>
-
-                        </div>
-
-                        <p className="mt-5 text-sm leading-6 text-[#6f5a4c]">
-                          {proposal.coverLetter}
-                        </p>
-
-                        <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
-
-                          <div className="rounded-2xl bg-white p-4">
-
-                            <p className="text-xs font-bold text-[#806049]">
-                              Proposed Budget
-                            </p>
-
-                            <p className="mt-2 font-black text-[#24130c]">
-                              ₹{formattedBid}
-                            </p>
-
-                          </div>
-
-                          <div className="rounded-2xl bg-white p-4">
-
-                            <p className="text-xs font-bold text-[#806049]">
-                              Estimated Delivery
-                            </p>
-
-                            <p className="mt-2 font-black text-[#24130c]">
-                              {proposal.estimatedDays} days
-                            </p>
-
-                          </div>
-
-                        </div>
-
-                        {project.status === "OPEN" &&
-                          proposal.status === "PENDING" && (
-                            <div className="mt-5 flex flex-wrap justify-end gap-3">
-
-                              <button
-                                type="button"
-                                className="rounded-xl border border-[#eadfd2] px-5 py-2.5 text-sm font-medium text-[#6f2e1c] hover:bg-[#f7efe4]"
-                              >
-                                View Freelancer
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  handleAcceptProposal(
-                                    proposal.id
-                                  )
-                                }
-                                disabled={
-                                  acceptingProposalId !== null
-                                }
-                                className="rounded-2xl bg-[#6f2e1c] px-5 py-2.5 text-sm font-black text-white transition hover:bg-[#5b2416] disabled:cursor-not-allowed disabled:opacity-60"
-                              >
-                                {acceptingProposalId ===
-                                  proposal.id
-                                  ? "Accepting..."
-                                  : "Accept Proposal"}
-                              </button>
-
-                            </div>
-                          )}
-
-                      </article>
-                    );
-                  })}
-
-                </div>
-              )}
-
-          </section>
-
+          </section>}
       </div>
 
       {/* CREATE MILESTONE MODAL */}

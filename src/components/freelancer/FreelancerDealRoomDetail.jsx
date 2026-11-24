@@ -1,5 +1,6 @@
 "use client";
 
+import ProjectDescription from "@/components/marketplace/ProjectDescription";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -206,9 +207,7 @@ export default function FreelancerDealRoomDetail({ projectId }) {
                 {project.title}
               </h1>
 
-              <p className="mt-3 max-w-3xl text-sm leading-6 text-[#7c6858]">
-                {project.summary || project.description}
-              </p>
+              <ProjectDescription text={project.summary || project.description} className="mt-3 max-w-3xl text-[#6b5445]"/>
             </div>
 
             <div className="flex flex-wrap gap-3">

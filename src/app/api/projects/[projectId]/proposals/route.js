@@ -1,3 +1,5 @@
+import { evidenceSubmission } from "@/services/evidence-upload";
+import { evidenceErrorResponse } from "@/lib/evidence-error";
 import { requireRole } from "@/lib/permissions";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
@@ -15,12 +17,12 @@ export async function POST(req, { params }) {
     }
 
     const { projectId } = await params;
-    const body = await req.json();
+    const { input:body, files } = await evidenceSubmission(req,false);
 
     const result = await createProposal(
       session.user.id,
       projectId,
-      body
+      body,files
     );
 
     if (!result.success) {
@@ -38,7 +40,9 @@ export async function POST(req, { params }) {
       { status: 201 }
     );
   } catch (error) {
-    console.error("CREATE_PROPOSAL_ROUTE_ERROR", error);
+    const invalid=evidenceErrorResponse(error);
+    if (invalid) return invalid;
+    console.error("CREATE_PROPOSAL_ROUTE_ERROR", error.name);
 
     return NextResponse.json(
       {

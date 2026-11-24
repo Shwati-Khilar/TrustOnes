@@ -276,6 +276,7 @@ test("project assignment, nested milestone operations, simulated funding and fre
   const path = "/api/projects/" + project.id;
   await jsonAt(await patch(owner, path, { ...draft, title: "Revised project" }), 200);
   assert.equal((await jsonAt(await owner.request(path), 200)).project.title, "Revised project");
+  await jsonAt(await owner.post(path + "/publish", { visibility: "PUBLIC" }), 200);
   const { proposal } = await jsonAt(await worker.post(path + "/proposals", {
     bidAmount: 450, estimatedDays: 4, coverLetter: "I can deliver this project.",
   }), 201);

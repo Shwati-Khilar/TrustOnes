@@ -27,33 +27,33 @@ const roles = [
     mode: "Build Mode",
     headline: "Hire with clarity.",
     short:
-      "Create projects, fund milestones, review safe previews, and approve releases.",
+      "Create projects, compare offers, and plan milestones.",
     description:
-      "Post trusted projects, define milestones, fund safely, review preview work, and release payment only when the work is approved.",
+      "Publish a project or invite a freelancer privately, then negotiate terms before work begins.",
     image: "/landing/client-role.png",
     href: "/register?role=CLIENT",
     icon: BriefcaseBusiness,
-    chips: ["Milestones", "Approvals", "Secure funding"],
+    chips: ["Public projects", "Private invitations", "Offer history"],
     points: [
       "Create projects with clear scope",
-      "Fund one milestone at a time",
-      "Review safe preview before release",
-      "Approve, request revision, or dispute",
+      "Invite a freelancer to a private project",
+      "Compare applications and counteroffers",
+      "Agree the price, scope and delivery date",
     ],
     controlCards: [
       {
-        label: "Funded Milestone",
-        value: "₹10,000 locked",
+        label: "Milestone funding",
+        value: "Sandbox simulation",
         icon: WalletCards,
       },
       {
-        label: "Preview Review",
-        value: "Final files hidden",
+        label: "Project visibility",
+        value: "Public or private",
         icon: Eye,
       },
       {
-        label: "Release Control",
-        value: "Approve to unlock",
+        label: "Assignment",
+        value: "By mutual acceptance",
         icon: CircleDollarSign,
       },
     ],
@@ -63,35 +63,35 @@ const roles = [
     title: "Freelancer",
     eyebrow: "Verified Professional",
     mode: "Deliver Mode",
-    headline: "Deliver with protection.",
+    headline: "Agree how you’ll deliver.",
     short:
-      "Submit preview proof, lock final delivery, track approval, and get paid fairly.",
+      "Discover projects, negotiate terms, and submit work.",
     description:
-      "Accept structured work, submit safe preview proof, lock final delivery, track approvals, and build trust through proof-based progress.",
+      "Discover published projects or respond to a private invitation. Review the terms and keep a record of every offer.",
     image: "/landing/freelancer-role.png",
     href: "/register?role=FREELANCER",
     icon: UploadCloud,
-    chips: ["Preview proof", "Locked delivery", "Payout clarity"],
+    chips: ["Project discovery", "Counteroffers", "Agreed terms"],
     points: [
-      "Accept trusted project opportunities",
-      "Submit safe preview proof",
-      "Keep source and final files locked",
-      "Track approval and payout status",
+      "Discover published projects",
+      "Submit a proposal with your scope",
+      "Counter the amount or delivery time",
+      "See the terms you both accepted",
     ],
     controlCards: [
       {
-        label: "Submit Proof",
-        value: "Preview only",
+        label: "Applications",
+        value: "Public projects",
         icon: UploadCloud,
       },
       {
-        label: "Final Delivery",
-        value: "Locked safely",
+        label: "Invitations",
+        value: "Private projects",
         icon: LockKeyhole,
       },
       {
-        label: "Payout Status",
-        value: "After release",
+        label: "Offer history",
+        value: "Versioned terms",
         icon: CircleDollarSign,
       },
     ],
@@ -100,41 +100,41 @@ const roles = [
 
 const workflow = [
   {
-    title: "Create deal",
-    text: "Client and freelancer agree scope.",
+    title: "Publish a project",
+    text: "Choose public discovery or private invitations.",
   },
   {
-    title: "Set milestones",
-    text: "Work is split into checkpoints.",
+    title: "Exchange offers",
+    text: "Propose a price, delivery time and scope.",
   },
   {
-    title: "Fund securely",
-    text: "Client funds the milestone.",
+    title: "Accept terms",
+    text: "Acceptance assigns one freelancer.",
   },
   {
-    title: "Submit preview",
-    text: "Freelancer submits proof.",
+    title: "Plan milestones",
+    text: "Define the project checkpoints.",
   },
   {
-    title: "Approve & release",
-    text: "Final delivery unlocks.",
+    title: "Simulate funding",
+    text: "Record a sandbox funding event.",
   },
 ];
 
 const trustCards = [
   {
-    title: "No unfunded preview",
-    text: "Clients can review work only after the milestone is funded.",
+    title: "Private invitations",
+    text: "Only the invited freelancer can respond to a private invitation.",
     icon: WalletCards,
   },
   {
-    title: "Final delivery locked",
-    text: "Source files and final exports stay hidden until approval or release.",
+    title: "Agreed project terms",
+    text: "Both participants can revisit their accepted price, scope and delivery time.",
     icon: LockKeyhole,
   },
   {
-    title: "Proof trail always ready",
-    text: "Submissions, revisions, approvals, and disputes stay traceable.",
+    title: "Negotiation history",
+    text: "Each counteroffer keeps its sender, date and terms.",
     icon: ShieldCheck,
   },
 ];
@@ -382,9 +382,7 @@ export default function LandingPage() {
           </h1>
 
           <p className="mt-6 max-w-xl text-sm font-semibold leading-7 text-white/58 sm:text-base sm:leading-8">
-            TrustOnes helps clients and freelancers work through milestone
-            funding, protected submissions, locked delivery, and dispute-ready
-            collaboration.
+            Publish a project, compare proposals and agree on terms with your freelancer. Track milestones and simulated funding in your workspace.
           </p>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -408,17 +406,17 @@ export default function LandingPage() {
             {[
               {
                 title: "Milestone",
-                subtitle: "funded first",
+                subtitle: "sandbox funding",
                 icon: WalletCards,
               },
               {
-                title: "Preview",
-                subtitle: "safe review",
+                title: "Terms",
+                subtitle: "shared history",
                 icon: Eye,
               },
               {
-                title: "Final",
-                subtitle: "locked delivery",
+                title: "Assignment",
+                subtitle: "one freelancer",
                 icon: LockKeyhole,
               },
             ].map((item) => {
@@ -696,8 +694,7 @@ export default function LandingPage() {
           </h2>
 
           <p className="mx-auto mt-5 max-w-xl text-sm font-semibold leading-7 text-white/50">
-            Join as a client or freelancer and work through milestones,
-            protected submissions, locked final delivery, and trusted releases.
+            Join as a client or freelancer to discover projects, negotiate an offer and track the work you agree to deliver.
           </p>
 
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">

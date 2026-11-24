@@ -1,3 +1,4 @@
+import { formatCurrency } from "@/lib/project-presentation";
 import { prisma } from "@/lib/prisma";
 
 import { Prisma } from "@prisma/client";
@@ -5,16 +6,6 @@ import { z } from "zod";
 import { accountName, availability, nonemptyPatch } from "@/lib/account-fields";
 
 const EXPERIENCE_VALUES = ["BEGINNER", "INTERMEDIATE", "ADVANCED", "EXPERT"];
-
-function formatCurrency(value) {
-  const amount = Number(value || 0);
-
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
 
 function formatDate(value) {
   if (!value) return "No date";
@@ -107,12 +98,14 @@ async function getFreelancerWorkStats(freelancerId) {
 
     prisma.proposal.count({
       where: {
+        kind: "PROPOSAL",
         freelancerId,
       },
     }),
 
     prisma.proposal.count({
       where: {
+        kind: "PROPOSAL",
         freelancerId,
         status: "PENDING",
       },
@@ -120,6 +113,7 @@ async function getFreelancerWorkStats(freelancerId) {
 
     prisma.proposal.count({
       where: {
+        kind: "PROPOSAL",
         freelancerId,
         status: "ACCEPTED",
       },

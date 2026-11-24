@@ -1,5 +1,6 @@
 "use client";
 
+import MobileMarketNav from "@/components/marketplace/MobileMarketNav";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Bell, ChevronDown, MessageSquare, Plus, Search } from "lucide-react";
@@ -16,6 +17,8 @@ function getFirstName(name, email) {
 }
 
 const pageTitles = [
+  ["/client/freelancers", "Freelancers"],
+  ["/client/offers", "Offers"],
   ["/client/projects/create", "Post a Project"],
   ["/client/projects", "Projects"],
   ["/client/notifications", "Notifications"],
@@ -36,21 +39,22 @@ export default function ClientTopNav({ user }) {
   return (
     <header className="sticky top-0 z-20 border-b border-[#eadfd2]/80 bg-[#f8f4ed]/85 px-5 py-4 backdrop-blur-xl sm:px-7 lg:px-8">
       <div className="flex items-center justify-between gap-5">
-        <div className="hidden min-w-[280px] max-w-xl flex-1 items-center gap-3 rounded-2xl border border-[#eadfd2] bg-white/80 px-4 py-3 shadow-sm md:flex">
+        <MobileMarketNav portal="client" />
+        {pathname !== "/client/freelancers" && <form action="/client/freelancers" className="hidden min-w-[280px] max-w-xl flex-1 items-center gap-3 rounded-2xl border border-[#eadfd2] bg-white/80 px-4 py-3 shadow-sm md:flex">
           <Search size={18} className="text-[#7c6858]" />
 
           <input
-            type="text"
-            placeholder="Search projects, freelancers..."
+            type="search" name="q" aria-label="Search directory"
+            placeholder="Search freelancers..."
             className="w-full bg-transparent text-sm font-medium text-[#2b1810] outline-none placeholder:text-[#806049]"
           />
-        </div>
+        </form>}
 
         <div className="flex flex-1 items-center justify-between md:hidden">
-          <h1 className="text-lg font-black text-[#24130c]">{pageTitle}</h1>
+          <p className="text-lg font-black text-[#24130c]">{pageTitle}</p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="ml-auto flex items-center gap-3">
           <Link
             href="/client/projects/create"
             className="hidden h-11 items-center gap-2 rounded-2xl bg-[#6f2e1c] px-4 text-sm font-bold text-white shadow-lg shadow-[#6f2e1c]/20 transition hover:bg-[#5b2416] sm:flex"

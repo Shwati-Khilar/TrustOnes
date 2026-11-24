@@ -1,60 +1,19 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
-import { requireRole } from "@/lib/permissions";
-import { getFreelancerInvites } from "@/services/freelancer-invite.service";
+import { z } from "zod";
+import { accountEndpoint } from "@/lib/account-api";
+import { inbox } from "@/services/marketplace.service";
+import { getFreelancerProposalSummary } from "@/services/freelancer-invite.service";
 
-export const dynamic = "force-dynamic";
+const filters = z.strictObject({
+  status: z.enum(["ALL", "PENDING", "ACCEPTED", "REJECTED", "WITHDRAWN", "CLOSED"]).default("ALL"),
+  search: z.string().trim().max(150).default(""),
+  page: z.coerce.number().int().min(1).max(100000).default(1),
+});
 
-export async function GET(request) {
-  try {
-    const session = await getServerSession(authOptions);
-
-    const permission = requireRole(session, ["FREELANCER"]);
-
-    if (!permission.allowed) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: permission.message,
-        },
-        {
-          status: permission.status,
-        }
-      );
-    }
-
-    const { searchParams } = new URL(request.url);
-
-    const data = await getFreelancerInvites(session.user.id, {
-      status: searchParams.get("status"),
-      search: searchParams.get("search"),
-    });
-
-    return NextResponse.json(
-      {
-        success: true,
-        message: "Freelancer proposal responses fetched successfully.",
-        data,
-      },
-      {
-        status: 200,
-        headers: {
-          "Cache-Control": "no-store",
-        },
-      }
-    );
-  } catch (error) {
-    console.error("FREELANCER_INVITES_API_ERROR", error);
-
-    return NextResponse.json(
-      {
-        success: false,
-        message: "Unable to load freelancer proposal responses.",
-      },
-      {
-        status: 500,
-      }
-    );
-  }
-}
+export const GET = accountEndpoint(["FREELANCER"], async (id, query) => {
+  const options = filters.parse(query);
+  const [threads, summary] = await Promise.all([
+    inbox(id, { page: options.page, status: options.status, search: options.search }),
+    getFreelancerProposalSummary(id, options),
+  ]);
+  return { ...threads, ...summary, invitations: threads.items.filter(row => row.kind === "INVITATION") };
+}, { query: true });

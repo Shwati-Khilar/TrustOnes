@@ -65,15 +65,6 @@ function getBudget(room) {
   );
 }
 
-function getFunded(room) {
-  return (
-    room?.fundedAmountDisplay ||
-    room?.approvedAmountDisplay ||
-    room?.summary?.approvedAmountDisplay ||
-    "₹0"
-  );
-}
-
 function getDeadline(room) {
   return (
     room?.deadlineDisplay ||
@@ -218,8 +209,7 @@ export default function FreelancerMessagesPage() {
           </h1>
 
           <p className="mt-3 max-w-2xl text-sm leading-6 text-[#7c6858]">
-            Real message storage is not added yet. This page now shows
-            conversation-ready deal rooms instead of fake static messages.
+            Open an assigned project to see its client, milestones and work submissions.
           </p>
         </div>
 
@@ -297,14 +287,13 @@ export default function FreelancerMessagesPage() {
                       </p>
 
                       <p className="mt-2 line-clamp-2 text-xs leading-5 text-[#7c6858]">
-                        Message thread will be available after Message model/API
-                        is added.
+                        Open the room to view project activity.
                       </p>
 
                       <div className="mt-3 flex items-center justify-between">
                         <StatusBadge status={room.status || "ACTIVE"} />
                         <span className="text-[11px] font-black text-[#9b7a64]">
-                          0 unread
+                          Messaging unavailable
                         </span>
                       </div>
                     </div>
@@ -375,14 +364,11 @@ export default function FreelancerMessagesPage() {
               </div>
 
               <h3 className="mt-5 text-2xl font-black tracking-[-0.04em] text-[#24130c]">
-                Messaging backend is not connected yet
+                Project messaging is unavailable
               </h3>
 
               <p className="mt-3 text-sm leading-6 text-[#7c6858]">
-                I removed the fake static conversations. This page now shows
-                project-linked rooms only. Real chat needs `Conversation`,
-                `Message`, and attachment models after submit-work flow is
-                completed.
+                Open the deal room to review project activity with your client.
               </p>
 
               <Link
@@ -400,8 +386,7 @@ export default function FreelancerMessagesPage() {
               <ShieldCheck size={18} className="shrink-0 text-[#047857]" />
 
               <p className="text-sm font-semibold text-[#7c6858]">
-                Message sending is disabled until the real Message API is added.
-                This prevents fake UI behavior.
+                Message sending is unavailable.
               </p>
             </div>
           </div>
@@ -437,11 +422,11 @@ export default function FreelancerMessagesPage() {
 
                 <div className="rounded-2xl bg-[#fffaf3] p-4">
                   <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[#b79d88]">
-                    Funded
+                    Settlement
                   </p>
 
                   <p className="mt-1 text-sm font-black text-[#24130c]">
-                    {getFunded(selectedRoom)}
+                    Unavailable
                   </p>
                 </div>
               </div>

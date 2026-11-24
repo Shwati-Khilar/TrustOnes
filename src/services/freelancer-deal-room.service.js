@@ -1,3 +1,4 @@
+import { projectDate, formatCurrency } from "@/lib/project-presentation";
 import { prisma } from "@/lib/prisma";
 
 const ALLOWED_PROJECT_STATUSES = [
@@ -6,16 +7,6 @@ const ALLOWED_PROJECT_STATUSES = [
   "COMPLETED",
   "CANCELLED",
 ];
-
-function formatCurrency(value) {
-  const amount = Number(value || 0);
-
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
 
 function formatDate(value) {
   if (!value) return "No date";
@@ -156,7 +147,7 @@ function mapDealRoom(project) {
     budgetDisplay: formatCurrency(project.budget),
 
     deadline: project.deadline ? project.deadline.toISOString() : null,
-    deadlineDisplay: formatDate(project.deadline),
+    deadlineDisplay: projectDate(project.deadline),
     deadlineShortDisplay: formatShortDate(project.deadline),
 
     client: project.client
@@ -408,14 +399,15 @@ function getMilestoneActivityType(status) {
 
 function buildDealRoomTimeline(project) {
   const events = [];
+  const assignedAt = project.acceptedAt ?? project.createdAt;
 
   events.push({
     id: `project-${project.id}`,
-    title: "Project assigned",
-    text: `${project.title} was assigned to you.`,
-    time: formatDate(project.createdAt),
+    title: project.acceptedAt ? "Project assigned" : "Project created",
+    text: project.acceptedAt ? `${project.title} was assigned to you.` : project.title,
+    time: formatDate(assignedAt),
     type: "PROJECT",
-    createdAt: project.createdAt.toISOString(),
+    createdAt: assignedAt.toISOString(),
   });
 
   const acceptedProposal = project.proposals?.[0] || null;
@@ -423,13 +415,13 @@ function buildDealRoomTimeline(project) {
   if (acceptedProposal) {
     events.push({
       id: `proposal-${acceptedProposal.id}`,
-      title: "Proposal accepted",
-      text: `Your proposal of ${formatCurrency(
-        acceptedProposal.bidAmount
-      )} was accepted by the client.`,
-      time: formatDate(acceptedProposal.updatedAt),
+      title: "Agreement accepted",
+      text: project.acceptedOffer
+        ? `Agreed ${formatCurrency(project.acceptedOffer.amount)} for ${project.acceptedOffer.days} days.`
+        : "Historical proposal recorded as accepted.",
+      time: formatDate(project.acceptedAt ?? acceptedProposal.updatedAt),
       type: "PROPOSAL",
-      createdAt: acceptedProposal.updatedAt.toISOString(),
+      createdAt: (project.acceptedAt ?? acceptedProposal.updatedAt).toISOString(),
     });
   }
 
@@ -466,6 +458,8 @@ export async function getFreelancerDealRoomDetail(freelancerId, projectId) {
       description: true,
       category: true,
       budget: true,
+      acceptedAt: true,
+      acceptedOffer: { select: { scope: true, amount: true, days: true } },
       deadline: true,
       status: true,
       createdAt: true,
@@ -526,8 +520,10 @@ export async function getFreelancerDealRoomDetail(freelancerId, projectId) {
       ...dealRoom,
       summary: project.description,
       terms:
-        acceptedProposal?.coverLetter ||
-        "No accepted proposal note is available for this deal room.",
+        project.acceptedOffer?.scope ||
+        (acceptedProposal?.coverLetter
+          ? `Agreed scope unavailable. Historical proposal note: ${acceptedProposal.coverLetter}`
+          : "Agreed scope unavailable for this historical assignment."),
       deliverables:
         project.milestones.length > 0
           ? project.milestones.map((milestone) => milestone.title)

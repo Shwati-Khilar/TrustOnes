@@ -1,5 +1,6 @@
 "use client";
 
+import { projectPreview } from "@/lib/project-presentation";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
@@ -118,7 +119,7 @@ export default function FreelancerDashboardHome() {
     {
       label: "Pending Proposals",
       value: String(dashboard?.stats?.pendingProposals ?? 0),
-      helper: "Awaiting client response",
+      helper: "Open proposal negotiations",
       icon: Inbox,
       tone: "amber",
     },
@@ -130,7 +131,7 @@ export default function FreelancerDashboardHome() {
       tone: "green",
     },
     {
-      label: "Approved Earnings",
+      label: "Approved milestone value",
       value: dashboard?.stats?.approvedEarnings || "₹0",
       helper: "Approved milestone value",
       icon: Wallet,
@@ -237,52 +238,10 @@ export default function FreelancerDashboardHome() {
           </div>
         </div>
 
-        <div className="rounded-[2rem] border border-[#eadfd2] bg-[#fffaf3] p-6 shadow-sm">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm font-black text-[#24130c]">Trust Score</p>
-              <p className="mt-1 text-xs font-semibold text-[#9b7a64]">
-                Based on client reviews, delivery, and disputes
-              </p>
-            </div>
-
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#fff7ed] text-[#b45309]">
-              <Star size={20} fill="currentColor" />
-            </div>
-          </div>
-
-          <div className="mt-6 flex items-end gap-3">
-            <h2 className="text-5xl font-black tracking-[-0.06em] text-[#24130c]">
-              94
-            </h2>
-            <p className="pb-2 text-sm font-bold text-[#9b7a64]">/100</p>
-          </div>
-
-          <div className="mt-5 h-3 overflow-hidden rounded-full bg-[#eadfd2]">
-            <div className="h-full w-[94%] rounded-full bg-gradient-to-r from-[#6f2e1c] to-[#f4b454]" />
-          </div>
-
-          <div className="mt-5 grid grid-cols-3 gap-2 text-center">
-            <div className="rounded-2xl bg-white p-3">
-              <p className="text-sm font-black text-[#24130c]">4.8</p>
-              <p className="text-[11px] font-semibold text-[#9b7a64]">
-                Rating
-              </p>
-            </div>
-
-            <div className="rounded-2xl bg-white p-3">
-              <p className="text-sm font-black text-[#24130c]">18</p>
-              <p className="text-[11px] font-semibold text-[#9b7a64]">Jobs</p>
-            </div>
-
-            <div className="rounded-2xl bg-white p-3">
-              <p className="text-sm font-black text-[#24130c]">0</p>
-              <p className="text-[11px] font-semibold text-[#9b7a64]">
-                Disputes
-              </p>
-            </div>
-          </div>
-        </div>
+        <aside className="space-y-3 rounded-[2rem] border border-[#eadfd2] bg-[#fffaf3] p-6 shadow-sm">
+          <h2 className="font-bold">Reputation</h2><p>Unrated</p>
+          <Link className="font-bold text-[#6f2e1c] underline" href="/freelancer/discover">Discover projects</Link>
+        </aside>
       </section>
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -331,7 +290,7 @@ export default function FreelancerDashboardHome() {
               </h2>
 
               <p className="mt-1 text-sm font-medium text-[#9b7a64]">
-                Track proposals waiting for client response
+                Track proposals with an outstanding offer
               </p>
             </div>
 
@@ -374,7 +333,7 @@ export default function FreelancerDashboardHome() {
                   </div>
 
                   <p className="mt-4 line-clamp-3 text-sm leading-6 text-[#7c6858]">
-                    {invite.summary}
+                    {projectPreview(invite.summary)}
                   </p>
 
                   <div className="mt-5 grid grid-cols-2 gap-3">

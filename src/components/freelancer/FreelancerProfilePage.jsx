@@ -283,7 +283,7 @@ export default function FreelancerProfilePage() {
         icon: Star,
       },
       {
-        label: "Earned",
+        label: "Approved milestone value",
         value: stats.approvedEarningsDisplay || "₹0",
         icon: IndianRupee,
       },

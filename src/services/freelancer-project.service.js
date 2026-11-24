@@ -1,3 +1,4 @@
+import { projectDate, formatCurrency } from "@/lib/project-presentation";
 import { prisma } from "@/lib/prisma";
 
 const ALLOWED_PROJECT_STATUSES = [
@@ -6,16 +7,6 @@ const ALLOWED_PROJECT_STATUSES = [
   "COMPLETED",
   "CANCELLED",
 ];
-
-function formatCurrency(value) {
-  const amount = Number(value || 0);
-
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
 
 function formatDate(value) {
   if (!value) return null;
@@ -105,7 +96,7 @@ function mapProject(project) {
     budgetDisplay: formatCurrency(project.budget),
 
     deadline: project.deadline ? project.deadline.toISOString() : null,
-    deadlineDisplay: formatDate(project.deadline),
+    deadlineDisplay: projectDate(project.deadline),
 
     client: project.client
       ? {

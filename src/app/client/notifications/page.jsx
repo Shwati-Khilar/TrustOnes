@@ -12,55 +12,7 @@ import {
   Wallet,
 } from "lucide-react";
 
-const initialNotifications = [
-  {
-    id: 1,
-    type: "Payment",
-    title: "Milestone funded",
-    project: "Demo Secure Submission Project",
-    description:
-      "Funds are locked in escrow and the freelancer can begin work on this milestone.",
-    time: "2 hours ago",
-    unread: true,
-  },
-  {
-    id: 2,
-    type: "Deadline",
-    title: "Milestone deadline approaching",
-    project: "Demo Secure Submission Project",
-    description: "The next milestone is due in two days. Review progress soon.",
-    time: "5 hours ago",
-    unread: true,
-  },
-  {
-    id: 3,
-    type: "Message",
-    title: "New message from your freelancer",
-    project: "Demo Secure Submission Project",
-    description: "A preview link and delivery notes were shared in messages.",
-    time: "Yesterday",
-    unread: true,
-  },
-  {
-    id: 4,
-    type: "Submission",
-    title: "Work submitted for review",
-    project: "Demo Secure Submission Project",
-    description:
-      "A milestone submission is waiting for your approval before funds release.",
-    time: "Yesterday",
-    unread: false,
-  },
-  {
-    id: 5,
-    type: "Dispute",
-    title: "Dispute closed",
-    project: "Portfolio Website",
-    description: "Support resolved the case and released the agreed amount.",
-    time: "3 days ago",
-    unread: false,
-  },
-];
+const initialNotifications = [];
 
 const tabs = ["All", "Unread", "Payment", "Deadline", "Message"];
 

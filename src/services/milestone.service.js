@@ -300,48 +300,25 @@ export async function updateMilestone(userId, projectId, milestoneId, data) {
 }
 export async function deleteMilestone(userId, projectId, milestoneId) {
   try {
-    const milestone = await prisma.milestone.findFirst({
-      where: {
-        id: milestoneId,
-        projectId,
-        project: { clientId: userId },
-      },
-      include: {
-        project: true,
-      },
+    return await prisma.$transaction(async tx => {
+      // Serialize deletion with work/funding records that reference this milestone.
+      const [row] = await tx.$queryRaw`
+        SELECT p.status FROM milestones m JOIN projects p ON p.id = m."projectId"
+        WHERE m.id = ${milestoneId} AND p.id = ${projectId} AND p."clientId" = ${userId}
+        FOR UPDATE OF m FOR SHARE OF p`;
+      if (!row) return { success: false, status: 404, message: "Milestone not found." };
+      if (["COMPLETED", "CANCELLED"].includes(row.status)) {
+        return { success: false, status: 400, message: "Project can no longer be modified." };
+      }
+
+      const result = await tx.milestone.deleteMany({
+        where: { id: milestoneId, projectId, status: "PENDING", funding: null, submissions: { none: {} } },
+      });
+      if (!result.count) {
+        return { success: false, status: 409, message: "Only pending milestones without funding or submissions can be deleted." };
+      }
+      return { success: true, status: 200, message: "Milestone deleted successfully." };
     });
-
-    if (!milestone) {
-      return {
-        success: false,
-        status: 404,
-        message: "Milestone not found.",
-      };
-    }
-
-
-    if (
-      milestone.project.status === "COMPLETED" ||
-      milestone.project.status === "CANCELLED"
-    ) {
-      return {
-        success: false,
-        status: 400,
-        message: "Project can no longer be modified.",
-      };
-    }
-
-    await prisma.milestone.delete({
-      where: {
-        id: milestoneId,
-      },
-    });
-
-    return {
-      success: true,
-      status: 200,
-      message: "Milestone deleted successfully.",
-    };
   } catch (error) {
     console.error("DELETE_MILESTONE_SERVICE_ERROR", error);
 

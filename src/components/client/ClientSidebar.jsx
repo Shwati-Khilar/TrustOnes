@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { logoutUser } from "@/services/auth.client.service";
 import { useState } from "react";
 import {
-  Bell,
+  Bell, Mail as MailIcon,
   FolderKanban,
   LayoutDashboard,
   LogOut,
@@ -20,6 +20,8 @@ import {
 const navItems = [
   { label: "Dashboard", href: "/client/dashboard", icon: LayoutDashboard },
   { label: "Projects", href: "/client/projects", icon: FolderKanban },
+  { label: "Freelancers", href: "/client/freelancers", icon: UserRound },
+  { label: "Invitations and proposals", href: "/client/offers", icon: MailIcon },
   { label: "Notifications", href: "/client/notifications", icon: Bell },
   { label: "Messages", href: "/client/messages", icon: MessageSquare },
   { label: "Disputes", href: "/client/disputes", icon: ShieldAlert },

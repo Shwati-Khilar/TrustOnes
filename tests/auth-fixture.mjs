@@ -47,7 +47,7 @@ function mailSink(messages) {
   });
 }
 
-export async function startFixture() {
+export async function startFixture({ beforeMigration } = {}) {
   const adminUrl = process.env.S1_TEST_PG_URL;
   if (!adminUrl) throw new Error("Set S1_TEST_PG_URL to a disposable PostgreSQL server with CREATEDB permission.");
   const admin = new pg.Client({ connectionString: adminUrl });
@@ -76,6 +76,7 @@ export async function startFixture() {
     pool = new pg.Pool({ connectionString: url.href });
     for (const item of (await readdir("prisma/migrations", { withFileTypes: true }))
       .filter((entry) => entry.isDirectory()).sort((a, b) => a.name.localeCompare(b.name))) {
+      if (beforeMigration) await beforeMigration(pool, item.name);
       await pool.query(await readFile(path.join("prisma/migrations", item.name, "migration.sql"), "utf8"));
     }
     const smtpPort = await listen(mail);

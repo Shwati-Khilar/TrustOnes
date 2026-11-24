@@ -5,7 +5,7 @@ import LogoutButton from "@/components/auth/LogoutButton";
 
 export default async function AdminDashboardPage() {
   const user = await requirePortal("ADMIN");
-  const totalUsers = await prisma.user.count();
+  const [totalUsers, activeProjects] = await Promise.all([prisma.user.count(), prisma.project.count({where:{status:"ACTIVE"}})]);
 
   return (
     <main className="min-h-screen bg-slate-100 p-8">
@@ -31,12 +31,12 @@ export default async function AdminDashboardPage() {
 
             <div className="rounded-xl border p-5">
               <p className="text-sm text-slate-500">Active Projects</p>
-              <p className="mt-2 text-3xl font-bold">0</p>
+              <p className="mt-2 text-3xl font-bold">{activeProjects}</p>
             </div>
 
             <div className="rounded-xl border p-5">
               <p className="text-sm text-slate-500">Open Disputes</p>
-              <p className="mt-2 text-3xl font-bold">0</p>
+              <p className="mt-2 text-3xl font-bold">Unavailable</p>
             </div>
           </div>
           <Link href="/admin/support" className="my-5 block font-semibold text-purple-700 underline">Support requests</Link>

@@ -1,16 +1,20 @@
 "use client";
+import { EvidencePicker,useEvidenceSelection } from "@/components/marketplace/EvidenceFiles";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import ProjectSummaryCard from "./ProjectSummaryCard";
 
 export default function ProjectsForm() {
+  const selection=useEvidenceSelection();
   const router = useRouter();
 
   const [formData, setFormData] = useState({
     title: "",
     description: "",
     category: "",
+    skills: "",
+    visibility: "PRIVATE",
     budget: "",
     deadline: "",
   });
@@ -42,18 +46,14 @@ export default function ProjectsForm() {
       setSubmitting(true);
       setError("");
 
-      const response = await fetch("/api/projects", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          title: formData.title,
-          description: formData.description,
-          category: formData.category,
-          budget: Number(formData.budget),
-          deadline: formData.deadline,
-        }),
+      const response = await selection.submit("/api/projects","POST",{
+        title: formData.title,
+        description: formData.description,
+        category: formData.category,
+        skills: formData.skills.split(",").map(s => s.trim()).filter(Boolean),
+        visibility: formData.visibility,
+        budget: formData.budget,
+        deadline: formData.deadline,
       });
 
       const data = await response.json();
@@ -115,12 +115,12 @@ export default function ProjectsForm() {
 
           {/* Title */}
           <div className="mb-6">
-            <label className="block mb-2 font-medium text-[#2B1A12]">
+            <label htmlFor="project-title" className="block mb-2 font-medium text-[#2B1A12]">
               Project Title
             </label>
 
             <input
-              name="title"
+              id="project-title" name="title"
               value={formData.title}
               onChange={handleChange}
               required
@@ -132,31 +132,32 @@ export default function ProjectsForm() {
 
           {/* Description */}
           <div className="mb-6">
-            <label className="block mb-2 font-medium text-[#2B1A12]">
+            <label htmlFor="project-description" className="block mb-2 font-medium text-[#2B1A12]">
               Description
             </label>
 
             <textarea
-              rows={7}
-              name="description"
+              rows={7} maxLength={8000} aria-describedby="description-help"
+              id="project-description" name="description"
               value={formData.description}
               onChange={handleChange}
               required
-              placeholder="Describe your project..."
-              className="w-full rounded-xl border border-[#E9D8C8] px-5 py-4 resize-none outline-none focus:border-[#8B5A2B]"
+              placeholder="Describe the work, requirements and deliverables…"
+              className="w-full rounded-xl border border-[#E9D8C8] px-5 py-4 resize-y outline-none focus:border-[#8B5A2B]"
             />
           </div>
 
+          <p id="description-help" className="-mt-4 mb-5 text-xs text-[#715c4d]">Use headings, lists or emphasis to structure your brief. Set the project deadline in the date field.</p>
           {/* Category / Budget / Deadline */}
           <div className="grid md:grid-cols-3 gap-6">
 
             <div>
-              <label className="block mb-2 font-medium text-[#2B1A12]">
+              <label htmlFor="project-category" className="block mb-2 font-medium text-[#2B1A12]">
                 Category
               </label>
 
               <select
-                name="category"
+                id="project-category" name="category"
                 value={formData.category}
                 onChange={handleChange}
                 required
@@ -173,30 +174,30 @@ export default function ProjectsForm() {
             </div>
 
             <div>
-              <label className="block mb-2 font-medium text-[#2B1A12]">
+              <label htmlFor="project-budget" className="block mb-2 font-medium text-[#2B1A12]">
                 Budget (₹)
               </label>
 
               <input
                 type="number"
-                name="budget"
+                id="project-budget" name="budget"
                 value={formData.budget}
                 onChange={handleChange}
                 required
-                min="1"
+                min="0.01" step="0.01"
                 placeholder="5000"
                 className="w-full rounded-xl border border-[#E9D8C8] px-4 py-4 outline-none focus:border-[#8B5A2B]"
               />
             </div>
 
             <div>
-              <label className="block mb-2 font-medium text-[#2B1A12]">
+              <label htmlFor="project-deadline" className="block mb-2 font-medium text-[#2B1A12]">
                 Deadline
               </label>
 
               <input
                 type="date"
-                name="deadline"
+                id="project-deadline" name="deadline"
                 value={formData.deadline}
                 onChange={handleChange}
                 required
@@ -206,6 +207,14 @@ export default function ProjectsForm() {
 
           </div>
 
+          <div className="mt-5 grid gap-4 sm:grid-cols-2">
+            <label>Project visibility<select name="visibility" className="mt-2 w-full rounded-xl border p-3" value={formData.visibility} onChange={handleChange}>
+              <option value="PRIVATE">Private invitations</option><option value="PUBLIC">Public discovery</option>
+            </select></label>
+            <label>Required skills<input name="skills" placeholder="Design, React" value={formData.skills} onChange={handleChange} className="mt-2 w-full rounded-xl border p-3" /></label>
+          </div>
+          <EvidencePicker selection={selection} brief disabled={submitting}/>
+            <p className="mt-3 text-sm">New projects are drafts until you publish them.</p>
           {/* Buttons */}
           <div className="flex justify-end gap-4 mt-10">
 
