@@ -1,3 +1,6 @@
+import { evidenceSubmission } from "@/services/evidence-upload";
+import { evidenceErrorResponse } from "@/lib/evidence-error";
+import { requireRole } from "@/lib/permissions";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 
@@ -8,21 +11,9 @@ export async function GET(req, { params }) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { message: "Authentication required." },
-        { status: 401 }
-      );
-    }
-
-    if (
-      session.user.status !== "ACTIVE" ||
-      session.user.role !== "CLIENT"
-    ) {
-      return NextResponse.json(
-        { message: "You are not allowed to access this project." },
-        { status: 403 }
-      );
+    const permission = requireRole(session, ["CLIENT"]);
+    if (!permission.allowed) {
+      return NextResponse.json({ message: permission.message }, { status: permission.status });
     }
 
     const { projectId } = await params;
@@ -56,31 +47,19 @@ export async function PATCH(req, { params }) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { message: "Authentication required." },
-        { status: 401 }
-      );
-    }
-
-    if (
-      session.user.status !== "ACTIVE" ||
-      session.user.role !== "CLIENT"
-    ) {
-      return NextResponse.json(
-        { message: "You are not allowed to update this project." },
-        { status: 403 }
-      );
+    const permission = requireRole(session, ["CLIENT"]);
+    if (!permission.allowed) {
+      return NextResponse.json({ message: permission.message }, { status: permission.status });
     }
 
     const { projectId } = await params;
 
-    const body = await req.json();
+    const { input:body, files } = await evidenceSubmission(req,true);
 
     const result = await updateProject(
       session.user.id,
       projectId,
-      body
+      body,files
     );
 
     if (!result.success) {
@@ -104,7 +83,9 @@ export async function PATCH(req, { params }) {
       }
     );
   } catch (error) {
-    console.error("UPDATE_PROJECT_ROUTE_ERROR", error);
+    const invalid=evidenceErrorResponse(error);
+    if (invalid) return invalid;
+    console.error("UPDATE_PROJECT_ROUTE_ERROR", error.name);
 
     return NextResponse.json(
       {

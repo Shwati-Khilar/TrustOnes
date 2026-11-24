@@ -8,6 +8,7 @@ import { requireRole } from "@/lib/permissions";
 import {
   getClientPreferences,
   updateClientPreferences,
+  InvalidPreferenceError,
 } from "@/services/client-settings.service";
 
 export const dynamic = "force-dynamic";
@@ -30,6 +31,10 @@ export async function GET() {
         status: 401,
       }
     );
+  }
+
+  if (!requireRole(session, ["CLIENT"]).allowed) {
+    return NextResponse.json({ user: session.user, preferences: null }, { headers: NO_STORE_HEADERS });
   }
 
   try {
@@ -82,17 +87,6 @@ export async function PATCH(request) {
       );
     }
 
-    if (session.user.status !== "ACTIVE") {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Your account is not active.",
-        },
-        {
-          status: 403,
-        }
-      );
-    }
 
     const payload = await request.json();
 
@@ -123,15 +117,18 @@ export async function PATCH(request) {
       );
     }
 
-    console.error("USER_ME_PATCH_API_ERROR", error);
+    if (error instanceof InvalidPreferenceError) {
+      return NextResponse.json({ success: false, message: error.message }, { status: 400 });
+    }
+    console.error("USER_ME_PATCH_API_ERROR");
 
     return NextResponse.json(
       {
         success: false,
-        message: error.message || "Unable to update settings.",
+        message: "Unable to update settings.",
       },
       {
-        status: 400,
+        status: 500,
       }
     );
   }

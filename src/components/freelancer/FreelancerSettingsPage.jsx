@@ -106,11 +106,12 @@ const supportTypeOptions = [
   { label: "Other support request", value: "OTHER" },
 ];
 
-function Toggle({ enabled, onChange, disabled = false }) {
+function Toggle({ label, enabled, onChange, disabled = false }) {
   return (
     <button
       type="button"
       disabled={disabled}
+      role="switch" aria-checked={enabled} aria-label={label}
       onClick={() => onChange(!enabled)}
       className={`relative h-7 w-12 rounded-full transition disabled:cursor-not-allowed disabled:opacity-60 ${
         enabled ? "bg-[#6f2e1c]" : "bg-[#d7c3b2]"
@@ -183,45 +184,46 @@ export default function FreelancerSettingsPage() {
   const [creatingTicket, setCreatingTicket] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
 
-  async function loadSettings() {
-    try {
-      setLoading(true);
-      setMessage({ type: "", text: "" });
-
-      const response = await fetch("/api/freelancer/settings", {
-        method: "GET",
-        cache: "no-store",
-      });
-
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        throw new Error(result.message || "Unable to load settings.");
-      }
-
-      const data = result.data;
-
-      setSettings(data);
-      setAccountForm({
-        name: data.account?.name || "",
-        availability: data.freelancer?.availability || "AVAILABLE",
-      });
-      setPreferences({
-        ...initialPreferences,
-        ...(data.preferences || {}),
-      });
-    } catch (error) {
-      setMessage({
-        type: "error",
-        text: error.message || "Unable to load settings.",
-      });
-    } finally {
-      setLoading(false);
-    }
-  }
-
   useEffect(() => {
+    const controller = new AbortController();
+    async function loadSettings() {
+      try {
+
+        const response = await fetch("/api/freelancer/settings", {
+          method: "GET",
+          cache: "no-store",
+          signal: controller.signal,
+        });
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          throw new Error(result.message || "Unable to load settings.");
+        }
+
+        const data = result.data;
+
+        setSettings(data);
+        setAccountForm({
+          name: data.account?.name || "",
+          availability: data.freelancer?.availability || "AVAILABLE",
+        });
+        setPreferences({
+          ...initialPreferences,
+          ...(data.preferences || {}),
+        });
+      } catch (error) {
+        if (controller.signal.aborted) return;
+        setMessage({
+          type: "error",
+          text: error.message || "Unable to load settings.",
+        });
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
+    }
     loadSettings();
+    return () => controller.abort();
   }, []);
 
   function updatePreference(field, value) {
@@ -230,6 +232,14 @@ export default function FreelancerSettingsPage() {
       [field]: value,
     }));
   }
+
+  const edits = {};
+  if (accountForm.name !== settings.account.name) edits.name = accountForm.name;
+  if (accountForm.availability !== settings.freelancer.availability) edits.availability = accountForm.availability;
+  const preferenceEdits = Object.fromEntries(Object.entries(preferences).filter(
+    ([field, value]) => value !== settings.preferences[field]
+  ));
+  if (Object.keys(preferenceEdits).length) edits.preferences = preferenceEdits;
 
   async function saveSettings() {
     try {
@@ -242,11 +252,7 @@ export default function FreelancerSettingsPage() {
           "Content-Type": "application/json",
         },
         cache: "no-store",
-        body: JSON.stringify({
-          name: accountForm.name,
-          availability: accountForm.availability,
-          preferences,
-        }),
+        body: JSON.stringify(edits),
       });
 
       const result = await response.json();
@@ -307,6 +313,7 @@ export default function FreelancerSettingsPage() {
         body: JSON.stringify({
           currentPassword: passwordForm.currentPassword,
           newPassword: passwordForm.newPassword,
+          confirmPassword: passwordForm.confirmPassword,
         }),
       });
 
@@ -324,8 +331,9 @@ export default function FreelancerSettingsPage() {
 
       setMessage({
         type: "success",
-        text: "Password updated successfully.",
+        text: "Password updated. Sign in again.",
       });
+      await signOut({ callbackUrl: "/login" });
     } catch (error) {
       setMessage({
         type: "error",
@@ -342,6 +350,7 @@ export default function FreelancerSettingsPage() {
       setMessage({ type: "", text: "" });
 
       const payload = payloadOverride || supportForm;
+      if (!payloadOverride && payload.type === "ACCOUNT_DELETION" && !window.confirm("Request account deletion review?")) return;
 
       const response = await fetch("/api/freelancer/settings", {
         method: "POST",
@@ -358,7 +367,7 @@ export default function FreelancerSettingsPage() {
         throw new Error(result.message || "Unable to create support ticket.");
       }
 
-      setSettings(result.data);
+      setSettings(current => ({ ...current, supportTickets: result.data.supportTickets }));
 
       if (!payloadOverride) {
         setSupportForm({
@@ -385,6 +394,7 @@ export default function FreelancerSettingsPage() {
   }
 
   function requestAccountDeletion() {
+    if (!window.confirm("Send an account deletion request to support for review?")) return;
     createSupportTicket({
       type: "ACCOUNT_DELETION",
       title: "Account deletion request",
@@ -447,7 +457,7 @@ export default function FreelancerSettingsPage() {
         <button
           type="button"
           onClick={saveSettings}
-          disabled={savingSettings}
+          disabled={savingSettings || !settings.account.id || !Object.keys(edits).length}
           className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-[#6f2e1c] px-5 text-sm font-black text-white shadow-lg shadow-[#6f2e1c]/20 transition hover:bg-[#5b2416] disabled:cursor-not-allowed disabled:opacity-60"
         >
           <Save size={18} />
@@ -561,6 +571,7 @@ export default function FreelancerSettingsPage() {
                     </div>
 
                     <Toggle
+                      label={item.label}
                       enabled={item.enabled}
                       onChange={(value) => updatePreference(item.field, value)}
                     />
@@ -834,6 +845,7 @@ export default function FreelancerSettingsPage() {
                     </div>
 
                     <Toggle
+                      label={item.label}
                       enabled={item.enabled}
                       onChange={(value) => updatePreference(item.field, value)}
                     />
@@ -851,7 +863,7 @@ export default function FreelancerSettingsPage() {
                 </h2>
 
                 <p className="mt-1 text-sm font-medium text-[#9b7a64]">
-                  Password update is backend-connected for credential accounts.
+                  Changing your password signs you out of existing sessions.
                 </p>
               </div>
 
@@ -891,6 +903,8 @@ export default function FreelancerSettingsPage() {
 
                   <button
                     type="button"
+                    aria-label={showPassword ? "Hide current password" : "Show current password"}
+                    aria-pressed={showPassword}
                     onClick={() => setShowPassword(!showPassword)}
                     className="text-[#9b7a64]"
                   >
@@ -992,7 +1006,7 @@ export default function FreelancerSettingsPage() {
                   </div>
 
                   <Toggle
-                    enabled={preferences.profileVisible}
+                    label="Public profile" enabled={preferences.profileVisible}
                     onChange={(value) =>
                       updatePreference("profileVisible", value)
                     }
@@ -1011,7 +1025,7 @@ export default function FreelancerSettingsPage() {
                   </div>
 
                   <Toggle
-                    enabled={preferences.showEarnings}
+                    label="Show earnings" enabled={preferences.showEarnings}
                     onChange={(value) =>
                       updatePreference("showEarnings", value)
                     }
@@ -1078,7 +1092,7 @@ export default function FreelancerSettingsPage() {
             </div>
 
             <div className="grid gap-5 lg:grid-cols-[1fr_0.9fr]">
-              <form className="rounded-[1.5rem] border border-[#eadfd2] bg-[#fffaf3] p-5">
+              <form onSubmit={event => { event.preventDefault(); createSupportTicket(); }} className="rounded-[1.5rem] border border-[#eadfd2] bg-[#fffaf3] p-5">
                 <label className="block">
                   <span className="text-sm font-black text-[#24130c]">
                     Issue Type
@@ -1109,6 +1123,7 @@ export default function FreelancerSettingsPage() {
 
                   <input
                     type="text"
+                    required minLength={2} maxLength={120}
                     value={supportForm.title}
                     onChange={(event) =>
                       setSupportForm((current) => ({
@@ -1128,6 +1143,7 @@ export default function FreelancerSettingsPage() {
 
                   <textarea
                     rows={5}
+                    required minLength={10} maxLength={1200}
                     value={supportForm.message}
                     onChange={(event) =>
                       setSupportForm((current) => ({
@@ -1141,8 +1157,7 @@ export default function FreelancerSettingsPage() {
                 </label>
 
                 <button
-                  type="button"
-                  onClick={() => createSupportTicket()}
+                  type="submit"
                   disabled={creatingTicket}
                   className="mt-4 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#6f2e1c] px-5 text-sm font-black text-white shadow-lg shadow-[#6f2e1c]/20 transition hover:bg-[#5b2416] disabled:cursor-not-allowed disabled:opacity-60"
                 >

@@ -1,3 +1,6 @@
+import { evidenceSubmission } from "@/services/evidence-upload";
+import { evidenceErrorResponse } from "@/lib/evidence-error";
+import { requireRole } from "@/lib/permissions";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 
@@ -12,42 +15,14 @@ export async function POST(req) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        {
-          message: "Authentication required.",
-        },
-        {
-          status: 401,
-        }
-      );
+    const permission = requireRole(session, ["CLIENT"]);
+    if (!permission.allowed) {
+      return NextResponse.json({ message: permission.message }, { status: permission.status });
     }
 
-    if (session.user.status !== "ACTIVE") {
-      return NextResponse.json(
-        {
-          message: "Your account is not active.",
-        },
-        {
-          status: 403,
-        }
-      );
-    }
+    const { input:body, files } = await evidenceSubmission(req,true);
 
-    if (session.user.role !== "CLIENT") {
-      return NextResponse.json(
-        {
-          message: "Only clients can create projects.",
-        },
-        {
-          status: 403,
-        }
-      );
-    }
-
-    const body = await req.json();
-
-    const result = await createProject(session.user.id, body);
+    const result = await createProject(session.user.id, body,files);
 
     if (!result.success) {
       return NextResponse.json(
@@ -70,7 +45,9 @@ export async function POST(req) {
       }
     );
   } catch (error) {
-    console.error("CREATE_PROJECT_ROUTE_ERROR", error);
+    const invalid=evidenceErrorResponse(error);
+    if (invalid) return invalid;
+    console.error("CREATE_PROJECT_ROUTE_ERROR", error.name);
 
     return NextResponse.json(
       {
@@ -87,37 +64,9 @@ export async function GET() {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        {
-          message: "Authentication required.",
-        },
-        {
-          status: 401,
-        }
-      );
-    }
-
-    if (session.user.status !== "ACTIVE") {
-      return NextResponse.json(
-        {
-          message: "Your account is not active.",
-        },
-        {
-          status: 403,
-        }
-      );
-    }
-
-    if (session.user.role !== "CLIENT") {
-      return NextResponse.json(
-        {
-          message: "Only clients can access client projects.",
-        },
-        {
-          status: 403,
-        }
-      );
+    const permission = requireRole(session, ["CLIENT"]);
+    if (!permission.allowed) {
+      return NextResponse.json({ message: permission.message }, { status: permission.status });
     }
 
     const result = await getClientProjects(session.user.id);

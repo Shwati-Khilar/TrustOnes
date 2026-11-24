@@ -1,3 +1,5 @@
+import { projectDate } from "@/lib/project-presentation";
+
 export default function ProjectSummaryCard({ formData }) {
   return (
     <div className="bg-white border border-[#E9D8C8] rounded-3xl p-8 h-fit sticky top-28">
@@ -8,7 +10,7 @@ export default function ProjectSummaryCard({ formData }) {
 
       <div className="space-y-6">
 
-        <Summary title="Status" value="OPEN" />
+        <Summary title="Status" value="DRAFT" />
 
         <Summary
           title="Category"
@@ -22,7 +24,7 @@ export default function ProjectSummaryCard({ formData }) {
 
         <Summary
           title="Deadline"
-          value={formData.deadline || "Not Selected"}
+          value={formData.deadline ? projectDate(formData.deadline) : "Not selected"}
         />
 
         <Summary

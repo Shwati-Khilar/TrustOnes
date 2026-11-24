@@ -1,9 +1,8 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { MarketSummary } from "@/components/marketplace/MarketViews";
 import ClientDashboard from "@/components/client/ClientDashboard";
+import { requirePortal } from "@/lib/portal-session";
 
 export default async function DashboardPage() {
-  const session = await getServerSession(authOptions);
-
-  return <ClientDashboard user={session?.user} />;
+  const user = await requirePortal("CLIENT");
+  return <><ClientDashboard user={user} /><MarketSummary role="CLIENT"/></>;
 }

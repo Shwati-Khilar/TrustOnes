@@ -1,3 +1,4 @@
+import { requireRole } from "@/lib/permissions";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 
@@ -8,21 +9,9 @@ export async function PATCH(req, { params }) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { message: "Authentication required." },
-        { status: 401 }
-      );
-    }
-
-    if (
-      session.user.status !== "ACTIVE" ||
-      session.user.role !== "CLIENT"
-    ) {
-      return NextResponse.json(
-        { message: "You are not allowed to cancel this project." },
-        { status: 403 }
-      );
+    const permission = requireRole(session, ["CLIENT"]);
+    if (!permission.allowed) {
+      return NextResponse.json({ message: permission.message }, { status: permission.status });
     }
 
     const { projectId } = await params;

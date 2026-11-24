@@ -1,3 +1,4 @@
+import { projectDate, formatCurrency } from "@/lib/project-presentation";
 import { prisma } from "@/lib/prisma";
 
 const ALLOWED_STATUSES = [
@@ -7,16 +8,6 @@ const ALLOWED_STATUSES = [
   "APPROVED",
   "REJECTED",
 ];
-
-function formatCurrency(value) {
-  const amount = Number(value || 0);
-
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
 
 function formatDate(value) {
   if (!value) return "No date";
@@ -95,7 +86,7 @@ function mapMilestone(milestone) {
           deadline: milestone.project.deadline
             ? milestone.project.deadline.toISOString()
             : null,
-          deadlineDisplay: formatDate(milestone.project.deadline),
+          deadlineDisplay: projectDate(milestone.project.deadline),
         }
       : null,
 

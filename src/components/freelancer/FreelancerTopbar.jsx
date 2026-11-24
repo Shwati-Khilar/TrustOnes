@@ -1,6 +1,8 @@
 "use client";
 
+import MobileMarketNav from "@/components/marketplace/MobileMarketNav";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
   Bell,
@@ -23,48 +25,21 @@ function getFirstName(name, email) {
 
 export default function FreelancerTopbar() {
   const [user, setUser] = useState(null);
-  const [topbarData, setTopbarData] = useState({
-    walletBalance: "₹0",
-    messageCount: 0,
-    notificationCount: 0,
-  });
+  const section = usePathname().split("/")[2] || "dashboard";
+  const title = ({discover: "Discover", invites: "Offers", "deal-rooms": "Deal rooms"})[section] || section;
 
   useEffect(() => {
     let ignore = false;
 
     async function loadTopbarData() {
       try {
-        const [userResponse, dashboardResponse] = await Promise.all([
-          fetch("/api/user/me", {
-            method: "GET",
-            cache: "no-store",
-          }),
-          fetch("/api/freelancer/dashboard", {
-            method: "GET",
-            cache: "no-store",
-          }),
-        ]);
-
+        const userResponse = await fetch("/api/user/me", { cache: "no-store" });
         const userResult = await userResponse.json();
-        const dashboardResult = await dashboardResponse.json();
 
         if (!ignore && userResponse.ok && userResult?.user) {
           setUser(userResult.user);
         }
 
-        if (!ignore && dashboardResponse.ok && dashboardResult?.success) {
-          const stats = dashboardResult.data?.stats || {};
-
-          const notificationCount =
-            Number(stats.pendingProposals || 0) +
-            Number(stats.activeMilestones || 0);
-
-          setTopbarData({
-            walletBalance: stats.approvedEarnings || "₹0",
-            messageCount: 0,
-            notificationCount,
-          });
-        }
       } catch (error) {
         console.error("FREELANCER_TOPBAR_ERROR", error);
       }
@@ -88,18 +63,19 @@ export default function FreelancerTopbar() {
   return (
     <header className="sticky top-0 z-20 border-b border-[#eadfd2]/80 bg-[#f8f4ed]/85 px-5 py-4 backdrop-blur-xl sm:px-7 lg:px-8">
       <div className="flex items-center justify-between gap-5">
-        <div className="hidden min-w-[280px] max-w-xl flex-1 items-center gap-3 rounded-2xl border border-[#eadfd2] bg-white/80 px-4 py-3 shadow-sm md:flex">
+        <MobileMarketNav portal="freelancer" />
+        <form action="/freelancer/discover" className="hidden min-w-[280px] max-w-xl flex-1 items-center gap-3 rounded-2xl border border-[#eadfd2] bg-white/80 px-4 py-3 shadow-sm md:flex">
           <Search size={18} className="text-[#9b7a64]" />
 
           <input
-            type="text"
-            placeholder="Search projects, clients, milestones..."
+            type="search" name="q" aria-label="Search projects"
+            placeholder="Search public projects..."
             className="w-full bg-transparent text-sm font-medium text-[#2b1810] outline-none placeholder:text-[#b79d88]"
           />
-        </div>
+        </form>
 
         <div className="flex flex-1 items-center justify-between md:hidden">
-          <h1 className="text-lg font-black text-[#24130c]">Dashboard</h1>
+          <h1 className="text-lg font-black capitalize text-[#24130c]">{title}</h1>
         </div>
 
         <div className="flex items-center gap-3">
@@ -108,33 +84,23 @@ export default function FreelancerTopbar() {
             className="hidden h-11 items-center gap-2 rounded-2xl border border-[#eadfd2] bg-white/80 px-4 text-sm font-bold text-[#6f2e1c] shadow-sm transition hover:bg-white sm:flex"
           >
             <Wallet size={17} />
-            {topbarData.walletBalance}
+            Wallet
           </Link>
 
           <Link
-            href="/freelancer/messages"
+            aria-label="Messages" href="/freelancer/messages"
             className="relative flex h-11 w-11 items-center justify-center rounded-2xl border border-[#eadfd2] bg-white/80 text-[#6f2e1c] shadow-sm transition hover:bg-white"
           >
             <MessageSquare size={18} />
 
-            {topbarData.messageCount > 0 && (
-              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#6f2e1c] px-1 text-[10px] font-black text-white">
-                {topbarData.messageCount}
-              </span>
-            )}
           </Link>
 
           <Link
-            href="/freelancer/notifications"
+            aria-label="Notifications" href="/freelancer/notifications"
             className="relative flex h-11 w-11 items-center justify-center rounded-2xl border border-[#eadfd2] bg-white/80 text-[#6f2e1c] shadow-sm transition hover:bg-white"
           >
             <Bell size={18} />
 
-            {topbarData.notificationCount > 0 && (
-              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#f4b454] px-1 text-[10px] font-black text-[#32180e]">
-                {topbarData.notificationCount}
-              </span>
-            )}
           </Link>
 
           <Link

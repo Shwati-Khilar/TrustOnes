@@ -27,6 +27,7 @@ const navItems = [
     icon: LayoutDashboard,
     badgeKey: null,
   },
+  { label: "Discover projects", href: "/freelancer/discover", icon: FolderKanban },
   {
     label: "Projects",
     href: "/freelancer/projects",
@@ -34,7 +35,7 @@ const navItems = [
     badgeKey: null,
   },
   {
-    label: "Invites",
+    label: "Invitations and proposals",
     href: "/freelancer/invites",
     icon: Inbox,
     badgeKey: "invites",
@@ -114,7 +115,6 @@ export default function FreelancerSidebar() {
   const pathname = usePathname();
   const router = useRouter();
 
-  const [mounted, setMounted] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
 
   const [badgeCounts, setBadgeCounts] = useState({
@@ -126,11 +126,6 @@ export default function FreelancerSidebar() {
   });
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!mounted) return;
 
     let ignore = false;
 
@@ -147,7 +142,6 @@ export default function FreelancerSidebar() {
           }),
         ]);
 
-        let pendingProposals = 0;
         let activeMilestones = 0;
         let actionRequiredNotifications = 0;
 
@@ -157,7 +151,6 @@ export default function FreelancerSidebar() {
 
           if (dashboardResponse.ok && dashboardJson?.success) {
             const stats = dashboardJson.data?.stats || {};
-            pendingProposals = Number(stats.pendingProposals || 0);
             activeMilestones = Number(stats.activeMilestones || 0);
           }
         }
@@ -176,7 +169,7 @@ export default function FreelancerSidebar() {
 
         if (!ignore) {
           setBadgeCounts({
-            invites: pendingProposals,
+            invites: 0,
             milestones: activeMilestones,
             notifications: actionRequiredNotifications,
             messages: 0,
@@ -193,15 +186,15 @@ export default function FreelancerSidebar() {
     return () => {
       ignore = true;
     };
-  }, [mounted]);
+  }, []);
 
   const navItemsWithBadges = useMemo(() => {
     return navItems.map((item) => ({
       ...item,
       badge:
-        mounted && item.badgeKey ? formatBadge(badgeCounts[item.badgeKey]) : "",
+        item.badgeKey ? formatBadge(badgeCounts[item.badgeKey]) : "",
     }));
-  }, [badgeCounts, mounted]);
+  }, [badgeCounts]);
 
   async function handleLogout() {
     try {
@@ -247,7 +240,7 @@ export default function FreelancerSidebar() {
       <nav className="space-y-1.5">
         {navItemsWithBadges.map((item) => {
           const Icon = item.icon;
-          const active = mounted && isActivePath(pathname, item.href);
+          const active = isActivePath(pathname, item.href);
 
           return (
             <Link
@@ -290,21 +283,8 @@ export default function FreelancerSidebar() {
           Trust Score
         </p>
 
-        <div className="mt-3 flex items-end justify-between">
-          <h3 className="text-4xl font-black tracking-tight">94</h3>
-
-          <span className="rounded-full bg-[#f4b454]/15 px-2 py-1 text-xs font-bold text-[#ffd28c]">
-            +4%
-          </span>
-        </div>
-
-        <p className="mt-2 text-xs font-medium text-white/65">
-          Excellent freelancer standing
-        </p>
-
-        <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/15">
-          <div className="h-full w-[94%] rounded-full bg-[#f4b454]" />
-        </div>
+        <p className="mt-3 text-lg font-black text-white">Unrated</p>
+        <p className="mt-2 text-xs text-white/75">No reputation score available.</p>
       </div>
 
       <button

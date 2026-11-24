@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 
 const initialForm = {
+  name: "",
   phone: "",
   location: "",
   availability: "AVAILABLE",
@@ -65,11 +66,12 @@ function buildForm(data) {
   const freelancerProfile = data?.freelancerProfile || {};
 
   return {
+    name: data?.profile?.name || "",
     phone: freelancerProfile.phone || "",
     location: freelancerProfile.location || "",
     availability: freelancerProfile.availability || "AVAILABLE",
     professionalTitle:
-      freelancerProfile.professionalTitle || "Freelance Developer",
+      freelancerProfile.professionalTitle || "",
     bio: freelancerProfile.bio || "",
     experienceLevel: freelancerProfile.experienceLevel || "INTERMEDIATE",
     startingPrice:
@@ -92,7 +94,7 @@ export default function FreelancerProfilePage() {
     profile: null,
     freelancerProfile: initialForm,
     stats: {
-      trustScore: 70,
+      trustScore: null,
       totalProjects: 0,
       activeProjects: 0,
       completedProjects: 0,
@@ -114,33 +116,34 @@ export default function FreelancerProfilePage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
-  async function loadProfile() {
-    try {
-      setLoading(true);
-      setErrorMessage("");
-
-      const response = await fetch("/api/freelancer/profile", {
-        method: "GET",
-        cache: "no-store",
-      });
-
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        throw new Error(result.message || "Unable to load freelancer profile.");
-      }
-
-      setProfileData(result.data);
-      setForm(buildForm(result.data));
-    } catch (error) {
-      setErrorMessage(error.message || "Unable to load freelancer profile.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
   useEffect(() => {
+    const controller = new AbortController();
+    async function loadProfile() {
+      try {
+
+        const response = await fetch("/api/freelancer/profile", {
+          method: "GET",
+          cache: "no-store",
+          signal: controller.signal,
+        });
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          throw new Error(result.message || "Unable to load freelancer profile.");
+        }
+
+        setProfileData(result.data);
+        setForm(buildForm(result.data));
+      } catch (error) {
+        if (controller.signal.aborted) return;
+        setErrorMessage(error.message || "Unable to load freelancer profile.");
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
+    }
     loadProfile();
+    return () => controller.abort();
   }, []);
 
   function updateField(field, value) {
@@ -220,18 +223,12 @@ export default function FreelancerProfilePage() {
       setErrorMessage("");
       setSuccessMessage("");
 
-      const payload = {
-        phone: form.phone,
-        location: form.location,
-        availability: form.availability,
-        professionalTitle: form.professionalTitle,
-        bio: form.bio,
-        experienceLevel: form.experienceLevel,
-        startingPrice: form.startingPrice === "" ? null : Number(form.startingPrice),
-        skills: form.skills,
-        portfolioLinks: form.portfolioLinks,
-        educationHighlight: form.educationHighlight,
-      };
+      const previous = buildForm(profileData);
+      const payload = Object.fromEntries(Object.entries(form).filter(
+        ([field, value]) => JSON.stringify(value) !== JSON.stringify(previous[field])
+      ));
+      if (!Object.keys(payload).length) return;
+      if (payload.startingPrice === "") payload.startingPrice = null;
 
       const response = await fetch("/api/freelancer/profile", {
         method: "PATCH",
@@ -265,7 +262,7 @@ export default function FreelancerProfilePage() {
   const displayName = profile?.name || "Freelancer";
   const displayEmail = profile?.email || "No email available";
   const initial = getInitial(profile?.name, profile?.email);
-  const publicTitle = form.professionalTitle || "Freelance Developer";
+  const publicTitle = form.professionalTitle || "Freelancer";
   const publicBio = getDisplayBio(profile, form);
 
   const workStats = useMemo(
@@ -277,7 +274,7 @@ export default function FreelancerProfilePage() {
       },
       {
         label: "Trust Score",
-        value: stats.trustScore || 70,
+        value: stats.trustScore ?? "Unrated",
         icon: ShieldCheck,
       },
       {
@@ -286,7 +283,7 @@ export default function FreelancerProfilePage() {
         icon: Star,
       },
       {
-        label: "Earned",
+        label: "Approved milestone value",
         value: stats.approvedEarningsDisplay || "₹0",
         icon: IndianRupee,
       },
@@ -327,7 +324,7 @@ export default function FreelancerProfilePage() {
         <button
           type="button"
           onClick={handleSave}
-          disabled={saving}
+          disabled={saving || !profileData.profile || JSON.stringify(form) === JSON.stringify(buildForm(profileData))}
           className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-[#6f2e1c] px-5 text-sm font-black text-white shadow-lg shadow-[#6f2e1c]/20 transition hover:bg-[#5b2416] disabled:cursor-not-allowed disabled:opacity-60"
         >
           <Save size={18} />
@@ -487,8 +484,9 @@ export default function FreelancerProfilePage() {
 
                 <input
                   type="text"
-                  value={displayName}
-                  readOnly
+                  value={form.name}
+                  onChange={event => updateField("name", event.target.value)}
+                  maxLength={80}
                   className="mt-2 h-12 w-full rounded-2xl border border-[#eadfd2] bg-[#fffaf3] px-4 text-sm font-semibold text-[#24130c] outline-none"
                 />
               </label>

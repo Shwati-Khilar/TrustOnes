@@ -1,19 +1,15 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { requirePortal } from "@/lib/portal-session";
+import { prisma } from "@/lib/prisma";
+import ProfileNameForm from "@/components/client/ProfileNameForm";
 import UserAvatar from "@/components/client/UserAvatar";
-import { BadgeCheck, Mail, ShieldCheck, Star, Settings } from "lucide-react";
+import { Mail, ShieldCheck, Star, Settings } from "lucide-react";
 import Link from "next/link";
 
 export default async function ClientProfilePage() {
-  const session = await getServerSession(authOptions);
-  const user = session?.user;
+  const user = await requirePortal("CLIENT");
+  const projectCount = await prisma.project.count({ where: { clientId: user.id } });
 
   const details = [
-    {
-      label: "Full name",
-      value: user?.name || "Not set",
-      icon: BadgeCheck,
-    },
     {
       label: "Email address",
       value: user?.email || "Not set",
@@ -27,9 +23,8 @@ export default async function ClientProfilePage() {
   ];
 
   const metrics = [
-    { label: "Trust score", value: "96", suffix: "/100" },
-    { label: "Projects posted", value: "5", suffix: "" },
-    { label: "Avg. rating", value: "4.9", suffix: "" },
+    { label: "Projects posted", value: projectCount, suffix: "" },
+    { label: "Avg. rating", value: "Unrated", suffix: "" },
   ];
 
   return (
@@ -45,8 +40,7 @@ export default async function ClientProfilePage() {
           </h1>
 
           <p className="mt-2 max-w-2xl text-sm leading-6 text-[#7c6858]">
-            This is how freelancers see you when you post projects and send
-            invites.
+            Manage your name and view your account details.
           </p>
         </div>
 
@@ -55,11 +49,11 @@ export default async function ClientProfilePage() {
           className="inline-flex h-12 items-center gap-2 rounded-2xl bg-[#6f2e1c] px-5 text-sm font-black text-white shadow-lg shadow-[#6f2e1c]/20 transition hover:bg-[#5b2416]"
         >
           <Settings size={17} />
-          Edit in Settings
+          Settings
         </Link>
       </div>
 
-      <div className="mt-6 grid gap-5 lg:grid-cols-[1.4fr_1fr]">
+      <div className="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-[1.4fr_1fr]">
         <div className="rounded-[2rem] border border-[#eadfd2] bg-white/80 p-6 shadow-sm">
           <div className="flex items-center gap-4">
             <UserAvatar user={user} />
@@ -75,6 +69,7 @@ export default async function ClientProfilePage() {
             </div>
           </div>
 
+          <ProfileNameForm name={user.name} />
           <div className="mt-7 space-y-3">
             {details.map(({ label, value, icon: Icon }) => (
               <div
@@ -109,25 +104,11 @@ export default async function ClientProfilePage() {
               <Star size={18} className="text-[#f4b454]" />
             </div>
 
-            <div className="mt-3 flex items-end gap-2">
-              <span className="text-4xl font-black tracking-[-0.04em]">96</span>
-              <span className="pb-1 text-sm font-semibold text-white/70">/100</span>
-            </div>
-
-            <div className="mt-4 h-2 w-full rounded-full bg-white/20">
-              <div
-                className="h-2 rounded-full bg-[#f4b454]"
-                style={{ width: "96%" }}
-              />
-            </div>
-
-            <p className="mt-3 text-xs font-semibold text-white/70">
-              Excellent standing
-            </p>
+            <p className="mt-4 text-lg font-bold">No reputation score available</p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            {metrics.slice(1).map((item) => (
+            {metrics.map((item) => (
               <div
                 key={item.label}
                 className="rounded-[1.5rem] border border-[#eadfd2] bg-white/80 p-5 shadow-sm"

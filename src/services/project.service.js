@@ -1,74 +1,11 @@
+import { references } from "./evidence-storage";
 import { prisma } from "@/lib/prisma";
 
-export async function createProject(userId, data) {
-  const title = String(data.title || "").trim();
-  const description = String(data.description || "").trim();
-  const category = String(data.category || "").trim();
-  const budget = Number(data.budget);
-  const deadline = new Date(data.deadline);
+import { createDraft, editListing, cancelListing } from "@/services/marketplace.service";
+import { serviceResult } from "@/services/service-result";
 
-  if (!title || !description || !category || !data.budget || !data.deadline) {
-    return {
-      success: false,
-      status: 400,
-      message: "All project fields are required.",
-    };
-  }
-
-  if (!Number.isFinite(budget) || budget <= 0) {
-    return {
-      success: false,
-      status: 400,
-      message: "Budget must be greater than 0.",
-    };
-  }
-
-  if (Number.isNaN(deadline.getTime())) {
-    return {
-      success: false,
-      status: 400,
-      message: "Invalid project deadline.",
-    };
-  }
-
-  if (deadline <= new Date()) {
-    return {
-      success: false,
-      status: 400,
-      message: "Project deadline must be in the future.",
-    };
-  }
-
-  try {
-    const project = await prisma.project.create({
-      data: {
-        title,
-        description,
-        category,
-        budget,
-        deadline,
-        clientId: userId,
-      },
-    });
-
-    return {
-      success: true,
-      status: 201,
-      message: "Project created successfully.",
-      project: {
-        ...project,
-        budget: project.budget.toString(),
-      },
-    };
-  } catch (error) {
-    console.error("CREATE_PROJECT_SERVICE_ERROR", error);
-
-    return {
-      success: false,
-      status: 500,
-      message: "Unable to create project.",
-    };
-  }
+export function createProject(id,input,files) {
+  return serviceResult(async()=>({project:await createDraft(id,input,files)}),201);
 }
 export async function getProjectById(userId, projectId) {
   try {
@@ -78,13 +15,14 @@ export async function getProjectById(userId, projectId) {
         clientId: userId,
       },
       include: {
+        acceptedOffer: true,
+        evidence:references(),
 
         freelancer: {
           select: {
             id: true,
             name: true,
             image: true,
-            email: true,
           },
         },
 
@@ -105,11 +43,21 @@ export async function getProjectById(userId, projectId) {
       };
     }
 
+    const counts = await prisma.proposal.groupBy({
+      by: ["kind", "status"], where: { projectId, project: { clientId: userId } }, _count: true,
+    });
+    const offerActivity = { proposals: 0, invitations: 0, pending: 0 };
+    for (const row of counts) {
+      offerActivity[row.kind === "INVITATION" ? "invitations" : "proposals"] += row._count;
+      if (row.status === "PENDING") offerActivity.pending += row._count;
+    }
+
     return {
       success: true,
       status: 200,
       project: {
         ...project,
+        offerActivity,
         budget: project.budget.toString(),
         milestones: project.milestones.map((m) => ({
           ...m,
@@ -127,156 +75,12 @@ export async function getProjectById(userId, projectId) {
     };
   }
 }
-export async function updateProject(userId, projectId, data) {
-  const title = String(data.title || "").trim();
-  const description = String(data.description || "").trim();
-  const category = String(data.category || "").trim();
-  const budget = Number(data.budget);
-  const deadline = new Date(data.deadline);
-
-  if (
-    !title ||
-    !description ||
-    !category ||
-    !data.budget ||
-    !data.deadline
-  ) {
-    return {
-      success: false,
-      status: 400,
-      message: "All project fields are required.",
-    };
-  }
-
-  if (!Number.isFinite(budget) || budget <= 0) {
-    return {
-      success: false,
-      status: 400,
-      message: "Budget must be greater than 0.",
-    };
-  }
-
-  if (Number.isNaN(deadline.getTime())) {
-    return {
-      success: false,
-      status: 400,
-      message: "Invalid project deadline.",
-    };
-  }
-
-  if (deadline <= new Date()) {
-    return {
-      success: false,
-      status: 400,
-      message: "Project deadline must be in the future.",
-    };
-  }
-
-  try {
-    // Ownership check.
-    // A client must only be able to update their own project.
-    const existingProject = await prisma.project.findFirst({
-      where: {
-        id: projectId,
-        clientId: userId,
-      },
-    });
-
-    if (!existingProject) {
-      return {
-        success: false,
-        status: 404,
-        message: "Project not found.",
-      };
-    }
-
-    const updatedProject = await prisma.project.update({
-      where: {
-        id: projectId,
-      },
-
-      data: {
-        title,
-        description,
-        category,
-        budget,
-        deadline,
-      },
-    });
-
-    return {
-      success: true,
-      status: 200,
-      message: "Project updated successfully.",
-      project: {
-        ...updatedProject,
-        budget: updatedProject.budget.toString(),
-      },
-    };
-  } catch (error) {
-    console.error("UPDATE_PROJECT_SERVICE_ERROR", error);
-
-    return {
-      success: false,
-      status: 500,
-      message: "Unable to update project.",
-    };
-  }
+export function updateProject(id,projectId,input,files) {
+  return serviceResult(async()=>({project:await editListing(id,projectId,input,files)}));
 }
-export async function cancelProject(userId, projectId) {
-  try {
-    const project = await prisma.project.findFirst({
-      where: {
-        id: projectId,
-        clientId: userId,
-      },
-    });
-
-    if (!project) {
-      return {
-        success: false,
-        status: 404,
-        message: "Project not found.",
-      };
-    }
-
-    if (project.status !== "OPEN") {
-      return {
-        success: false,
-        status: 400,
-        message: "Only open projects can be cancelled.",
-      };
-    }
-
-    const cancelledProject = await prisma.project.update({
-      where: {
-        id: projectId,
-      },
-      data: {
-        status: "CANCELLED",
-      },
-    });
-
-    return {
-      success: true,
-      status: 200,
-      message: "Project cancelled successfully.",
-      project: {
-        ...cancelledProject,
-        budget: cancelledProject.budget.toString(),
-      },
-    };
-  } catch (error) {
-    console.error("CANCEL_PROJECT_SERVICE_ERROR", error);
-
-    return {
-      success: false,
-      status: 500,
-      message: "Unable to cancel project.",
-    };
-  }
+export function cancelProject(id,projectId) {
+  return serviceResult(async()=>({project:await cancelListing(id,projectId)}));
 }
-
 export async function getClientProjects(userId) {
   try {
     const projects = await prisma.project.findMany({
@@ -285,6 +89,7 @@ export async function getClientProjects(userId) {
       },
 
       include: {
+        _count: { select: { proposals: { where: {status: "PENDING"} } } },
         freelancer: {
           select: {
             id: true,
@@ -316,7 +121,7 @@ export async function getClientProjects(userId) {
     const formattedProjects = projects.map((project) => {
 
       const completedMilestones = project.milestones.filter(
-        (m) => m.status === "COMPLETED"
+        (m) => m.status === "APPROVED"
       );
 
       const totalMilestones = project.milestones.length;

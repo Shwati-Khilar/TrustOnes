@@ -1,3 +1,4 @@
+import { requireRole } from "@/lib/permissions";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 
@@ -9,30 +10,9 @@ export async function PATCH(req, { params }) {
     // 1. Get logged-in user
     const session = await getServerSession(authOptions);
 
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        {
-          message: "Authentication required.",
-        },
-        {
-          status: 401,
-        }
-      );
-    }
-
-    // 2. Only active clients can accept proposals
-    if (
-      session.user.status !== "ACTIVE" ||
-      session.user.role !== "CLIENT"
-    ) {
-      return NextResponse.json(
-        {
-          message: "You are not allowed to accept proposals.",
-        },
-        {
-          status: 403,
-        }
-      );
+    const permission = requireRole(session, ["CLIENT"]);
+    if (!permission.allowed) {
+      return NextResponse.json({ message: permission.message }, { status: permission.status });
     }
 
     // 3. Get proposalId from dynamic route

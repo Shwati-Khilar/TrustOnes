@@ -1,3 +1,4 @@
+import { formatCurrency } from "@/lib/project-presentation";
 import { prisma } from "@/lib/prisma";
 
 const REVIEW_WINDOW_HOURS = 72;
@@ -48,16 +49,6 @@ function formatDateTime(value) {
     hour: "2-digit",
     minute: "2-digit",
   }).format(new Date(value));
-}
-
-function formatCurrency(value) {
-  const amount = Number(value || 0);
-
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 0,
-  }).format(amount);
 }
 
 function cleanText(value, maxLength = 500) {

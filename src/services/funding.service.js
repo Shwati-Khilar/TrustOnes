@@ -1,13 +1,14 @@
 import { prisma } from "@/lib/prisma";
 
-export async function fundMilestone(clientId, milestoneId) {
+export async function fundMilestone(clientId, projectId, milestoneId) {
   try {
     const result = await prisma.$transaction(async (tx) => {
 
       // Find milestone
-      const milestone = await tx.milestone.findUnique({
+      const milestone = await tx.milestone.findFirst({
         where: {
           id: milestoneId,
+          projectId,
         },
 
         include: {
@@ -28,7 +29,7 @@ export async function fundMilestone(clientId, milestoneId) {
       if (milestone.project.status !== "ACTIVE") {
         throw new Error("PROJECT_NOT_ACTIVE");
       }
-      
+
 
       // Milestone must still be pending
       if (milestone.status !== "PENDING") {
@@ -94,7 +95,7 @@ export async function fundMilestone(clientId, milestoneId) {
 
             amount,
 
-            provider: "RAZORPAY_TEST",
+            provider: "SIMULATED",
 
             status: "CREATED",
           },
@@ -121,7 +122,7 @@ export async function fundMilestone(clientId, milestoneId) {
     return {
       success: true,
       status: 200,
-      message: "Milestone funded successfully.",
+      message: "Simulated funding recorded.",
 
       funding: {
         ...result.funding,

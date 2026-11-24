@@ -1,14 +1,5 @@
+import { formatCurrency } from "@/lib/project-presentation";
 import { prisma } from "@/lib/prisma";
-
-function formatCurrency(value) {
-  const amount = Number(value || 0);
-
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
 
 function formatDate(value) {
   if (!value) return "No date";
@@ -22,7 +13,7 @@ function formatDate(value) {
 
 function mapTransactionFromMilestone(milestone) {
   const typeMap = {
-    APPROVED: "EARNING_RELEASED",
+    APPROVED: "MILESTONE_APPROVED",
     SUBMITTED: "PENDING_APPROVAL",
     IN_PROGRESS: "ACTIVE_WORK",
     REJECTED: "REVISION_PENDING",
@@ -178,8 +169,8 @@ export async function getFreelancerWallet(freelancerId) {
 
   return {
     summary: {
-      availableBalance: approved,
-      availableBalanceDisplay: formatCurrency(approved),
+      availableBalance: null,
+      availableBalanceDisplay: "Unavailable",
 
       pendingApproval: submitted,
       pendingApprovalDisplay: formatCurrency(submitted),
@@ -202,6 +193,7 @@ export async function getFreelancerWallet(freelancerId) {
       activeMilestones: activeCount,
     },
 
-    transactions: recentMilestones.map(mapTransactionFromMilestone),
+    milestoneActivity: recentMilestones.map(mapTransactionFromMilestone),
+    transactions: [],
   };
 }

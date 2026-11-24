@@ -1,5 +1,23 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
+## Authentication and portal access
+
+Each portal and its business APIs require a current database identity with a verified email, `ACTIVE` status and the matching role. The proxy sends visitors without a session to login. Server layouts and API handlers enforce authorization independently. Client resources are scoped to their owner and freelancer reads use the session user ID.
+
+Credentials registrations stay pending until email verification. Only a verified Google account with pending status and no assigned role can select CLIENT or FREELANCER, once. ADMIN is provisioned separately. Suspended accounts cannot enter portals or reactivate through verification, resend, password recovery or Google login. Email verification links expire after one hour, password reset links after 30 minutes. Request a fresh link if a pre-S1 password reset link is outstanding.
+
+## Authentication integration tests
+
+Set `S1_TEST_PG_URL` to a connection on a disposable PostgreSQL server with permission to create a database. The suite creates a randomly named database, applies the checked-in SQL migrations there, starts the production app and a local SMTP receiver, then removes its test database. It exercises the Google account callback and onboarding locally. The external Google consent flow requires a configured OAuth client and callback URL.
+
+```sh
+npx prisma generate
+npm run build
+npm test
+```
+
+The mailer uses its existing Gmail configuration by default. Set `SMTP_URL` to use a different SMTP transport. Keep local environment files outside Git and provision deployment secrets separately.
+
 ## Getting Started
 
 First, run the development server:

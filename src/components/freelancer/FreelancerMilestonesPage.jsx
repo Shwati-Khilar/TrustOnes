@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { formatCurrency } from "@/lib/project-presentation";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   AlertTriangle,
@@ -26,14 +27,6 @@ const filters = [
   { label: "Revision", value: "REVISION_REQUESTED" },
   { label: "Approved", value: "APPROVED" },
 ];
-
-function formatCurrency(amount) {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 0,
-  }).format(Number(amount || 0));
-}
 
 function StatusBadge({ status }) {
   const normalizedStatus = String(status || "PENDING");
@@ -114,44 +107,47 @@ export default function FreelancerMilestonesPage() {
   const [selectedMilestone, setSelectedMilestone] = useState(null);
   const [submitModalOpen, setSubmitModalOpen] = useState(false);
 
-  const loadMilestones = useCallback(async () => {
-    try {
-      setLoading(true);
-      setErrorMessage("");
-
-      const params = new URLSearchParams();
-
-      if (activeFilter && activeFilter !== "ALL") {
-        params.set("status", activeFilter);
-      }
-
-      const query = params.toString();
-
-      const response = await fetch(
-        `/api/freelancer/milestones${query ? `?${query}` : ""}`,
-        {
-          method: "GET",
-          cache: "no-store",
-        }
-      );
-
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        throw new Error(result.message || "Unable to load milestones.");
-      }
-
-      setMilestoneData(result.data);
-    } catch (error) {
-      setErrorMessage(error.message || "Unable to load milestones.");
-    } finally {
-      setLoading(false);
-    }
-  }, [activeFilter]);
-
+  const [refreshCount, setRefreshCount] = useState(0);
   useEffect(() => {
+    const controller = new AbortController();
+    const { signal } = controller;
+    async function loadMilestones() {
+      try {
+
+        const params = new URLSearchParams();
+
+        if (activeFilter && activeFilter !== "ALL") {
+          params.set("status", activeFilter);
+        }
+
+        const query = params.toString();
+
+        const response = await fetch(
+          `/api/freelancer/milestones${query ? `?${query}` : ""}`,
+          {
+            method: "GET",
+            cache: "no-store",
+            signal,
+          }
+        );
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          throw new Error(result.message || "Unable to load milestones.");
+        }
+
+        setErrorMessage("");
+        setMilestoneData(result.data);
+      } catch (error) {
+        if (!signal?.aborted) setErrorMessage(error.message || "Unable to load milestones.");
+      } finally {
+        if (!signal?.aborted) setLoading(false);
+      }
+    }
     loadMilestones();
-  }, [loadMilestones]);
+    return () => controller.abort();
+  }, [activeFilter, refreshCount]);
 
   const milestones = milestoneData.milestones || [];
   const stats = milestoneData.stats || {};
@@ -193,7 +189,8 @@ export default function FreelancerMilestonesPage() {
   }
 
   async function handleSubmitted() {
-    await loadMilestones();
+    setLoading(true);
+    setRefreshCount((count) => count + 1);
     setNotice({
       type: "success",
       text: "Work submitted successfully. Milestone status has been refreshed.",
@@ -349,7 +346,12 @@ export default function FreelancerMilestonesPage() {
                     <button
                       type="button"
                       key={filter.value}
-                      onClick={() => setActiveFilter(filter.value)}
+                      onClick={() => {
+                        if (activeFilter !== filter.value) {
+                          setLoading(true);
+                          setActiveFilter(filter.value);
+                        }
+                      }}
                       className={`rounded-full px-4 py-2 text-xs font-black transition ${
                         active
                           ? "bg-[#6f2e1c] text-white"

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { projectDate, projectPreview, projectMoney } from "@/lib/project-presentation";
 import { useEffect, useMemo, useState } from "react";
 import {
   CalendarClock,
@@ -12,7 +13,11 @@ import {
   UserRound,
 } from "lucide-react";
 
-const statusFilters = ["All", "Open", "Active", "Completed"];
+const statusFilters = ["All", "Draft", "Open", "Active", "Paused", "Completed", "Cancelled"];
+
+function listingStatus(project) {
+  return project.status === "OPEN" && !project.publishedAt ? "DRAFT" : project.status;
+}
 
 const statusStyles = {
   OPEN: "bg-[#eff6ff] text-[#1d4ed8] border-[#bfdbfe]",
@@ -24,16 +29,6 @@ const statusStyles = {
 
 function formatCurrency(value) {
   return `₹${Number(value || 0).toLocaleString("en-IN")}`;
-}
-
-function formatDate(value) {
-  if (!value) return "—";
-
-  return new Date(value).toLocaleDateString("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
 }
 
 function StatusBadge({ status }) {
@@ -102,7 +97,7 @@ export default function ProjectsPage() {
         project.category?.toLowerCase().includes(term);
 
       const matchesStatus =
-        activeStatus === "All" || project.status === activeStatus.toUpperCase();
+        activeStatus === "All" || listingStatus(project) === activeStatus.toUpperCase();
 
       return matchesSearch && matchesStatus;
     });
@@ -122,8 +117,8 @@ export default function ProjectsPage() {
     },
     {
       label: "Open",
-      value: String(projects.filter((p) => p.status === "OPEN").length),
-      helper: "Awaiting proposals",
+      value: String(projects.filter((p) => listingStatus(p) === "OPEN").length),
+      helper: "Published open projects",
       icon: Plus,
     },
     {
@@ -135,7 +130,7 @@ export default function ProjectsPage() {
     {
       label: "Total Budget",
       value: formatCurrency(totalBudget),
-      helper: "Committed to projects",
+      helper: "Across listed projects",
       icon: IndianRupee,
     },
   ];
@@ -283,9 +278,9 @@ export default function ProjectsPage() {
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <StatusBadge status={project.status} />
+                  <StatusBadge status={listingStatus(project)} />
 
-                  <h2 className="mt-3 truncate text-xl font-black tracking-[-0.03em] text-[#24130c]">
+                  <h2 className="mt-3 [overflow-wrap:anywhere] text-xl font-black tracking-[-0.03em] text-[#24130c]">
                     {project.title}
                   </h2>
 
@@ -294,23 +289,18 @@ export default function ProjectsPage() {
                   </p>
                 </div>
 
-                <Link
-                  href={`/client/projects/${project.id}`}
-                  className="shrink-0 rounded-xl border border-[#eadfd2] bg-white px-4 py-2 text-xs font-black text-[#6f2e1c] transition hover:bg-[#fff7ed]"
-                >
-                  Open
-                </Link>
+
               </div>
 
               <p className="mt-4 line-clamp-2 text-sm leading-6 text-[#7c6858]">
-                {project.description}
+                {projectPreview(project.description)}
               </p>
 
               <div className="mt-5">
                 <div className="mb-2 flex items-center justify-between text-xs font-bold text-[#7c6858]">
                   <span>
                     Milestones {project.completedMilestones || 0}/
-                    {project.totalMilestones || 0} completed
+                    {project.totalMilestones || 0} approved
                   </span>
 
                   <span>{project.progress || 0}%</span>
@@ -327,7 +317,7 @@ export default function ProjectsPage() {
               <div className="mt-5 grid grid-cols-3 gap-2 rounded-2xl border border-[#eadfd2] bg-[#fffaf3] p-4 text-center">
                 <div>
                   <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#806049]">
-                    Budget
+                    {project.acceptedOfferId ? "Contract value" : project.status === "OPEN" ? "Listed budget" : "Project budget"}
                   </p>
 
                   <p className="mt-1 text-sm font-black text-[#24130c]">
@@ -337,7 +327,7 @@ export default function ProjectsPage() {
 
                 <div>
                   <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#806049]">
-                    Spent
+                    Approved work value
                   </p>
 
                   <p className="mt-1 text-sm font-black text-[#24130c]">
@@ -347,11 +337,11 @@ export default function ProjectsPage() {
 
                 <div>
                   <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#806049]">
-                    Remaining
+                    Milestone allocation
                   </p>
 
                   <p className="mt-1 text-sm font-black text-[#047857]">
-                    {formatCurrency(project.remainingBudget)}
+                    {projectMoney(project.milestones.reduce((sum, m) => sum + Number(m.amount), 0))}
                   </p>
                 </div>
               </div>
@@ -367,7 +357,7 @@ export default function ProjectsPage() {
 
                 <div className="flex items-center gap-2 text-xs font-bold text-[#7c6858]">
                   <CalendarClock size={14} />
-                  {formatDate(project.deadline)}
+                  {project.acceptedOfferId ? "Agreed delivery" : "Deadline"} · {projectDate(project.deadline)}
                 </div>
               </div>
 
@@ -379,12 +369,12 @@ export default function ProjectsPage() {
                   View details
                 </Link>
 
-                <Link
+                {project.status === "OPEN" && !project._count?.proposals && <Link
                   href={`/client/projects/${project.id}/edit`}
                   className="inline-flex h-11 flex-1 items-center justify-center rounded-xl border border-[#eadfd2] bg-white text-sm font-black text-[#6f2e1c] transition hover:bg-[#fff7ed]"
                 >
                   Edit
-                </Link>
+                </Link>}
               </div>
             </article>
           ))}

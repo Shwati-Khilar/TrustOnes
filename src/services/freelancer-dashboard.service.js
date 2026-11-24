@@ -1,14 +1,5 @@
+import { projectDate, formatCurrency } from "@/lib/project-presentation";
 import { prisma } from "@/lib/prisma";
-
-function formatCurrency(value) {
-  const amount = Number(value || 0);
-
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
 
 function formatShortDate(value) {
   if (!value) return "No date";
@@ -114,6 +105,7 @@ export async function getFreelancerDashboard(freelancerId) {
 
     prisma.proposal.count({
       where: {
+        kind: "PROPOSAL",
         freelancerId,
         status: "PENDING",
       },
@@ -192,6 +184,7 @@ export async function getFreelancerDashboard(freelancerId) {
 
     prisma.proposal.findMany({
       where: {
+        kind: "PROPOSAL",
         freelancerId,
         status: "PENDING",
       },
@@ -302,7 +295,7 @@ export async function getFreelancerDashboard(freelancerId) {
       title: proposal.project.title,
       client: proposal.project.client?.name || "Client",
       budget: formatCurrency(proposal.project.budget),
-      deadline: formatShortDate(proposal.project.deadline),
+      deadline: projectDate(proposal.project.deadline),
       summary: proposal.project.description,
       status: "Awaiting Client",
     })),

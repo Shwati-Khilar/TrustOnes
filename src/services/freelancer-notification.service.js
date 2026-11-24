@@ -1,3 +1,4 @@
+import { formatCurrency } from "@/lib/project-presentation";
 import { prisma } from "@/lib/prisma";
 
 function formatDate(value) {
@@ -29,24 +30,13 @@ function formatRelativeTime(value) {
   return formatDate(value);
 }
 
-function formatCurrency(value) {
-  const amount = Number(value || 0);
-
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
-
 function buildProposalNotification(proposal) {
   const projectTitle = proposal.project?.title || "Project";
-  const clientName = proposal.project?.client?.name || "Client";
 
   const statusConfig = {
     PENDING: {
-      title: "Proposal awaiting client response",
-      message: `Your proposal for ${projectTitle} is waiting for ${clientName}'s response.`,
+      title: "Open proposal negotiation",
+      message: `Your proposal for ${projectTitle} has an outstanding offer.`,
       category: "PROPOSAL",
       priority: "MEDIUM",
       actionRequired: false,
@@ -55,7 +45,7 @@ function buildProposalNotification(proposal) {
     },
     ACCEPTED: {
       title: "Proposal accepted",
-      message: `${clientName} accepted your proposal for ${projectTitle}. The project can now continue in deal room.`,
+      message: `An offer for ${projectTitle} was accepted. The project can now continue in deal room.`,
       category: "PROPOSAL",
       priority: "HIGH",
       actionRequired: true,
@@ -64,12 +54,21 @@ function buildProposalNotification(proposal) {
     },
     REJECTED: {
       title: "Proposal rejected",
-      message: `${clientName} rejected your proposal for ${projectTitle}.`,
+      message: `The negotiation for ${projectTitle} was declined.`,
       category: "PROPOSAL",
       priority: "LOW",
       actionRequired: false,
       actionLabel: "View Proposal",
       actionUrl: "/freelancer/invites",
+    },
+    CLOSED: {
+      title: "Negotiation closed",
+      message: `${projectTitle} closed to applications.`,
+      category: "PROPOSAL",
+      priority: "LOW",
+      actionRequired: false,
+      actionLabel: "View history",
+      actionUrl: `/freelancer/offers/${proposal.id}`,
     },
     WITHDRAWN: {
       title: "Proposal withdrawn",
@@ -96,7 +95,7 @@ function buildProposalNotification(proposal) {
     actionRequired: config.actionRequired,
     actionLabel: config.actionLabel,
     actionUrl: config.actionUrl,
-    amountDisplay: formatCurrency(proposal.bidAmount),
+    amountDisplay: formatCurrency(proposal.offers[0]?.amount ?? proposal.bidAmount),
     createdAt: proposal.updatedAt.toISOString(),
     createdAtDisplay: formatDate(proposal.updatedAt),
     relativeTime: formatRelativeTime(proposal.updatedAt),
@@ -137,7 +136,7 @@ function buildMilestoneNotification(milestone) {
       title: "Milestone approved",
       message: `${milestone.title} was approved. ${formatCurrency(
         milestone.amount
-      )} is now counted in approved earnings.`,
+      )} is its approved milestone value.`,
       priority: "MEDIUM",
       actionRequired: false,
       actionLabel: "Open Wallet",
@@ -220,6 +219,7 @@ export async function getFreelancerNotifications(freelancerId, filters = {}) {
   const [proposals, milestones, projects] = await Promise.all([
     prisma.proposal.findMany({
       where: {
+        kind: "PROPOSAL",
         freelancerId,
       },
       orderBy: {
@@ -229,6 +229,7 @@ export async function getFreelancerNotifications(freelancerId, filters = {}) {
       select: {
         id: true,
         bidAmount: true,
+        offers: { orderBy: { version: "desc" }, take: 1, select: { amount: true } },
         status: true,
         updatedAt: true,
         project: {

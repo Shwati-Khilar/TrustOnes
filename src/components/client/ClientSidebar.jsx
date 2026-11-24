@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { signOut } from "next-auth/react";
+import { logoutUser } from "@/services/auth.client.service";
 import { useState } from "react";
 import {
-  Bell,
+  Bell, Mail as MailIcon,
   FolderKanban,
   LayoutDashboard,
   LogOut,
@@ -20,6 +20,8 @@ import {
 const navItems = [
   { label: "Dashboard", href: "/client/dashboard", icon: LayoutDashboard },
   { label: "Projects", href: "/client/projects", icon: FolderKanban },
+  { label: "Freelancers", href: "/client/freelancers", icon: UserRound },
+  { label: "Invitations and proposals", href: "/client/offers", icon: MailIcon },
   { label: "Notifications", href: "/client/notifications", icon: Bell },
   { label: "Messages", href: "/client/messages", icon: MessageSquare },
   { label: "Disputes", href: "/client/disputes", icon: ShieldAlert },
@@ -50,10 +52,7 @@ export default function ClientSidebar({ user }) {
     try {
       setLoggingOut(true);
 
-      await signOut({
-        redirect: false,
-        callbackUrl: "/login",
-      });
+      await logoutUser();
 
       router.replace("/login");
       router.refresh();
@@ -122,21 +121,8 @@ export default function ClientSidebar({ user }) {
           Trust Score
         </p>
 
-        <div className="mt-3 flex items-end justify-between">
-          <h3 className="text-4xl font-black tracking-tight">96</h3>
-
-          <span className="rounded-full bg-[#f4b454]/15 px-2 py-1 text-xs font-bold text-[#ffd28c]">
-            Verified
-          </span>
-        </div>
-
-        <p className="mt-2 text-xs font-semibold text-white/90">
-          Excellent client standing
-        </p>
-
-        <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/15">
-          <div className="h-full w-[96%] rounded-full bg-[#f4b454]" />
-        </div>
+        <p className="mt-3 text-lg font-black text-white">Unrated</p>
+        <p className="mt-2 text-xs text-white/75">No reputation score available.</p>
       </div>
 
       <div className="mt-5 flex items-center gap-3 rounded-2xl border border-[#eadfd2] bg-white/70 px-3 py-3">

@@ -1,4 +1,5 @@
 "use client";
+import { EvidenceList,EvidencePicker,useEvidenceSelection } from "@/components/marketplace/EvidenceFiles";
 
 import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -23,10 +24,14 @@ export default function EditProjectPage({ params }) {
   const { projectId } = use(params);
 
   const router = useRouter();
+  const selection=useEvidenceSelection();
+  const [references,setReferences]=useState([]);
 
+  const [originalDeadline, setOriginalDeadline] = useState("");
   const [formData, setFormData] = useState({
     title: "",
     description: "",
+    skills: "",
     category: "",
     budget: "",
     deadline: "",
@@ -55,10 +60,13 @@ export default function EditProjectPage({ params }) {
         }
 
         const project = data.project;
+        setOriginalDeadline(project.deadline);
+        setReferences(project.evidence || []);
 
         setFormData({
           title: project.title,
           description: project.description,
+          skills: project.skills.join(", "),
           category: project.category,
           budget: project.budget,
 
@@ -102,24 +110,14 @@ export default function EditProjectPage({ params }) {
       setSubmitting(true);
       setError("");
 
-      const response = await fetch(
-        `/api/projects/${projectId}`,
-        {
-          method: "PATCH",
-
-          headers: {
-            "Content-Type": "application/json",
-          },
-
-          body: JSON.stringify({
-            title: formData.title,
-            description: formData.description,
-            category: formData.category,
-            budget: Number(formData.budget),
-            deadline: formData.deadline,
-          }),
-        }
-      );
+      const response = await selection.submit(`/api/projects/${projectId}`,"PATCH",{
+        title: formData.title,
+        description: formData.description,
+        category: formData.category,
+        skills: formData.skills.split(",").map(s=>s.trim()).filter(Boolean),
+        budget: formData.budget,
+        deadline: originalDeadline.slice(0,10) === formData.deadline ? originalDeadline : formData.deadline,
+      });
 
       const data = await response.json();
 
@@ -143,18 +141,18 @@ export default function EditProjectPage({ params }) {
   if (loading) {
     return (
       <>
-        <main>
+        <section>
           <div className="p-6 text-[#6f2e1c]">
             Loading project...
           </div>
-        </main>
+        </section>
       </>
     );
   }
 
   return (
     <>
-      <main>
+      <section>
         <div className="mx-auto max-w-5xl p-6">
           <button
             type="button"
@@ -178,7 +176,7 @@ export default function EditProjectPage({ params }) {
             </h1>
 
             <p className="mt-3 max-w-2xl leading-7 text-[#f6e3d1]">
-              Update the project's basic information, budget,
+              Update the project&apos;s basic information, budget,
               category and deadline.
             </p>
           </section>
@@ -187,6 +185,9 @@ export default function EditProjectPage({ params }) {
             onSubmit={handleSubmit}
             className="mt-8 rounded-3xl border border-[#eadfd2] bg-white p-8"
           >
+          <EvidenceList files={references} title="Saved reference files"/>
+          <EvidencePicker selection={selection} brief disabled={submitting} existing={references.length}/>
+          <label className="block">Required skills<input name="skills" value={formData.skills} onChange={handleChange} className="mt-2 w-full rounded-xl border p-3"/></label>
             {error && (
               <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
                 {error}
@@ -227,13 +228,13 @@ export default function EditProjectPage({ params }) {
                   value={formData.description}
                   onChange={handleChange}
                   required
-                  maxLength={2000}
+                  maxLength={8000}
                   rows={7}
                   className="w-full resize-none rounded-2xl border border-[#eadfd2] px-4 py-3 outline-none focus:border-[#8B5A2B]"
                 />
 
                 <p className="mt-2 text-right text-xs text-[#806049]">
-                  {formData.description.length}/2000
+                  {formData.description.length}/8000
                 </p>
               </div>
 
@@ -254,7 +255,7 @@ export default function EditProjectPage({ params }) {
                     required
                     className="w-full rounded-2xl border border-[#eadfd2] bg-white px-4 py-3 outline-none focus:border-[#8B5A2B]"
                   >
-                    {categories.map((category) => (
+                    {Array.from(new Set([...categories, formData.category].filter(Boolean))).map((category) => (
                       <option
                         key={category}
                         value={category}
@@ -286,8 +287,8 @@ export default function EditProjectPage({ params }) {
                       value={formData.budget}
                       onChange={handleChange}
                       required
-                      min="1"
-                      step="1"
+                      min="0.01"
+                      step="0.01"
                       className="w-full rounded-2xl border border-[#eadfd2] py-3 pl-11 pr-4 outline-none focus:border-[#8B5A2B]"
                     />
                   </div>
@@ -354,7 +355,7 @@ export default function EditProjectPage({ params }) {
             </div>
           </form>
         </div>
-      </main>
+      </section>
     </>
   );
 }

@@ -1,3 +1,6 @@
+import { evidenceSubmission } from "@/services/evidence-upload";
+import { evidenceErrorResponse } from "@/lib/evidence-error";
+import { requireRole } from "@/lib/permissions";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 
@@ -8,32 +11,18 @@ export async function POST(req, { params }) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { message: "Authentication required." },
-        { status: 401 }
-      );
-    }
-
-    if (
-      session.user.status !== "ACTIVE" ||
-      session.user.role !== "FREELANCER"
-    ) {
-      return NextResponse.json(
-        {
-          message: "Only active freelancers can submit proposals.",
-        },
-        { status: 403 }
-      );
+    const permission = requireRole(session, ["FREELANCER"]);
+    if (!permission.allowed) {
+      return NextResponse.json({ message: permission.message }, { status: permission.status });
     }
 
     const { projectId } = await params;
-    const body = await req.json();
+    const { input:body, files } = await evidenceSubmission(req,false);
 
     const result = await createProposal(
       session.user.id,
       projectId,
-      body
+      body,files
     );
 
     if (!result.success) {
@@ -51,7 +40,9 @@ export async function POST(req, { params }) {
       { status: 201 }
     );
   } catch (error) {
-    console.error("CREATE_PROPOSAL_ROUTE_ERROR", error);
+    const invalid=evidenceErrorResponse(error);
+    if (invalid) return invalid;
+    console.error("CREATE_PROPOSAL_ROUTE_ERROR", error.name);
 
     return NextResponse.json(
       {
@@ -66,23 +57,9 @@ export async function GET(req, { params }) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { message: "Authentication required." },
-        { status: 401 }
-      );
-    }
-
-    if (
-      session.user.status !== "ACTIVE" ||
-      session.user.role !== "CLIENT"
-    ) {
-      return NextResponse.json(
-        {
-          message: "Only active clients can view project proposals.",
-        },
-        { status: 403 }
-      );
+    const permission = requireRole(session, ["CLIENT"]);
+    if (!permission.allowed) {
+      return NextResponse.json({ message: permission.message }, { status: permission.status });
     }
 
     const { projectId } = await params;

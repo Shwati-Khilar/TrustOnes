@@ -61,7 +61,7 @@ function mapApiRoom(room) {
     deadline: room.deadlineDisplay || "No deadline",
     milestonesDone: room.milestoneSummary?.approved || 0,
     milestonesTotal: room.milestoneSummary?.total || 0,
-    fundedAmount: room.milestoneSummary?.activeAmountDisplay || "₹0",
+    activeMilestoneValue: room.milestoneSummary?.activeAmountDisplay || "₹0",
     approvedAmount: room.milestoneSummary?.approvedAmountDisplay || "₹0",
     nextAction: room.nextAction || "Open deal room",
     unreadMessages: 0,
@@ -322,7 +322,7 @@ export default function FreelancerDealRoomsPage() {
                       </div>
 
                       <p className="text-sm font-black text-[#24130c]">
-                        {room.fundedAmount}
+                        {room.activeMilestoneValue}
                       </p>
 
                       <p className="mt-1 text-xs font-semibold text-[#9b7a64]">

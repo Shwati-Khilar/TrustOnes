@@ -1,22 +1,11 @@
-import { redirect } from "next/navigation";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import Link from "next/link";
+import { requirePortal } from "@/lib/portal-session";
 import { prisma } from "@/lib/prisma";
 import LogoutButton from "@/components/auth/LogoutButton";
-import { logoutUser } from '@/services/auth.client.service';
 
 export default async function AdminDashboardPage() {
-  const session = await getServerSession(authOptions);
-
-  if (!session?.user) {
-    redirect("/login");
-  }
-
-  if (session.user.role !== "ADMIN") {
-    redirect("/unauthorized");
-  }
-
-  const totalUsers = await prisma.user.count();
+  const user = await requirePortal("ADMIN");
+  const [totalUsers, activeProjects] = await Promise.all([prisma.user.count(), prisma.project.count({where:{status:"ACTIVE"}})]);
 
   return (
     <main className="min-h-screen bg-slate-100 p-8">
@@ -31,7 +20,7 @@ export default async function AdminDashboardPage() {
           </h1>
 
           <p className="mt-3 text-slate-600">
-            Welcome, {session.user.name}
+            Welcome, {user.name}
           </p>
 
           <div className="mt-6 grid gap-4 md:grid-cols-3">
@@ -42,14 +31,15 @@ export default async function AdminDashboardPage() {
 
             <div className="rounded-xl border p-5">
               <p className="text-sm text-slate-500">Active Projects</p>
-              <p className="mt-2 text-3xl font-bold">0</p>
+              <p className="mt-2 text-3xl font-bold">{activeProjects}</p>
             </div>
 
             <div className="rounded-xl border p-5">
               <p className="text-sm text-slate-500">Open Disputes</p>
-              <p className="mt-2 text-3xl font-bold">0</p>
+              <p className="mt-2 text-3xl font-bold">Unavailable</p>
             </div>
           </div>
+          <Link href="/admin/support" className="my-5 block font-semibold text-purple-700 underline">Support requests</Link>
           <LogoutButton/>
         </div>
       </section>

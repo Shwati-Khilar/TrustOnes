@@ -1,3 +1,4 @@
+import { requireRole } from "@/lib/permissions";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 
@@ -11,19 +12,21 @@ import {
 export async function PATCH(request, { params }) {
   const session = await getServerSession(authOptions);
 
-  if (!session?.user) {
+  const permission = requireRole(session, ["CLIENT"]);
+  if (!permission.allowed) {
     return NextResponse.json(
-      { message: "Unauthorized." },
-      { status: 401 }
+      { message: permission.message },
+      { status: permission.status }
     );
   }
 
-  const { milestoneId } = await params;
+  const { projectId, milestoneId } = await params;
 
   const body = await request.json();
 
   const result = await updateMilestone(
     session.user.id,
+    projectId,
     milestoneId,
     body
   );
@@ -36,17 +39,19 @@ export async function PATCH(request, { params }) {
 export async function DELETE(request, { params }) {
   const session = await getServerSession(authOptions);
 
-  if (!session?.user) {
+  const permission = requireRole(session, ["CLIENT"]);
+  if (!permission.allowed) {
     return NextResponse.json(
-      { message: "Unauthorized." },
-      { status: 401 }
+      { message: permission.message },
+      { status: permission.status }
     );
   }
 
-  const { milestoneId } = await params;
+  const { projectId, milestoneId } = await params;
 
   const result = await deleteMilestone(
     session.user.id,
+    projectId,
     milestoneId
   );
 

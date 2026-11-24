@@ -56,7 +56,7 @@ function getPreferenceDefaults() {
   };
 }
 
-function mapPreferences(preference) {
+export function mapPreferences(preference) {
   const defaults = getPreferenceDefaults();
 
   if (!preference) {
@@ -92,9 +92,11 @@ function isValidTimezone(value) {
 
 // Only the keys actually present in the payload are returned, so a PATCH
 // touching one toggle never resets the rest of the record.
-function buildPreferenceUpdate(payload) {
+export class InvalidPreferenceError extends Error {}
+
+export function buildPreferenceUpdate(payload) {
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
-    throw new Error("Request body must be a settings object.");
+    throw new InvalidPreferenceError("Request body must be a settings object.");
   }
 
   const data = {};
@@ -103,7 +105,7 @@ function buildPreferenceUpdate(payload) {
     if (!(field in payload)) continue;
 
     if (typeof payload[field] !== "boolean") {
-      throw new Error(`${field} must be true or false.`);
+      throw new InvalidPreferenceError(`${field} must be true or false.`);
     }
 
     data[field] = payload[field];
@@ -113,7 +115,7 @@ function buildPreferenceUpdate(payload) {
     if (!(field in payload)) continue;
 
     if (!allowedValues.includes(payload[field])) {
-      throw new Error(
+      throw new InvalidPreferenceError(
         `${field} must be one of: ${allowedValues.join(", ")}.`
       );
     }
@@ -126,14 +128,14 @@ function buildPreferenceUpdate(payload) {
       typeof payload.timezone !== "string" ||
       !isValidTimezone(payload.timezone.trim())
     ) {
-      throw new Error("timezone must be a valid IANA timezone.");
+      throw new InvalidPreferenceError("timezone must be a valid IANA timezone.");
     }
 
     data.timezone = payload.timezone.trim().slice(0, 80);
   }
 
   if (Object.keys(data).length === 0) {
-    throw new Error("No supported settings were provided.");
+    throw new InvalidPreferenceError("No supported settings were provided.");
   }
 
   return data;

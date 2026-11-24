@@ -37,23 +37,8 @@ export async function POST(req) {
       },
     });
 
-    /*
-      Avoid exposing whether an email exists.
-      For unknown emails, return success but do not send anything.
-    */
-    if (!user) {
-      return jsonResponse({
-        success: true,
-        message: "If this email exists, a verification email has been sent.",
-      });
-    }
-
-    if (user.emailVerified) {
-      return jsonResponse({
-        success: true,
-        message: "This email is already verified. Please login.",
-      });
-    }
+    const message = "If your account is eligible, a verification email will be sent.";
+    if (!user || user.emailVerified) return jsonResponse({ success: true, message });
 
     const rawVerificationToken = createRawToken();
     const hashedVerificationToken = hashToken(rawVerificationToken);
@@ -62,31 +47,23 @@ export async function POST(req) {
       Date.now() + VERIFICATION_TOKEN_EXPIRY_MS
     );
 
-    await prisma.user.update({
+    const { count } = await prisma.user.updateMany({
       where: {
         id: user.id,
+        provider: "credentials",
+        status: { not: "SUSPENDED" },
+        emailVerified: false,
       },
       data: {
         verificationToken: hashedVerificationToken,
         verificationTokenExpiry,
-        status: "PENDING",
       },
     });
 
-    /*
-      Send the raw token only through email.
-      Only the hashed token is stored in the database.
-    */
-    await sendVerificationEmail({
-      to: user.email,
-      name: user.name,
-      token: rawVerificationToken,
-    });
-
-    return jsonResponse({
-      success: true,
-      message: "Verification email sent successfully.",
-    });
+    if (count) {
+      await sendVerificationEmail({ to: user.email, name: user.name, token: rawVerificationToken });
+    }
+    return jsonResponse({ success: true, message });
   } catch (error) {
     console.error("RESEND_EMAIL_VERIFICATION_ERROR", error);
 

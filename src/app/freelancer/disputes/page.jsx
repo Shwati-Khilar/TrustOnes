@@ -1,10 +1,5 @@
+import Unavailable from "@/components/marketplace/Unavailable";
 import FreelancerPortalShell from "@/components/freelancer/FreelancerPortalShell";
-import FreelancerDisputesPage from "@/components/freelancer/FreelancerDisputesPage";
-
-export default function DisputesPage() {
-  return (
-    <FreelancerPortalShell>
-      <FreelancerDisputesPage />
-    </FreelancerPortalShell>
-  );
+export default function Page() {
+  return <FreelancerPortalShell><Unavailable title="Disputes" description="Dispute filing and adjudication are unavailable."/></FreelancerPortalShell>;
 }

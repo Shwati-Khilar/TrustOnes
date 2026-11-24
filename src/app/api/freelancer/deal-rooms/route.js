@@ -24,18 +24,6 @@ export async function GET(request) {
       );
     }
 
-    if (session.user.status !== "ACTIVE") {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Your account is not active.",
-        },
-        {
-          status: 403,
-        }
-      );
-    }
-
     const { searchParams } = new URL(request.url);
 
     const data = await getFreelancerDealRooms(session.user.id, {
